@@ -1,0 +1,16 @@
+*
+
+!.gitignore
+!.clang-format
+
+!Tests
+!Tests/**/
+
+!App
+!App/**/
+
+!**/CMakeLists.txt
+!**/*.cpp
+!**/*.tpp
+!**/*.ipp
+!**/*.h
