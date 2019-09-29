@@ -2,7 +2,6 @@
 #include "TableManager.h"
 
 void initTable(char *name) {
-    std::cout << name;
     table = new Table();
     table->setName(std::string(name));
 }

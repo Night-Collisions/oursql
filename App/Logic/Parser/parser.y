@@ -20,10 +20,10 @@
 
 %type <ident> ID
 %type <inum> ICONST
-%type <type> INT REAL TEXT 
+%type <type> INT REAL TEXT type
 
 %union {
-    char type[100];
+    char *type;
     char ident[100];
 	int inum; 
 	double dnum; 
@@ -47,7 +47,7 @@ decl: variable | decl COMMA variable;
 variable: ID type {
     addField(yylval.ident, $2, 0);
 } | ID type LPAREN ICONST RPAREN {
-    addField(yylval.ident, $2, inum);
+    addField(yylval.ident, $2, yylval.inum);
 } ;
 
 type: INT {$$ = "int";} | REAL {$$ = "real";} | TEXT {$$ = "text";}
