@@ -44,6 +44,16 @@ macro(data_directory TARGET DIRECTORY)
             ${CMAKE_BINARY_DIR}/${DIRECTORY}/)
 endmacro()
 
+find_package(FLEX)
+find_package(BISON)
+
+macro(assemble_parser WAY)
+FLEX_TARGET(SCANNER ${CMAKE_CURRENT_SOURCE_DIR}/${WAY}scanner.l ${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp)
+BISON_TARGET(PARSER ${CMAKE_CURRENT_SOURCE_DIR}/${WAY}parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp COMPILE_FLAGS -t)
+ADD_FLEX_BISON_DEPENDENCY(SCANNER PARSER)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+endmacro()
+
 add_subdirectory(App)
 
 add_subdirectory(Tests)
