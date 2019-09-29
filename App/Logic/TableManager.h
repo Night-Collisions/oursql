@@ -3,7 +3,7 @@
 
 // An api between parser and table-class
 
-#include "Table.h"
+#include "../Engine/Table.h"
 
 void initTable(char *name);
 void addField(char *name, char *type, char *value);

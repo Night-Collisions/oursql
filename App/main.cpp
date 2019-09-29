@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Logic/Table.h"
+#include "Engine/Table.h"
 #include "parser.cpp"
 
 int main() {

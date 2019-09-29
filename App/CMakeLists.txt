@@ -1,14 +1,14 @@
 project(OurSql_APP)
 
 set(HEADERS
-        Logic/Field.h
-        Logic/Table.h
+        Engine/Field.h
+        Engine/Table.h
         Logic/TableManager.h
         )
 
 set(DEFINITIONS
-        Logic/Field.cpp
-        Logic/Table.cpp
+        Engine/Field.cpp
+        Engine/Table.cpp
         Logic/TableManager.cpp
         main.cpp)
 
