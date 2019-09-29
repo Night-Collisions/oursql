@@ -1,6 +1,7 @@
 #include <iostream>
+#include "parser.cpp"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    yyparse();
     return 0;
 }
