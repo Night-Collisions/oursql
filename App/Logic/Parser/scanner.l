@@ -46,8 +46,14 @@ FCONST      "0"|{digit}*"."{digit}+
 "text"|"TEXT"              { return TEXT; }
 "real"|"REAL"              { return REAL; }
 
-{ID}                       { sscanf(yytext, "%s", yylval.name); return ID; }
-{ICONST}                   { return ICONST; }
+{ID}                       { 
+                              sscanf(yytext, "%s", yylval.ident); 
+                              return ID; 
+                           }
+{ICONST}                   { 
+                              sscanf(yytext, "%d", yylval.inum);
+                              return ICONST; 
+                           }
 {FCONST}                   { return FCONST; }
 
 "\n"                       { lineno += 1; }

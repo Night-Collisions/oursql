@@ -1,6 +1,7 @@
 %{
+    #include "D:\IT\Cpp\oursql\App\Logic\TableManager.h"
     #include <stdio.h>
-    // + какая то сторонняя библа типа api от движка
+    #include <string>
 
     extern FILE *yyin;
     extern FILE *yyout;
@@ -17,22 +18,25 @@
 
 %start expression
 
-%type <name> ID
-%type <number> INT REAL
+%type <ident> ID
+%type <inum> ICONST
+%type <type> INT REAL TEXT 
 
-%union{
-	char name[20];
-	int number; 
+%union {
+    char type[100];
+    char ident[100];
+	int inum; 
+	double dnum; 
 }
 
 %%
 expression: statements SEMI;
 
-statements: create_st body {} | create_st | show_st | drop_st;
+statements: create_st body  | create_st | show_st | drop_st;
 
-create_st: CREATE TABLE ID;
+create_st: CREATE TABLE ID { initTable(yylval.ident); };
 
-show_st: SHOW TABLE ID { /*show()*/};
+show_st: SHOW TABLE ID { };
 
 drop_st: DROP TABLE ID {};
 
@@ -40,8 +44,12 @@ body: LPAREN decl RPAREN SEMI;
 
 decl: variable | decl COMMA variable;
 
-variable: ID type;
+variable: ID type {
+    addField(yylval.ident, $2, 0);
+} | ID type LPAREN ICONST RPAREN {
+    addField(yylval.ident, $2, inum);
+} ;
 
-type: INT | REAL | TEXT
+type: INT {$$ = "int";} | REAL {$$ = "real";} | TEXT {$$ = "text";}
 
 %%
