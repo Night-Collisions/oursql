@@ -3,9 +3,10 @@
 #include <iostream>
 #include <map>
 
-static Table *table;
+static Table *table = nullptr;
 
 void initTable(char *name) {
+    delete table;
     table = new Table();
     table->setName(std::string(name));
 }
