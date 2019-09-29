@@ -52,9 +52,14 @@ FCONST      "0"|{digit}*"."{digit}+
                            }
 {ICONST}                   { 
                               sscanf(yytext, "%d", yylval.inum);
+                              sprintf(yylval.val, "%d", yylval.inum);
                               return ICONST; 
                            }
-{FCONST}                   { return FCONST; }
+{FCONST}                   { 
+                              sscanf(yytext, "%d", yylval.dnum);
+                              sprintf(yylval.val, "%f", yylval.dnum);
+                              return FCONST; 
+                            }
 
 "\n"                       { lineno += 1; }
 [ \t\r\f]+                 ; //ignore spaces

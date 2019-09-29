@@ -5,7 +5,7 @@ set(HEADERS
 
 set(DEFINITIONS
         main.cpp
-        Logic/Table.cpp Logic/Table.h Logic/Field.cpp Logic/Field.h Logic/Types.h Logic/TableManager.cpp Logic/TableManager.h)
+        Logic/Table.cpp Logic/Table.h Logic/Field.cpp Logic/Field.h Logic/TableManager.cpp Logic/TableManager.h)
 
 find_package(FLEX)
 find_package(BISON)

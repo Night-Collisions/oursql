@@ -6,9 +6,7 @@
 
 #include "Table.h"
 
-static Table *table;
-
-void initTable(char *);
-void addField(char *name, char *type, int value);
+void initTable(char *name);
+void addField(char *name, char *type, char *value);
 
 #endif //OURSQL_APP_LOGIC_TABLEMANAGER_H_
