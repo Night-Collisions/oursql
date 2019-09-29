@@ -1,5 +1,5 @@
 %{
-    #include "D:\IT\Cpp\oursql\App\Logic\TableManager.h"
+    #include "../../App/Logic/TableManager.h"
     #include <stdio.h>
     #include <string>
 

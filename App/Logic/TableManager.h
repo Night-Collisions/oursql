@@ -1,4 +1,3 @@
-
 #ifndef OURSQL_APP_LOGIC_TABLEMANAGER_H_
 #define OURSQL_APP_LOGIC_TABLEMANAGER_H_
 
@@ -9,4 +8,4 @@
 void initTable(char *name);
 void addField(char *name, char *type, char *value);
 
-#endif //OURSQL_APP_LOGIC_TABLEMANAGER_H_
+#endif  // OURSQL_APP_LOGIC_TABLEMANAGER_H_

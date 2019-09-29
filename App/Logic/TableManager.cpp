@@ -1,5 +1,6 @@
-#include <iostream>
 #include "TableManager.h"
+
+#include <iostream>
 
 static Table *table;
 
