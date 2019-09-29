@@ -1,1 +1,47 @@
-%{	#include<stdio.h>	#include<stdlib.h>	int yylex();	int yyerror(char *s);%}	%token STRING NUM OTHER SEMICOLON DDLSTRING TABLE%type <name> STRING%type <number> NUM%type <name> DDLSTRING%type <name> TABLE%union{	char name[20];	int number; }%%prog:	stmts;stmts:	| request stmts	request:	create_table SEMICOLON create_table: 	DDLSTRING TABLE STRING{		printf("%s TABLE %s", $1, $3);	}	| DDLSTRING{		printf("CREATE!!");	} 	| NUM{		printf("YOUR NUM is - %d", $1);	}	| STRING{		printf("STRING KEK %s", $1);	}	| OTHER;%%	int yyerror(char *s){	printf("Syntax Error on line %s\n", s);	return 0;}
+%{
+    #include <stdio.h>
+    // + какая то сторонняя библа типа api от движка
+
+    extern FILE *yyin;
+    extern FILE *yyout;
+    extern int lineno;
+    extern int yylex();
+    void yyerror(char *s);
+%}
+
+%token CREATE SHOW DROP
+%token TABLE
+%token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA
+%token ID ICONST FCONST
+%token INT REAL TEXT
+
+%start expression
+
+%type <name> ID
+%type <number> INT REAL
+
+%union{
+	char name[20];
+	int number; 
+}
+
+%%
+expression: statements SEMI;
+
+statements: create_st body {} | create_st | show_st | drop_st;
+
+create_st: CREATE TABLE ID;
+
+show_st: SHOW TABLE ID { /*show()*/};
+
+drop_st: DROP TABLE ID {};
+
+body: LPAREN decl RPAREN SEMI;
+
+decl: variable | decl COMMA variable;
+
+variable: ID type;
+
+type: INT | REAL | TEXT
+
+%%
