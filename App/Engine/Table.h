@@ -1,15 +1,19 @@
 #ifndef OURSQL_APP_LOGIC_TABLE_H_
 #define OURSQL_APP_LOGIC_TABLE_H_
 
-#include <map>
 #include <string>
 #include <vector>
+
 #include "Field.h"
 
 class Table {
    public:
-    void setName(std::string name) { name_ = name; }
-    void addField(const Field &field);
+    void setName(const std::string& name) { name_ = name; }
+
+    std::string getName() const { return name_; }
+    std::vector<Field> getFields() const { return fields_; }
+
+    void addField(const Field& field);
 
    private:
     std::string name_;
