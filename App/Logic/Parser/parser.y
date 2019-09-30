@@ -2,6 +2,7 @@
     #include "../../App/Logic/TableManager.h"
     #include <stdio.h>
     #include <string>
+    #include <cstring>
 
     extern FILE *yyin;
     extern FILE *yyout;
@@ -19,21 +20,20 @@
 %start expression
 
 %type <ident> ID
-%type <inum> ICONST
+%type <val> ICONST
 %type <type> INT REAL TEXT type
 
 %union {
-    char *type;
+    char type[30];
     char ident[100];
 	char *val; 
-    int inum;
-    double dnum;
 }
 
 %%
 expression: statements SEMI;
 
-statements: create_st body  | create_st | show_st | drop_st;
+statements: create_st body  | create_st {addField("", "", "");} | 
+    show_st | drop_st;
 
 create_st: CREATE TABLE ID { initTable(yylval.ident); };
 
@@ -55,6 +55,8 @@ assign: LPAREN consts RPAREN;
 
 consts: ICONST | FCONST;
 
-type: INT {$$ = "int";} | REAL {$$ = "real";} | TEXT {$$ = "text";}
+type: INT { strcpy($$, "int"); } | 
+        REAL { strcpy($$, "real"); } | 
+        TEXT { strcpy($$, "text"); };
 
 %%

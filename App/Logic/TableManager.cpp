@@ -6,7 +6,7 @@
 static Table *table = nullptr;
 
 void initTable(char *name) {
-    delete table;
+    destroyTable();
     table = new Table();
     table->setName(std::string(name));
 }
@@ -32,4 +32,6 @@ void addField(char *name, char *type, char *value) {
     table->addField(f);
 }
 
-void destroyTable();
+void destroyTable() {
+    delete table;
+}
