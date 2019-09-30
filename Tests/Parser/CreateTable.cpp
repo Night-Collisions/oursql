@@ -41,10 +41,71 @@ void setParserRequest(const std::string& s) {
     yyin = f;
 }
 
-TEST(Parser_CreateTable, CreateSimpleTable) {
-    setParserRequest("create table a(f int);\n");
+TEST(Parser_CreateTable, SimpleTest) {
+    setParserRequest("create table MyTable(Name text);\n");
     yyparse();
     auto table = getTable();
-    Table expect_table("a", {{"f", DataType::integer}});
+    Table expect_table("MyTable", {{"Name", DataType::text}});
     EXPECT_EQ(table, expect_table);
 }
+
+TEST(Parser_CreateTable, UPCASE) {
+    setParserRequest("CREATE TABLE MyTablE(DatA REAL);\n");
+    yyparse();
+    auto table = getTable();
+    Table expect_table("MyTablE", {{"DatA", DataType::real}});
+    EXPECT_EQ(table, expect_table);
+}
+
+TEST(Parser_CreateTable, AnySpase) {
+    setParserRequest("create    \ntable a   (  \n  f  int   ,  h   real  , E   text )   ;   \n");
+    int flag = yyparse();
+    std::cout << flag << std::endl;
+    auto table = getTable();
+    Table expect_table("a", {{"f", DataType::integer}, {"h", DataType::real}, {"E", DataType::text}});
+    EXPECT_EQ(table, expect_table);
+}
+
+TEST(Parser_CreateTable, EqDataType) {
+    setParserRequest("create table a(b int, h int);\n");
+    yyparse();
+    auto table = getTable();
+    Table expect_table("a", {{"b", DataType::integer}, {"h", DataType::integer}});
+    EXPECT_EQ(table, expect_table);
+}
+
+//TEST(Parser_CreateTable, WrongStyleComand) {
+//    setParserRequest("Create tAbLE MyTable(i Int)\n");
+//    yyparse();
+//    // ошибка парсинга
+//}
+
+//TEST(Parser_CreateTable, WrongDataType1) {
+//    setParserRequest("create table MyTable(create table MyTable)\n");
+//    yyparse();
+//    // ошибка парсинга
+//}
+
+//TEST(Parser_CreateTable, WrongDataType2) {
+//    setParserRequest("create table MyTable(Name rael)\n");
+//    yyparse();
+//    // ошибка парсинга
+//}
+
+//TEST(Parser_CreateTable, WithOutPoints) {
+//    setParserRequest("create table MyTable(Name text)\n");
+//    yyparse();
+//    // ошибка парсинга
+//}
+
+//TEST(Parser_CreateTable, IntNameOfField) {
+//    setParserRequest("create table a(int int, h int);\n");
+//    yyparse();
+//    // ошибка парсинга
+//}
+
+//TEST(Parser_CreateTable, WithWalue) {
+//    setParserRequest("create table MyTable(Name text(5), Status int(2));\n");
+//    yyparse();
+//    // ошибка парсинга
+//}
