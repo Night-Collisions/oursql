@@ -7,15 +7,15 @@
 #include "Field.h"
 
 class Table {
-  public:
-    void setName(const std::string &name) { name_ = name; }
+   public:
+    void setName(const std::string& name) { name_ = name; }
 
     std::string getName() const { return name_; }
     std::vector<Field> getFields() const { return fields_; }
 
-    void addField(const Field &field);
+    void addField(const Field& field);
 
-  private:
+   private:
     std::string name_;
     std::vector<Field> fields_;
 };
