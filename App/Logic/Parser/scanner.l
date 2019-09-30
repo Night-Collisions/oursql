@@ -21,10 +21,12 @@ alpha         [a-zA-Z]
 digit         [0-9]
 alnum         {alpha}|{digit}
 alnum_dash    {alnum}|_
+dquote        \"
 
 ID            {alpha}+{alnum_dash}*
 ICONST        "0"|[0-9]{digit}*
 FCONST        "0"|{digit}*"."{digit}+
+SCONST        {dquote}.*{dquote}
 
 %%
 
@@ -65,6 +67,12 @@ FCONST        "0"|{digit}*"."{digit}+
                               yylval.val = tmp_str;
                               return ICONST; 
                            }
+                           
+{SCONST}                   {
+                              sscanf(yytext, "%s", tmp_str);
+                              yylval.val = tmp_str;
+                              return SCONST; 
+                           }        
 
 "\n"                       { lineno += 1; }
 [ \t\r\f]+                 ; //ignore spaces
