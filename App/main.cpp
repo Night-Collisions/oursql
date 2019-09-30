@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include "Engine/Table.h"
 #include "parser.cpp"
 
 int main() {
@@ -8,6 +7,6 @@ int main() {
     yydebug = 1;
     yyin = stdin;
     flag = yyparse();
-    printf("%d\n", flag);
+    std::cout << flag << std::endl;
     return 0;
 }

@@ -5,9 +5,9 @@
 
 bool create(const Table& table);
 
-Table& show(const std::string& name);
+Table show(const std::string& name);
 
 bool drop(const std::string& name);
 
 
-#endif  // OURSQL_APP_ENGINE_ENGINE_H_
+#endif

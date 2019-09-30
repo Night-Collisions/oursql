@@ -14,7 +14,7 @@
 %token CREATE SHOW DROP
 %token TABLE
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA
-%token ID ICONST FCONST
+%token ID ICONST FCONST SCONST
 %token INT REAL TEXT
 
 %start expression
@@ -33,7 +33,9 @@
 
 expression: statements SEMI;
 
-statements: create_st body  | create_st {addField("", "", "");} | 
+statements: statement | statements statement;
+
+statement: create_st body | 
     show_st | drop_st;
 
 create_st: CREATE TABLE ID { initTable(yylval.ident); };
@@ -54,7 +56,7 @@ variable: ID type {
 
 assign: LPAREN consts RPAREN { $$ = yylval.val; };
 
-consts: ICONST | FCONST;
+consts: ICONST | FCONST | SCONST;
 
 type: INT { strcpy($$, "int"); } | 
         REAL { strcpy($$, "real"); } | 
