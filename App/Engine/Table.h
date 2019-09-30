@@ -8,6 +8,10 @@
 
 class Table {
    public:
+    Table() {}
+    Table(const std::string& name, const std::vector<Field>& fields)
+        : name_(name), fields_(fields) {}
+
     void setName(const std::string& name) { name_ = name; }
 
     std::string getName() const { return name_; }

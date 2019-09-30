@@ -33,3 +33,5 @@ void addField(char* name, char* type, char* value) {
 }
 
 void destroyTable() { delete table; }
+
+Table getTable() { return *table; }
