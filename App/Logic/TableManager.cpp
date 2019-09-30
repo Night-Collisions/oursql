@@ -27,8 +27,7 @@ DataType string2Type(const std::string& s) {
 }
 
 void addField(char* name, char* type, char* value) {
-    Field f((std::string(name)), string2Type(std::string(type)),
-            std::string(value));
+    Field f((std::string(name)), string2Type(std::string(type)));
     table->addField(f);
 }
 

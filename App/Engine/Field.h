@@ -3,8 +3,9 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
-enum class DataType : unsigned int { integer, real, text };
+enum class DataType : unsigned int { integer, real, text, Count };
 
 enum class FieldConstraint : unsigned int {
     null,
@@ -16,23 +17,24 @@ enum class FieldConstraint : unsigned int {
 
 class Field {
    public:
-    Field(std::string name, const DataType type, std::string value = "",
+    Field(std::string name, const DataType type,
           const FieldConstraint constraint = FieldConstraint::null)
-        : name_(std::move(name)),
-          type_(type),
-          val_(std::move(value)),
-          constraint_(constraint) {}
+        : name_(std::move(name)), type_(type), constraint_(constraint) {}
 
-    [[nodiscard]] std::string getVal() const { return val_; };
     [[nodiscard]] DataType getType() const { return type_; };
     [[nodiscard]] std::string getName() const { return name_; };
     [[nodiscard]] FieldConstraint getConstraint() const { return constraint_; };
+    [[nodiscard]] std::vector<std::string> getData() const { return data_; };
+
+    void addData(const std::string&);
 
    private:
     std::string name_;
     DataType type_;
-    std::string val_;
     FieldConstraint constraint_;
+    std::vector<std::string> data_;
 };
+
+bool checkDataForType(const DataType type, const std::string& data);
 
 #endif

@@ -9,7 +9,7 @@ extern Table getTable();
 
 bool operator==(const Field& a, const Field& b) {
     return a.getName() == b.getName() && a.getType() == b.getType() &&
-           a.getConstraint() == b.getConstraint() && a.getVal() == b.getVal();
+           a.getConstraint() == b.getConstraint();
 }
 
 bool operator==(const Table& a, const Table& b) {
@@ -58,11 +58,15 @@ TEST(Parser_CreateTable, UPCASE) {
 }
 
 TEST(Parser_CreateTable, AnySpase) {
-    setParserRequest("create    \ntable a   (  \n  f  int   ,  h   real  , E   text )   ;   \n");
+    setParserRequest(
+        "create    \ntable a   (  \n  f  int   ,  h   real  , E   text )   ;   "
+        "\n");
     int flag = yyparse();
     std::cout << flag << std::endl;
     auto table = getTable();
-    Table expect_table("a", {{"f", DataType::integer}, {"h", DataType::real}, {"E", DataType::text}});
+    Table expect_table("a", {{"f", DataType::integer},
+                             {"h", DataType::real},
+                             {"E", DataType::text}});
     EXPECT_EQ(table, expect_table);
 }
 
@@ -70,41 +74,42 @@ TEST(Parser_CreateTable, EqDataType) {
     setParserRequest("create table a(b int, h int);\n");
     yyparse();
     auto table = getTable();
-    Table expect_table("a", {{"b", DataType::integer}, {"h", DataType::integer}});
+    Table expect_table("a",
+                       {{"b", DataType::integer}, {"h", DataType::integer}});
     EXPECT_EQ(table, expect_table);
 }
 
-//TEST(Parser_CreateTable, WrongStyleComand) {
+// TEST(Parser_CreateTable, WrongStyleComand) {
 //    setParserRequest("Create tAbLE MyTable(i Int)\n");
 //    yyparse();
 //    // ошибка парсинга
 //}
 
-//TEST(Parser_CreateTable, WrongDataType1) {
+// TEST(Parser_CreateTable, WrongDataType1) {
 //    setParserRequest("create table MyTable(create table MyTable)\n");
 //    yyparse();
 //    // ошибка парсинга
 //}
 
-//TEST(Parser_CreateTable, WrongDataType2) {
+// TEST(Parser_CreateTable, WrongDataType2) {
 //    setParserRequest("create table MyTable(Name rael)\n");
 //    yyparse();
 //    // ошибка парсинга
 //}
 
-//TEST(Parser_CreateTable, WithOutPoints) {
+// TEST(Parser_CreateTable, WithOutPoints) {
 //    setParserRequest("create table MyTable(Name text)\n");
 //    yyparse();
 //    // ошибка парсинга
 //}
 
-//TEST(Parser_CreateTable, IntNameOfField) {
+// TEST(Parser_CreateTable, IntNameOfField) {
 //    setParserRequest("create table a(int int, h int);\n");
 //    yyparse();
 //    // ошибка парсинга
 //}
 
-//TEST(Parser_CreateTable, WithWalue) {
+// TEST(Parser_CreateTable, WithWalue) {
 //    setParserRequest("create table MyTable(Name text(5), Status int(2));\n");
 //    yyparse();
 //    // ошибка парсинга
