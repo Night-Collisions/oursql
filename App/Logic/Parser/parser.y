@@ -33,7 +33,9 @@
 
 expression: statements SEMI;
 
-statements: create_st body  | create_st {addField("", "", "");} | 
+statements: statement | statements statement;
+
+statement: create_st body | 
     show_st | drop_st;
 
 create_st: CREATE TABLE ID { initTable(yylval.ident); };
