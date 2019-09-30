@@ -30,6 +30,7 @@
 }
 
 %%
+
 expression: statements SEMI;
 
 statements: create_st body  | create_st {addField("", "", "");} | 
@@ -46,7 +47,7 @@ body: LPAREN decl RPAREN SEMI;
 decl: variable | decl COMMA variable;
 
 variable: ID type {
-    addField(yylval.ident, $2, "null");
+    addField(yylval.ident, $2, "");
 } | ID type assign {
     addField(yylval.ident, $2, $3);
 };

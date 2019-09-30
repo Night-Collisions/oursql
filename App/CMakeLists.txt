@@ -10,7 +10,7 @@ set(DEFINITIONS
         Engine/Field.cpp
         Engine/Table.cpp
         Logic/TableManager.cpp
-        main.cpp)
+        main.cpp Engine/Engine.cpp Engine/Engine.h)
 
 assemble_parser(Logic/Parser/)
 add_executable(${PROJECT_NAME} ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
