@@ -10,19 +10,20 @@
     extern FILE *yyout;
 
     int lineno = 1;
+    //todo: free?
     char *tmp_str = (char *) malloc(100);
 %}
 
 %option noyywrap
 
-alpha       [a-zA-Z]
-digit       [0-9]
-alnum       {alpha}|{digit}
-alnum_dash  {alnum}|_
+alpha         [a-zA-Z]
+digit         [0-9]
+alnum         {alpha}|{digit}
+alnum_dash    {alnum}|_
 
-ID          {alpha}+{alnum_dash}*
-ICONST      "0"|[0-9]{digit}*
-FCONST      "0"|{digit}*"."{digit}+
+ID            {alpha}+{alnum_dash}*
+ICONST        "0"|[0-9]{digit}*
+FCONST        "0"|{digit}*"."{digit}+
 
 %%
 

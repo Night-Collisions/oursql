@@ -20,7 +20,7 @@
 %start expression
 
 %type <ident> ID
-%type <val> ICONST
+%type <val> consts assign
 %type <type> INT REAL TEXT type
 
 %union {
@@ -48,10 +48,10 @@ decl: variable | decl COMMA variable;
 variable: ID type {
     addField(yylval.ident, $2, "null");
 } | ID type assign {
-    addField(yylval.ident, $2, yylval.val);
+    addField(yylval.ident, $2, $3);
 };
 
-assign: LPAREN consts RPAREN;
+assign: LPAREN consts RPAREN { $$ = yylval.val; };
 
 consts: ICONST | FCONST;
 
