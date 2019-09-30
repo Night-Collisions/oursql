@@ -10,12 +10,13 @@
     extern FILE *yyout;
 
     int lineno = 1;
+    char *tmp_str = (char *) malloc(100);
 %}
 
 %option noyywrap
 
 alpha       [a-zA-Z]
-digit       [0-9]B
+digit       [0-9]
 alnum       {alpha}|{digit}
 alnum_dash  {alnum}|_
 
@@ -50,16 +51,18 @@ FCONST      "0"|{digit}*"."{digit}+
                               sscanf(yytext, "%s", yylval.ident); 
                               return ID; 
                            }
-{ICONST}                   { 
-                              sscanf(yytext, "%d", yylval.inum);
-                              sprintf(yylval.val, "%d", yylval.inum);
-                              return ICONST; 
-                           }
+
 {FCONST}                   { 
-                              sscanf(yytext, "%d", yylval.dnum);
-                              sprintf(yylval.val, "%f", yylval.dnum);
+                              sscanf(yytext, "%s", tmp_str);
+                              yylval.val = tmp_str;
                               return FCONST; 
                             }
+
+{ICONST}                   { 
+                              sscanf(yytext, "%s", tmp_str);
+                              yylval.val = tmp_str;
+                              return ICONST; 
+                           }
 
 "\n"                       { lineno += 1; }
 [ \t\r\f]+                 ; //ignore spaces

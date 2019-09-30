@@ -3,17 +3,17 @@
 #include <iostream>
 #include <map>
 
-static Table* table = nullptr;
+static Table *table = nullptr;
 
 void initTable(char* name) {
-    delete table;
+    destroyTable();
     table = new Table();
     table->setName(std::string(name));
 }
 
-DataType string2Type(const std::string& s) {
+DataType string2Type(const std::string &s) {
     std::string type = s;
-    for (auto& i : type) {
+    for (auto &i : type) {
         i = std::tolower(i);
     }
     const std::map<std::string, DataType> map = {{"int", DataType::integer},
@@ -26,10 +26,12 @@ DataType string2Type(const std::string& s) {
     }
 }
 
-void addField(char* name, char* type, char* value) {
+void addField(char *name, char *type, char *value) {
     Field f((std::string(name)), string2Type(std::string(type)),
             std::string(value));
     table->addField(f);
 }
 
-void destroyTable();
+void destroyTable() {
+    delete table;
+}
