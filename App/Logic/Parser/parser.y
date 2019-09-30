@@ -35,7 +35,7 @@ expression: statements SEMI;
 
 statements: statement | statements statement;
 
-statement: create_st body | 
+statement: create_st body |
     show_st | drop_st;
 
 create_st: CREATE TABLE id { initTable($3); };
@@ -44,7 +44,7 @@ show_st: SHOW TABLE id { };
 
 drop_st: DROP TABLE id {};
 
-body: LPAREN decl RPAREN SEMI;
+body: LPAREN decl RPAREN;
 
 decl: variable | decl COMMA variable;
 
@@ -58,8 +58,8 @@ assign: LPAREN consts RPAREN { $$ = yylval.val; };
 
 consts: ICONST | FCONST | SCONST;
 
-type: INT { strcpy($$, "int"); } | 
-        REAL { strcpy($$, "real"); } | 
+type: INT { strcpy($$, "int"); } |
+        REAL { strcpy($$, "real"); } |
         TEXT { strcpy($$, "text"); };
 
 id: ID { strcpy($$, yylval.ident);}

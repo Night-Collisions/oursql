@@ -43,7 +43,7 @@ void setParserRequest(const std::string& s) {
 
 TEST(Parser_CreateTable, SimpleTest) {
     setParserRequest("create table MyTable(Name text);\n");
-    yyparse();
+    ASSERT_FALSE(yyparse());
     auto table = getTable();
     Table expect_table("MyTable", {{"Name", DataType::text}});
     EXPECT_EQ(table, expect_table);
@@ -51,7 +51,7 @@ TEST(Parser_CreateTable, SimpleTest) {
 
 TEST(Parser_CreateTable, UPCASE) {
     setParserRequest("CREATE TABLE MyTablE(DatA REAL);\n");
-    yyparse();
+    ASSERT_FALSE(yyparse());
     auto table = getTable();
     Table expect_table("MyTablE", {{"DatA", DataType::real}});
     EXPECT_EQ(table, expect_table);
@@ -61,8 +61,7 @@ TEST(Parser_CreateTable, AnySpase) {
     setParserRequest(
         "create    \ntable a   (  \n  f  int   ,  h   real  , E   text )   ;   "
         "\n");
-    int flag = yyparse();
-    std::cout << flag << std::endl;
+    ASSERT_FALSE(yyparse());
     auto table = getTable();
     Table expect_table("a", {{"f", DataType::integer},
                              {"h", DataType::real},
@@ -72,45 +71,39 @@ TEST(Parser_CreateTable, AnySpase) {
 
 TEST(Parser_CreateTable, EqDataType) {
     setParserRequest("create table a(b int, h int);\n");
-    yyparse();
+    ASSERT_FALSE(yyparse());
     auto table = getTable();
     Table expect_table("a",
                        {{"b", DataType::integer}, {"h", DataType::integer}});
     EXPECT_EQ(table, expect_table);
 }
 
-// TEST(Parser_CreateTable, WrongStyleComand) {
-//    setParserRequest("Create tAbLE MyTable(i Int)\n");
-//    yyparse();
-//    // ошибка парсинга
-//}
+ TEST(Parser_CreateTable, WrongStyleComand) {
+    setParserRequest("Create tAbLE MyTable(i Int)\n");
+    ASSERT_TRUE(yyparse());
+}
 
-// TEST(Parser_CreateTable, WrongDataType1) {
-//    setParserRequest("create table MyTable(create table MyTable)\n");
-//    yyparse();
-//    // ошибка парсинга
-//}
+ TEST(Parser_CreateTable, WrongDataType1) {
+    setParserRequest("create table MyTable(create table MyTable)\n");
+    ASSERT_TRUE(yyparse());
+}
 
-// TEST(Parser_CreateTable, WrongDataType2) {
-//    setParserRequest("create table MyTable(Name rael)\n");
-//    yyparse();
-//    // ошибка парсинга
-//}
+ TEST(Parser_CreateTable, WrongDataType2) {
+    setParserRequest("create table MyTable(Name rael)\n");
+    ASSERT_TRUE(yyparse());
+}
 
-// TEST(Parser_CreateTable, WithOutPoints) {
-//    setParserRequest("create table MyTable(Name text)\n");
-//    yyparse();
-//    // ошибка парсинга
-//}
+ TEST(Parser_CreateTable, WithOutPoints) {
+    setParserRequest("create table MyTable(Name text)\n");
+    ASSERT_TRUE(yyparse());
+}
 
-// TEST(Parser_CreateTable, IntNameOfField) {
-//    setParserRequest("create table a(int int, h int);\n");
-//    yyparse();
-//    // ошибка парсинга
-//}
+ TEST(Parser_CreateTable, IntNameOfField) {
+    setParserRequest("create table a(int int, h int);\n");
+    ASSERT_TRUE(yyparse());
+}
 
-// TEST(Parser_CreateTable, WithWalue) {
-//    setParserRequest("create table MyTable(Name text(5), Status int(2));\n");
-//    yyparse();
-//    // ошибка парсинга
-//}
+ TEST(Parser_CreateTable, WithWalue) {
+    setParserRequest("create table MyTable(Name text(5), Status int(2));\n");
+    ASSERT_TRUE(yyparse());
+}
