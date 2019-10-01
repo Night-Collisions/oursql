@@ -1,18 +1,14 @@
 project(Tests)
 
-include(FetchContent)
-
 FetchContent_Declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
         GIT_TAG release-1.8.1
         UPDATE_DISCONNECTED 1
 )
-
 FetchContent_MakeAvailable(googletest)
 
 set(ALL_TEST)
-
 macro(package_add_test TESTNAME)
     add_executable(${TESTNAME} ${ARGN} ${FLEX_SCANNER_OUTPUTS})
     #data_directory(${TESTNAME} Tests/Data)

@@ -28,6 +28,18 @@ ADD_FLEX_BISON_DEPENDENCY(SCANNER PARSER)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 endmacro()
 
+include(FetchContent)
+
+FetchContent_Declare(
+        rapidjson
+        GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+        GIT_TAG v1.1.0
+        UPDATE_DISCONNECTED 1
+)
+
+FetchContent_Populate(rapidjson)
+include_directories(${rapidjson_SOURCE_DIR}/include/)
+
 add_subdirectory(App)
 
 add_subdirectory(Tests)
