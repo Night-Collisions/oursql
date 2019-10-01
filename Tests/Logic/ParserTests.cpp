@@ -116,7 +116,7 @@ TEST(Parser_CreateTable, WithoutSemicolon) {
 }
 
 TEST(Parser_CreateTable, TwoCreate) {
-    ASSERT_TRUE(parse_string(
+    ASSERT_FALSE(parse_string(
         "create table MyTable1(a int); \n create table MyTable2(a int);\n"));
 }
 
@@ -248,4 +248,10 @@ TEST(Parser_ShowCreateTable, Wrong2) {
 
 TEST(Parser_ShowCreateTable, AnyCase) {
     ASSERT_FALSE(parse_string("Show creaTe tAble A;\n"));
+}
+
+// constraints
+
+TEST(Paresr_Constraints, not_null) {
+
 }
