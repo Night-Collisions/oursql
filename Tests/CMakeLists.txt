@@ -28,6 +28,6 @@ endmacro()
 assemble_parser(../App/Logic/Parser/)
 
 package_add_test(first_test FirstTest.cpp)
-package_add_test(Parser Parser/CreateTable.cpp)
+package_add_test(Logic Logic/ParserTests.cpp)
 
 package_add_test(ALL_TESTS ${ALL_TEST})

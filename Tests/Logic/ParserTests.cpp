@@ -78,32 +78,87 @@ TEST(Parser_CreateTable, EqDataType) {
     EXPECT_EQ(table, expect_table);
 }
 
- TEST(Parser_CreateTable, WrongStyleComand) {
-    setParserRequest("Create tAbLE MyTable(i Int)\n");
+TEST(Parser_CreateTable, WrongStyleComand) {
+    setParserRequest("Create tAbLE MyTable(i Int);\n");
     ASSERT_TRUE(yyparse());
 }
 
- TEST(Parser_CreateTable, WrongDataType1) {
-    setParserRequest("create table MyTable(create table MyTable)\n");
+TEST(Parser_CreateTable, WrongDataType1) {
+    setParserRequest("create table MyTable(create table MyTable);\n");
     ASSERT_TRUE(yyparse());
 }
 
- TEST(Parser_CreateTable, WrongDataType2) {
-    setParserRequest("create table MyTable(Name rael)\n");
+TEST(Parser_CreateTable, WrongDataType2) {
+    setParserRequest("create table MyTable(Name rael);\n");
     ASSERT_TRUE(yyparse());
 }
 
- TEST(Parser_CreateTable, WithOutPoints) {
+TEST(Parser_CreateTable, WrongParam1) {
+    setParserRequest("create table MyTable();\n");
+    ASSERT_TRUE(yyparse());
+}
+
+TEST(Parser_CreateTable, WrongParam2) {
+    setParserRequest("create table MyTable(int);\n");
+    ASSERT_TRUE(yyparse());
+}
+
+TEST(Parser_CreateTable, WrongParam3) {
+    setParserRequest("create table MyTable(a);\n");
+    ASSERT_TRUE(yyparse());
+}
+
+TEST(Parser_CreateTable, WrongParam4) {
+    setParserRequest("create table MyTable(a int;);\n");
+    ASSERT_TRUE(yyparse());
+}
+
+TEST(Parser_CreateTable, WithoutSemicolon) {
+    setParserRequest("create table MyTable(a int)\n");
+    ASSERT_TRUE(yyparse());
+}
+
+TEST(Parser_CreateTable, TwoCreate) {
+    setParserRequest("create table MyTable1(a int); \n create table MyTable2(a int);\n");
+    ASSERT_FALSE(yyparse());
+}
+
+TEST(Parser_CreateTable, WithOutPoints) {
     setParserRequest("create table MyTable(Name text)\n");
     ASSERT_TRUE(yyparse());
 }
 
- TEST(Parser_CreateTable, IntNameOfField) {
+TEST(Parser_CreateTable, IntNameOfField) {
     setParserRequest("create table a(int int, h int);\n");
     ASSERT_TRUE(yyparse());
 }
 
- TEST(Parser_CreateTable, WithWalue) {
+TEST(Parser_CreateTable, WithWalue) {
     setParserRequest("create table MyTable(Name text(5), Status int(2));\n");
+    ASSERT_TRUE(yyparse());
+}
+
+TEST(Parser_ShowTable, SimpleTest) {
+    setParserRequest("show table a;\n");
+    ASSERT_FALSE(yyparse());
+}
+
+TEST(Parser_ShowTable, UPCASE) {
+    setParserRequest("SHOW TABLE A;\n");
+    ASSERT_FALSE(yyparse());
+}
+
+TEST(Parser_ShowTable, AnySpase) {
+    setParserRequest("  \n  SHOW     TABLE  \n  A  ; \n");
+    ASSERT_FALSE(yyparse());
+}
+
+TEST(Parser_ShowTable, WrongShow1) {
+    setParserRequest("SHOW TABLE A(f int);\n");
+    ASSERT_TRUE(yyparse());
+}
+
+TEST(Parser_ShowTable, WrongShow2) {
+    setParserRequest("SHOW TABLE A();\n");
     ASSERT_TRUE(yyparse());
 }
