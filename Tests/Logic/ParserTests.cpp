@@ -133,28 +133,32 @@ TEST(Parser_CreateTable, WithWalue) {
         parse_string("create table MyTable(Name text(5), Status int(2));\n"));
 }
 
-TEST(Parser_ShowTable, SimpleTest) {
-    ASSERT_FALSE(parse_string("show table a;\n"));
+TEST(Parser_ShowTables, SimpleTest) {
+    ASSERT_FALSE(parse_string("show tables;\n"));
 }
 
-TEST(Parser_ShowTable, UPCASE) {
-    ASSERT_FALSE(parse_string("SHOW TABLE A;\n"));
+TEST(Parser_ShowTables, DifferentCase) {
+    ASSERT_FALSE(parse_string("SHoW TaBLeS;\n"));
 }
 
-TEST(Parser_ShowTable, AnySpase) {
-    ASSERT_FALSE(parse_string("  \n  show    table  \n  A  ; \n"));
+TEST(Parser_ShowTables, AnySpase) {
+    ASSERT_FALSE(parse_string("  \n  show    tables  \n; \n"));
 }
 
-TEST(Parser_ShowTable, WrongShow1) {
+TEST(Parser_ShowTables, WrongShow1) {
     ASSERT_TRUE(parse_string("show table A(f int);\n"));
 }
 
-TEST(Parser_ShowTable, WrongShow2) {
+TEST(Parser_ShowTables, WrongShow2) {
     ASSERT_TRUE(parse_string("show table A();\n"));
 }
 
-TEST(Parser_ShowTable, WrongShow3) {
-    ASSERT_TRUE(parse_string("show table; A();\n"));
+TEST(Parser_ShowTables, WrongShow3) {
+    ASSERT_TRUE(parse_string("show table A;\n"));
+}
+
+TEST(Parser_ShowTables, WrongShow4) {
+    ASSERT_TRUE(parse_string("show table;\n"));
 }
 
 TEST(Parser_DropTable, SimpleTest) {
