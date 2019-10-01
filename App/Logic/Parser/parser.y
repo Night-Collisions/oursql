@@ -12,18 +12,20 @@
 %}
 
 %token CREATE SHOW DROP
-%token TABLE
+%token TABLE TABLES
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA
 %token ID ICONST FCONST SCONST
 %token INT REAL TEXT
+%token NULL_ NOT_NULL PRIMARY_KEY FOREIGN_KEY UNIQUE
 
 %start expression
 
 %type <ident> id ID
-%type <val> constraints
+%type <constraint_str> constraints constraint 
 %type <type> INT REAL TEXT type
 
 %union {
+    char constraint_str[100];
     char type[20];
     char ident[20];
 	char *val; 
@@ -35,14 +37,14 @@ expression: statements SEMI;
 
 statements: statement | statements statement;
 
-statement: create_st body |
-    show_create_st | show_st | drop_st;
+statement: create body |
+    show_create | show | drop_st;
 
-create_st: CREATE TABLE id { initTable($3); };
+create: CREATE TABLE id { initTable($3); };
 
-show_st: SHOW TABLE id {};
+show: SHOW TABLES id {};
 
-show_create_st: SHOW CREATE TABLE id { };
+show_create: SHOW CREATE TABLE id { };
 
 drop_st: DROP TABLE id {};
 
@@ -56,11 +58,14 @@ variable: id type {
     addField($1, $2, $3);
 };
 
-constraints: consstraint | constraints consstraint;
+constraints: constraint { strcat($$, $1); } | 
+    constraints constraint { strcat($$, $1); strcat($$, $2); };
 
-consstraint: ;
-
-consts: ICONST | FCONST | SCONST;
+constraint: NOT_NULL { strcpy($$, "not_null"); } | 
+    NULL_ { strcpy($$, "null"); } | 
+    PRIMARY_KEY { strcpy($$, "primary_key"); }| 
+    FOREIGN_KEY { strcpy($$, "foreign_key"); } | 
+    UNIQUE { strcpy($$, "unique"); }; 
 
 type: INT { strcpy($$, "int"); } |
         REAL { strcpy($$, "real"); } |
