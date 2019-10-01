@@ -28,6 +28,12 @@ ICONST        "0"|[0-9]{digit}*
 FCONST        "0"|{digit}*"."{digit}+
 SCONST        {dquote}.*{dquote}
 
+NOT           "not"
+NULL_         "null"
+NOT_NULL      "not"[ \t\r\f]+"null"
+PRIMARY_KEY   "primary"[ \t\r\f]+"key"
+FOREIGN_KEY   "foreign"[ \t\r\f]+"key"
+
 %%
 
 "//".*\n                   ; // ingore comments
@@ -42,14 +48,21 @@ SCONST        {dquote}.*{dquote}
 "."                        { return DOT; }
 ","                        { return COMMA; }
 
-"create"          { return CREATE; }
-"show"              { return SHOW; }
-"drop"              { return DROP; }
-"table"            { return TABLE; }
+"create"                   { return CREATE; }
+"show"                     { return SHOW; }
+"drop"                     { return DROP; }
+"tables"                   { return TABLES; }
+"table"                    { return TABLE; }
 
-"int"                { return INT; }
-"text"              { return TEXT; }
-"real"              { return REAL; }
+"int"                      { return INT; }
+"text"                     { return TEXT; }
+"real"                     { return REAL; }
+
+{NULL_}                    { return NULL_; }
+{NOT_NULL}                 { return NOT_NULL; }
+{PRIMARY_KEY}              { return PRIMARY_KEY; }
+{FOREIGN_KEY}              { return FOREIGN_KEY; }
+"unique"                   { return UNIQUE; }
 
 {ID}                       { 
                               sscanf(yytext, "%s", yylval.ident); 
