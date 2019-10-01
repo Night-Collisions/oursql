@@ -1,4 +1,5 @@
 #include "Field.h"
+#include <iostream>
 
 std::map<std::string, FieldConstraint> Field::constraint_map_;
 
@@ -65,12 +66,15 @@ std::vector<std::string> split(const std::string& s, const char sep) {
 }
 
 std::set<FieldConstraint> Field::checkConstraints(
+    //TODO: проверить, чтобы не было дубликатов констрейнтов
+
     const std::string& constraints) {
     std::set<FieldConstraint> res;
 
     auto separated = split(constraints, ' ');
 
     for (auto& c : separated) {
+       // std::cout << c << std::endl;
         if (constraint_map_.find(c) == constraint_map_.end()) {
             // the so-called constaint doesn't exists
             //TODO: throw exception?

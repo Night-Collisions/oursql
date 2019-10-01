@@ -28,7 +28,6 @@ ICONST        "0"|[0-9]{digit}*
 FCONST        "0"|{digit}*"."{digit}+
 SCONST        {dquote}.*{dquote}
 
-NOT           "not"
 NOT_NULL      "not"[ \t\r\f]+"null"
 PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 FOREIGN_KEY   "foreign"[ \t\r\f]+"key"

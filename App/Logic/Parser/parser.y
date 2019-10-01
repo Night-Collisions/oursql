@@ -33,20 +33,20 @@
 
 %%
 
-expression: statements SEMI;
+expression: statements;
 
-statements: statement | statements statement;
+statements: statement SEMI | statements statement SEMI;
 
 statement: create body |
-    show_create | show | drop_st;
+    show_create | show | drop;
 
 create: CREATE TABLE id { initTable($3); };
 
-show: SHOW TABLES id {};
+show: SHOW TABLES;
 
 show_create: SHOW CREATE TABLE id { };
 
-drop_st: DROP TABLE id {};
+drop: DROP TABLE id {};
 
 body: LPAREN decl RPAREN;
 
@@ -58,13 +58,13 @@ variable: id type {
     addField($1, $2, $3);
 };
 
-constraints: constraint { strcat($$, $1); } | 
-    constraints constraint { strcat($$, $1); strcat($$, $2); };
+constraints: constraint | 
+    constraints constraint { strcat($$, $2); };
 
-constraint: NOT_NULL { strcpy($$, "not_null"); } | 
-    PRIMARY_KEY { strcpy($$, "primary_key"); }| 
-    FOREIGN_KEY { strcpy($$, "foreign_key"); } | 
-    UNIQUE { strcpy($$, "unique"); }; 
+constraint: NOT_NULL { strcpy($$, "not_null "); } | 
+    PRIMARY_KEY { strcpy($$, "primary_key "); }| 
+    FOREIGN_KEY { strcpy($$, "foreign_key "); } | 
+    UNIQUE { strcpy($$, "unique "); }; 
 
 type: INT { strcpy($$, "int"); } |
         REAL { strcpy($$, "real"); } |
