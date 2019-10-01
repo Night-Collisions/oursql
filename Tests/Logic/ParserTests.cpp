@@ -133,6 +133,51 @@ TEST(Parser_CreateTable, WithWalue) {
         parse_string("create table MyTable(Name text(5), Status int(2));\n"));
 }
 
+TEST(Parser_CreateTable, Constraint) {
+    ASSERT_FALSE(
+        parse_string("create table a(b int not null, h int primary key, c real "
+                     "foreign key, d text unique);\n"));
+    auto table = getTable();
+    Table expect_table(
+        "a", {{"b", DataType::integer, {FieldConstraint::not_null}},
+              {"h", DataType::integer, {FieldConstraint::primary_key}},
+              {"с", DataType::real, {FieldConstraint::foreign_key}},
+              {"d", DataType::text, {FieldConstraint::unique}}});
+    EXPECT_EQ(table, expect_table);
+}
+
+TEST(Parser_CreateTable, MultyConstraint) {
+    ASSERT_FALSE(
+        parse_string("create table a(b int not null primary key unique);\n"));
+    auto table = getTable();
+    Table expect_table(
+        "a", {{"b", DataType::integer, {FieldConstraint::not_null, FieldConstraint::primary_key, FieldConstraint::unique}}});
+    EXPECT_EQ(table, expect_table);
+}
+
+TEST(Parser_CreateTable, WrongMultyConstraint) {
+    ASSERT_TRUE(
+        parse_string("create table a(b int null primary not key unique);\n"));
+}
+
+TEST(Parser_CreateTable, WrongConstraint) {
+    ASSERT_TRUE(
+        parse_string("create table a(b int null);\n"));
+}
+
+TEST(Parser_CreateTable, MixedConstraint) {
+    ASSERT_FALSE(
+        parse_string("create table a(b int, h int primary key unique, c real "
+                     "foreign KEY, d text);\n"));
+    auto table = getTable();
+    Table expect_table(
+        "a", {{"b", DataType::integer},
+              {"h", DataType::integer, {FieldConstraint::primary_key, FieldConstraint::unique}},
+              {"с", DataType::real, {FieldConstraint::foreign_key}},
+              {"d", DataType::text}});
+    EXPECT_EQ(table, expect_table);
+}
+
 TEST(Parser_ShowTables, SimpleTest) {
     ASSERT_FALSE(parse_string("show tables;\n"));
 }
