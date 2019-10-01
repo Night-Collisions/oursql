@@ -68,7 +68,7 @@ TEST(Parser_CreateTable, EqDataType) {
 }
 
 TEST(Parser_CreateTable, WrongStyleComand) {
-    ASSERT_TRUE(parse_string("Create tAbLE MyTable(i Int);\n"));
+    ASSERT_FALSE(parse_string("Create tAbLE MyTable(i Int);\n"));
 }
 
 TEST(Parser_CreateTable, WrongDataType1) {
@@ -93,6 +93,22 @@ TEST(Parser_CreateTable, WrongParam3) {
 
 TEST(Parser_CreateTable, WrongParam4) {
     ASSERT_TRUE(parse_string("create table MyTable(a int;);\n"));
+}
+
+TEST(Parser_CreateTable, WrongParamName) {
+    ASSERT_TRUE(parse_string("create table MyTable(1a int);\n"));
+}
+
+TEST(Parser_CreateTable, ParamName) {
+    ASSERT_FALSE(parse_string("create table MyTable(a2b3 int);\n"));
+}
+
+TEST(Parser_CreateTable, WrongName) {
+    ASSERT_TRUE(parse_string("create table 1MyTable(a int);\n"));
+}
+
+TEST(Parser_CreateTable, NameWithNumber) {
+    ASSERT_FALSE(parse_string("create table My1Table2(a int);\n"));
 }
 
 TEST(Parser_CreateTable, WithoutSemicolon) {
@@ -126,13 +142,61 @@ TEST(Parser_ShowTable, UPCASE) {
 }
 
 TEST(Parser_ShowTable, AnySpase) {
-    ASSERT_FALSE(parse_string("  \n  SHOW     TABLE  \n  A  ; \n"));
+    ASSERT_FALSE(parse_string("  \n  show    table  \n  A  ; \n"));
 }
 
 TEST(Parser_ShowTable, WrongShow1) {
-    ASSERT_TRUE(parse_string("SHOW TABLE A(f int);\n"));
+    ASSERT_TRUE(parse_string("show table A(f int);\n"));
 }
 
 TEST(Parser_ShowTable, WrongShow2) {
-    ASSERT_TRUE(parse_string("SHOW TABLE A();\n"));
+    ASSERT_TRUE(parse_string("show table A();\n"));
+}
+
+TEST(Parser_ShowTable, WrongShow3) {
+    ASSERT_TRUE(parse_string("show table; A();\n"));
+}
+
+TEST(Parser_DropTable, SimpleTest) {
+    ASSERT_FALSE(parse_string("drop table a;\n"));
+}
+
+TEST(Parser_DropTable, UPCASE) {
+    ASSERT_FALSE(parse_string("DROP TABLE a;\n"));
+}
+
+TEST(Parser_DropTable, WrongDrop1) {
+    ASSERT_TRUE(parse_string("drop table a();\n"));
+}
+
+TEST(Parser_DropTable, WrongDrop2) {
+    ASSERT_TRUE(parse_string("drop table a(b int);\n"));
+}
+
+TEST(Parser_DropTable, WrongDrop3) {
+    ASSERT_TRUE(parse_string("drop table;\n"));
+}
+
+TEST(Parser_DropTable, WrongDrop4) {
+    ASSERT_TRUE(parse_string("drop table drop;\n"));
+}
+
+TEST(Parser_DropTable, WrongDrop5) {
+    ASSERT_TRUE(parse_string("drop table 1Adrop;\n"));
+}
+
+TEST(Parser_ShowCreateTable, SimpleTEst) {
+    ASSERT_FALSE(parse_string("show create table A;\n"));
+}
+
+TEST(Parser_ShowCreateTable, Wrong1) {
+    ASSERT_TRUE(parse_string("create table show A;\n"));
+}
+
+TEST(Parser_ShowCreateTable, Wrong2) {
+    ASSERT_TRUE(parse_string("show create table 1A;\n"));
+}
+
+TEST(Parser_ShowCreateTable, AnyCase) {
+    ASSERT_FALSE(parse_string("Show creaTe tAble A;\n"));
 }

@@ -15,7 +15,7 @@
 %}
 
 %option noyywrap
-
+%option caseless
 
 alpha         [a-zA-Z]
 digit         [0-9]
@@ -42,14 +42,14 @@ SCONST        {dquote}.*{dquote}
 "."                        { return DOT; }
 ","                        { return COMMA; }
 
-"create"|"CREATE"          { return CREATE; }
-"show"|"SHOW"              { return SHOW; }
-"drop"|"DROP"              { return DROP; }
-"table"|"TABLE"            { return TABLE; }
+"create"          { return CREATE; }
+"show"              { return SHOW; }
+"drop"              { return DROP; }
+"table"            { return TABLE; }
 
-"int"|"INT"                { return INT; }
-"text"|"TEXT"              { return TEXT; }
-"real"|"REAL"              { return REAL; }
+"int"                { return INT; }
+"text"              { return TEXT; }
+"real"              { return REAL; }
 
 {ID}                       { 
                               sscanf(yytext, "%s", yylval.ident); 
