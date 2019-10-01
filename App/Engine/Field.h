@@ -18,8 +18,10 @@ enum class FieldConstraint : unsigned int {
 class Field {
    public:
     Field(std::string name, const DataType type,
-          const std::set<FieldConstraint> constraint = {})
-        : name_(std::move(name)), type_(type), constraint_(constraint) {
+          const std::string& constraints = {})
+        : name_(std::move(name)),
+          type_(type),
+          constraint_(checkConstraints(constraints)) {
         if (constraint_map_.empty()) {
             initMap();
         }
