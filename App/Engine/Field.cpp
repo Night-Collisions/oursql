@@ -1,5 +1,7 @@
 #include "Field.h"
 
+std::map<std::string, FieldConstraint> Field::constraint_map_;
+
 void Field::addData(const std::string& data) {
     if (!checkDataForType(type_, data)) {
         throw 1;
@@ -7,7 +9,7 @@ void Field::addData(const std::string& data) {
     data_.push_back(data);
 }
 
-bool checkDataForType(const DataType type, const std::string& data) {
+bool Field::checkDataForType(const DataType type, const std::string& data) {
     bool (*isAccording[static_cast<unsigned int>(DataType::Count)])(
         const std::string&) = {
 
@@ -24,7 +26,7 @@ bool checkDataForType(const DataType type, const std::string& data) {
             return true;
         },
         [](const std::string& s) {
-            bool foundedPoint = false;
+            bool foundPoint = false;
             for (unsigned int i =
                      ((s.size() > 2 && s[0] == '-' && std::isdigit(s[1]))
                           ? (1)
@@ -32,10 +34,10 @@ bool checkDataForType(const DataType type, const std::string& data) {
                  i < s.size(); i++) {
                 if (!std::isdigit(s[i])) {
                     if (s[i] == '.') {
-                        if (foundedPoint) {
+                        if (foundPoint) {
                             return false;
                         }
-                        foundedPoint = true;
+                        foundPoint = true;
                     }
                     return false;
                 }
@@ -44,4 +46,45 @@ bool checkDataForType(const DataType type, const std::string& data) {
         },
         [](const std::string& s) { return true; }};
     return isAccording[static_cast<unsigned int>(type)](data);
+}
+
+std::vector<std::string> split(const std::string& s, const char sep) {
+    int cnt = 0;
+    std::vector<std::string> res;
+    res.resize(cnt + 1);
+
+    for (auto& i : s) {
+        if (i == sep) {
+            res.resize(++cnt);
+        } else {
+            res[cnt].push_back(i);
+        }
+    }
+
+    return res;
+}
+
+std::set<FieldConstraint> Field::checkConstraints(
+    const std::string& constraints) {
+    std::set<FieldConstraint> res;
+
+    auto separated = split(constraints, ' ');
+
+    for (auto& c : separated) {
+        if (constraint_map_.find(c) == constraint_map_.end()) {
+            // the so-called constaint doesn't exists
+            //TODO: throw exception?
+        } else {
+            res.insert(constraint_map_[c]);
+        }
+    }
+
+    return res;
+}
+
+void Field::initMap() {
+    constraint_map_["not_null"] = FieldConstraint::not_null;
+    constraint_map_["primary_key"] = FieldConstraint::primary_key;
+    constraint_map_["foreign_key"] = FieldConstraint::foreign_key;
+    constraint_map_["unique"] = FieldConstraint::unique;
 }

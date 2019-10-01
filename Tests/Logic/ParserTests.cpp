@@ -204,3 +204,9 @@ TEST(Parser_ShowCreateTable, Wrong2) {
 TEST(Parser_ShowCreateTable, AnyCase) {
     ASSERT_FALSE(parse_string("Show creaTe tAble A;\n"));
 }
+
+// constraints
+
+TEST(Paresr_Constraints, not_null) {
+
+}

@@ -29,7 +29,6 @@ FCONST        "0"|{digit}*"."{digit}+
 SCONST        {dquote}.*{dquote}
 
 NOT           "not"
-NULL_         "null"
 NOT_NULL      "not"[ \t\r\f]+"null"
 PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 FOREIGN_KEY   "foreign"[ \t\r\f]+"key"
@@ -58,7 +57,6 @@ FOREIGN_KEY   "foreign"[ \t\r\f]+"key"
 "text"                     { return TEXT; }
 "real"                     { return REAL; }
 
-{NULL_}                    { return NULL_; }
 {NOT_NULL}                 { return NOT_NULL; }
 {PRIMARY_KEY}              { return PRIMARY_KEY; }
 {FOREIGN_KEY}              { return FOREIGN_KEY; }
