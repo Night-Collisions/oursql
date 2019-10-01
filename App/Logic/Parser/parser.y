@@ -20,7 +20,7 @@
 %start expression
 
 %type <ident> id ID
-%type <val> assign
+%type <val> constraints
 %type <type> INT REAL TEXT type
 
 %union {
@@ -50,11 +50,13 @@ decl: variable | decl COMMA variable;
 
 variable: id type {
     addField($1, $2, "");
-} | id type assign {
+} | id type constraints {
     addField($1, $2, $3);
 };
 
-assign: LPAREN consts RPAREN { $$ = yylval.val; };
+constraints: consstraint | constraints consstraint;
+
+consstraint: ;
 
 consts: ICONST | FCONST | SCONST;
 
@@ -65,3 +67,14 @@ type: INT { strcpy($$, "int"); } |
 id: ID { strcpy($$, yylval.ident);}
 
 %%
+
+void set_input_string(const char* in);
+void end_lexical_scan(void);
+
+/* This function parses a string */
+int parse_string(const char* in) {
+  set_input_string(in);
+  int rv = yyparse();
+  end_lexical_scan();
+  return rv;
+}

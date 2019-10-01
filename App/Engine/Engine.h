@@ -9,5 +9,6 @@ Table show(const std::string& name);
 
 bool drop(const std::string& name);
 
+bool exists(const std::string& name);
 
 #endif
