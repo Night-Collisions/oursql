@@ -36,11 +36,13 @@ expression: statements SEMI;
 statements: statement | statements statement;
 
 statement: create_st body |
-    show_st | drop_st;
+    show_create_st | show_st | drop_st;
 
 create_st: CREATE TABLE id { initTable($3); };
 
-show_st: SHOW TABLE id { };
+show_st: SHOW TABLE id {};
+
+show_create_st: SHOW CREATE TABLE id { };
 
 drop_st: DROP TABLE id {};
 

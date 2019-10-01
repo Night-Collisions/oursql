@@ -8,7 +8,7 @@
 
 class Table {
    public:
-    Table() {}
+    Table() = default;
     Table(const std::string& name, const std::vector<Field>& fields)
         : name_(name), fields_(fields) {}
 

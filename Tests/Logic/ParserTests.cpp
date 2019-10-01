@@ -185,7 +185,7 @@ TEST(Parser_DropTable, WrongDrop5) {
     ASSERT_TRUE(parse_string("drop table 1Adrop;\n"));
 }
 
-TEST(Parser_ShowCreateTable, SimpleTEst) {
+TEST(Parser_ShowCreateTable, SimpleTest) {
     ASSERT_FALSE(parse_string("show create table A;\n"));
 }
 

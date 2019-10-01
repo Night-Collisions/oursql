@@ -6,7 +6,7 @@
 
 int main() {
     int flag;
-    yydebug = 0;
+    yydebug = 1;
     yyin = stdin;
     flag = yyparse();
     std::cout << flag << std::endl;
