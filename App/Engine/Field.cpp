@@ -74,10 +74,12 @@ std::set<FieldConstraint> Field::checkConstraints(
 
     auto separated = split(constraints, ' ');
 
+    //std::cout << separated[0];
+
     for (auto& c : separated) {
         std::cout << c << std::endl;
         if (constraint_map_.find(c) == constraint_map_.end()) {
-            // the so-called constaint doesn't exists
+            // the so-called constraint doesn't exists
             // TODO: throw exception?
         } else {
             res.insert(constraint_map_[c]);
