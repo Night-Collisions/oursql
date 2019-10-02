@@ -62,7 +62,7 @@ bool Field::checkDataForType(const DataType type, const std::string& data) {
             return true;
         },
         [](const std::string& s) {
-            bool foundPoint = false;
+            bool found_point = false;
             for (unsigned int i =
                      ((s.size() > 2 && s[0] == '-' && std::isdigit(s[1]))
                           ? (1)
@@ -70,10 +70,10 @@ bool Field::checkDataForType(const DataType type, const std::string& data) {
                  i < s.size(); i++) {
                 if (!std::isdigit(s[i])) {
                     if (s[i] == '.') {
-                        if (foundPoint) {
+                        if (found_point) {
                             return false;
                         }
-                        foundPoint = true;
+                        found_point = true;
                     }
                     return false;
                 }
@@ -108,10 +108,7 @@ std::set<FieldConstraint> Field::checkConstraints(
 
     auto separated = split(constraints, ' ');
 
-    // std::cout << separated[0];
-
     for (auto& c : separated) {
-       // std::cout << c << std::endl;
         if (Name2FieldConstraint.find(c) == Name2FieldConstraint.end()) {
             // the so-called constraint doesn't exists
             // TODO: throw exception?
