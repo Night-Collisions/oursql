@@ -21,7 +21,7 @@ macro(package_set_test TESTNAME)
 endmacro()
 
 macro(package_add_test_with_parser TESTNAME)
-    add_executable(${TESTNAME} ${ARGN} ${FLEX_SCANNER_OUTPUTS})
+    add_executable(${TESTNAME} ${ARGN} ${FLEX_SCANNER_OUTPUTS} test.h)
     package_set_test(${TESTNAME} ${ARGN})
 endmacro()
 
