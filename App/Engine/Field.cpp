@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <stdexcept>
 #include <iostream>
 #include <map>
 #include <set>
@@ -40,7 +41,7 @@ FieldConstraint String2FieldConstraint(const std::string& s) {
 
 void Field::addData(const std::string& data) {
     if (!checkDataForType(type_, data)) {
-        throw 1;
+        throw std::invalid_argument("Data type mismatch!");
     }
     data_.push_back(data);
 }
@@ -59,7 +60,7 @@ void Field::checkConstraint(const std::set<FieldConstraint>& constraint) {
             constraint.begin(), constraint.end(),
             std::inserter(buff, buff.begin()));
         if (buff.size() > 0) {
-            throw 1;
+            throw std::invalid_argument("Incompatible constraints!");
         }
     }
 }
@@ -134,7 +135,7 @@ std::set<FieldConstraint> Field::checkConstraints(
         } else {
             auto constraint = Name2FieldConstraint[c];
             if (res.find(constraint) == res.end()) {
-                throw 1;
+                throw std::invalid_argument("Identical constraints!");
             }
             res.insert(constraint);
         }
