@@ -3,7 +3,7 @@
 
 #include "Table.h"
 
-bool create(const Table& table);
+bool create(const Table& table){};
 
 Table show(const std::string& name);
 
