@@ -250,3 +250,10 @@ TEST(Parser_ShowCreateTable, AnyCase) {
     ASSERT_FALSE(parse_string("Show creaTe tAble A;\n"));
 }
 
+TEST(Stream_Example, example) {
+    yyout = stdout;
+    parse_string("show tables;");
+    //что то внутри прасера можно написать в поток который выше
+    char a[100];
+    fscanf(yyout, "%s", a); //можно так читать
+}

@@ -28,7 +28,7 @@
     char constraint_str[100];
     char type[20];
     char ident[20];
-	char *val; 
+	char *val;
 }
 
 %%
@@ -77,7 +77,6 @@ id: ID { strcpy($$, yylval.ident);}
 void set_input_string(const char* in);
 void end_lexical_scan(void);
 
-/* This function parses a string */
 int parse_string(const char* in) {
   set_input_string(in);
   int rv = yyparse();
