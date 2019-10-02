@@ -19,6 +19,8 @@ class Table {
 
     void addField(const Field& field);
 
+    bool fieldExists(const std::string& name);
+
    private:
     std::string name_;
     std::vector<Field> fields_;
