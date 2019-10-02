@@ -1,4 +1,6 @@
 %{
+    #ifndef OURSQL_APP_LOGIC_PARSER_PARSER_Y_
+    #define OURSQL_APP_LOGIC_PARSER_PARSER_Y_
     #include "../../App/Logic/TableManager.h"
     #include <stdio.h>
     #include <string>
@@ -84,3 +86,5 @@ int parse_string(const char* in) {
   end_lexical_scan();
   return rv;
 }
+
+#endif  // OURSQL_APP_LOGIC_PARSER_PARSER_Y_
