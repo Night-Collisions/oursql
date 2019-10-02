@@ -8,7 +8,7 @@
     extern FILE *yyout;
     extern int lineno;
     extern int yylex();
-    void yyerror(char *s);
+    void yyerror(const char *s);
 %}
 
 %error-verbose
@@ -56,9 +56,17 @@ body: LPAREN decl RPAREN;
 decl: variable | decl COMMA variable;
 
 variable: id type {
-    addField($1, $2, "");
+    try {
+        addField($1, $2, "");
+    } catch (std::invalid_argument& e) {
+        yyerror(e.what());
+    }
 } | id type constraints {
-    addField($1, $2, $3);
+    try {
+        addField($1, $2, $3);
+    } catch (std::invalid_argument& e) {
+        yyerror(e.what());
+    }
 };
 
 constraints: constraint | 

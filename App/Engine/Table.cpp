@@ -3,7 +3,8 @@
 void Table::addField(const Field& field) {
     for (const auto& i : fields_) {
         if (i.getName() == field.getName()) {
-            throw std::invalid_argument("Same field name!");
+            throw std::invalid_argument("Field '" + i.getName() +
+                                        "' already exists");
         }
     }
     auto constraint = field.getConstraint();
@@ -11,7 +12,7 @@ void Table::addField(const Field& field) {
         for (const auto& i : fields_) {
             auto buff = i.getConstraint();
             if (buff.find(FieldConstraint::primary_key) != buff.end()) {
-                throw std::invalid_argument("Reusing primary key!");
+                throw std::invalid_argument("Primary key already exists");
             }
         }
     }

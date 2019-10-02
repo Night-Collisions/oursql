@@ -1,9 +1,11 @@
 %{
+    #include <iostream>
     #include <stdio.h>
     #include "parser.hpp"
 
-    void yyerror(char *s) {
-      fprintf (stderr, "%s\n", s);
+    void yyerror(const char *s) {
+      //fprintf (stderr, "%s\n", s);
+      std::cerr << s << std::endl;
     }
 
     extern FILE *yyin;

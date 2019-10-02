@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <array>
-#include <stdexcept>
 #include <iostream>
 #include <map>
 #include <set>
+#include <stdexcept>
 
 //---DataType---//
 std::array<std::string, static_cast<unsigned int>(DataType::Count)>
@@ -41,7 +41,7 @@ FieldConstraint String2FieldConstraint(const std::string& s) {
 
 void Field::addData(const std::string& data) {
     if (!checkDataForType(type_, data)) {
-        throw std::invalid_argument("Data type mismatch!");
+        throw std::invalid_argument("Data type mismatch");
     }
     data_.push_back(data);
 }
@@ -60,7 +60,7 @@ void Field::checkConstraint(const std::set<FieldConstraint>& constraint) {
             constraint.begin(), constraint.end(),
             std::inserter(buff, buff.begin()));
         if (buff.size() > 0) {
-            throw std::invalid_argument("Incompatible constraints!");
+            throw std::invalid_argument("Incompatible constraints");
         }
     }
 }
@@ -122,8 +122,6 @@ std::vector<std::string> split(const std::string& s, const char sep) {
 
 std::set<FieldConstraint> Field::checkConstraints(
     const std::string& constraints) {
-    // TODO: проверить, чтобы не было дубликатов констрейнтов
-
     std::set<FieldConstraint> res;
 
     auto separated = split(constraints, ' ');
@@ -134,8 +132,8 @@ std::set<FieldConstraint> Field::checkConstraints(
             // TODO: throw exception?
         } else {
             auto constraint = Name2FieldConstraint[c];
-            if (res.find(constraint) == res.end()) {
-                throw std::invalid_argument("Identical constraints!");
+            if (res.find(constraint) != res.end()) {
+                throw std::invalid_argument("Duplicate constraints");
             }
             res.insert(constraint);
         }
