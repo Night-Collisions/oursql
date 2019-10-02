@@ -26,12 +26,9 @@ class Field {
    public:
     Field(std::string name, const DataType type,
           const std::set<FieldConstraint>& constraints = {})
-        : name_(std::move(name)),
-          type_(type),
-          constraint_(constraints) {}
+        : name_(std::move(name)), type_(type), constraint_(constraints) {}
 
-    Field(std::string name, const DataType type,
-          const std::string& constraints)
+    Field(std::string name, const DataType type, const std::string& constraints)
         : name_(std::move(name)),
           type_(type),
           constraint_(checkConstraints(constraints)) {}
@@ -46,7 +43,7 @@ class Field {
     void addData(const std::string&);
 
    private:
-    bool checkDataForType(const DataType type, const std::string& data);
+    static bool checkDataForType(const DataType type, const std::string& data);
     std::set<FieldConstraint> checkConstraints(const std::string& constraints);
 
     std::string name_;

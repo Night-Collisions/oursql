@@ -1,6 +1,6 @@
 #include <iostream>
 
-//TODO: вынести все их мэйн в отдельную функцию int run()
+// TODO: вынести все их мэйн в отдельную функцию int run()
 
 #include "parser.cpp"
 
