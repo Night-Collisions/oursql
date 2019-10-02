@@ -11,6 +11,8 @@
     void yyerror(char *s);
 %}
 
+%error-verbose
+
 %token CREATE SHOW DROP
 %token TABLE TABLES
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA
@@ -39,11 +41,11 @@ expression: statements;
 statements: statement SEMI | statements statement SEMI;
 
 statement: create body |
-    show_create | show | drop;
+    show_create | show | drop | error SEMI {yyerrok; yyclearin;};
 
-create: CREATE TABLE id { initTable($3); };
+create: CREATE TABLE id { initTable($3); } ;
 
-show: SHOW TABLES { yyerror("32423432424"); };
+show: SHOW TABLES ;
 
 show_create: SHOW CREATE TABLE id { };
 
