@@ -18,8 +18,6 @@ not null
 
 primary key
 
-foreign key
-
 unique
 
 
