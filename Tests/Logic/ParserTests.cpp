@@ -8,8 +8,7 @@
 extern Table getTable();
 
 bool operator==(const Field& a, const Field& b) {
-    return a.getName() == b.getName() && a.getType() == b.getType() &&
-           a.getConstraint() == b.getConstraint();
+    return a.getName() == b.getName() && a.getType() == b.getType() && a.getConstraint() == b.getConstraint();
 }
 
 bool operator==(const Table& a, const Table& b) {
@@ -141,14 +140,14 @@ TEST(Parser_CreateTable, Constraint) {
     Table expect_table(
         "a", {{"b", DataType::integer, {FieldConstraint::not_null}},
               {"h", DataType::integer, {FieldConstraint::primary_key}},
-              {"с", DataType::real, {FieldConstraint::foreign_key}},
+              {"c", DataType::real, {FieldConstraint::foreign_key}},
               {"d", DataType::text, {FieldConstraint::unique}}});
     EXPECT_EQ(table, expect_table);
 }
 
 TEST(Parser_CreateTable, MultyConstraint) {
     ASSERT_FALSE(
-        parse_string("create table a(b int not null primary key unique);\n"));
+        parse_string("create table a(b int not null unique primary key);\n"));
     auto table = getTable();
     Table expect_table(
         "a", {{"b", DataType::integer, {FieldConstraint::not_null, FieldConstraint::primary_key, FieldConstraint::unique}}});
@@ -173,7 +172,7 @@ TEST(Parser_CreateTable, MixedConstraint) {
     Table expect_table(
         "a", {{"b", DataType::integer},
               {"h", DataType::integer, {FieldConstraint::primary_key, FieldConstraint::unique}},
-              {"с", DataType::real, {FieldConstraint::foreign_key}},
+              {"c", DataType::real, {FieldConstraint::foreign_key}},
               {"d", DataType::text}});
     EXPECT_EQ(table, expect_table);
 }

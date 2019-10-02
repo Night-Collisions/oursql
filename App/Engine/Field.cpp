@@ -21,7 +21,7 @@ DataType String2DataType(const std::string& s) { return Name2DataType.at(s); }
 
 //---FieldConstraint---//
 std::array<std::string, static_cast<unsigned int>(FieldConstraint::Count)>
-    FieldConstraint2Names = {"primary key", "foreign key", "not null",
+    FieldConstraint2Names = {"primary_key", "foreign_key", "not_null",
                              "unique"};
 std::map<std::string, FieldConstraint> Name2FieldConstraint = {
     {FieldConstraint2Names[0], FieldConstraint::primary_key},
