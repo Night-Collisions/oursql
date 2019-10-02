@@ -30,12 +30,6 @@ class Field {
           type_(type),
           constraint_(constraints) {}
 
-    Field(std::string name, const DataType type,
-          const std::string& constraints)
-        : name_(std::move(name)),
-          type_(type),
-          constraint_(checkConstraints(constraints)) {}
-
     [[nodiscard]] DataType getType() const { return type_; };
     [[nodiscard]] std::string getName() const { return name_; };
     [[nodiscard]] std::set<FieldConstraint> getConstraint() const {
