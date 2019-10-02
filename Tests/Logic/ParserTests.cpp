@@ -8,8 +8,7 @@
 extern Table getTable();
 
 bool operator==(const Field& a, const Field& b) {
-    return a.getName() == b.getName() && a.getType() == b.getType() &&
-           a.getConstraint() == b.getConstraint();
+    return a.getName() == b.getName() && a.getType() == b.getType() && a.getConstraint() == b.getConstraint();
 }
 
 bool operator==(const Table& a, const Table& b) {
@@ -141,20 +140,17 @@ TEST(Parser_CreateTable, Constraint) {
     Table expect_table(
         "a", {{"b", DataType::integer, {FieldConstraint::not_null}},
               {"h", DataType::integer, {FieldConstraint::primary_key}},
-              {"с", DataType::real, {FieldConstraint::foreign_key}},
+              {"c", DataType::real, {FieldConstraint::foreign_key}},
               {"d", DataType::text, {FieldConstraint::unique}}});
     EXPECT_EQ(table, expect_table);
 }
 
 TEST(Parser_CreateTable, MultyConstraint) {
     ASSERT_FALSE(
-        parse_string("create table a(b int not null primary key unique);\n"));
+        parse_string("create table a(b int not null unique primary key);\n"));
     auto table = getTable();
     Table expect_table(
-        "a", {{"b",
-               DataType::integer,
-               {FieldConstraint::not_null, FieldConstraint::primary_key,
-                FieldConstraint::unique}}});
+        "a", {{"b", DataType::integer, {FieldConstraint::not_null, FieldConstraint::primary_key, FieldConstraint::unique}}});
     EXPECT_EQ(table, expect_table);
 }
 
@@ -174,10 +170,8 @@ TEST(Parser_CreateTable, MixedConstraint) {
     auto table = getTable();
     Table expect_table(
         "a", {{"b", DataType::integer},
-              {"h",
-               DataType::integer,
-               {FieldConstraint::primary_key, FieldConstraint::unique}},
-              {"с", DataType::real, {FieldConstraint::foreign_key}},
+              {"h", DataType::integer, {FieldConstraint::primary_key, FieldConstraint::unique}},
+              {"c", DataType::real, {FieldConstraint::foreign_key}},
               {"d", DataType::text}});
     EXPECT_EQ(table, expect_table);
 }
@@ -256,11 +250,3 @@ TEST(Parser_ShowCreateTable, AnyCase) {
     ASSERT_FALSE(parse_string("Show creaTe tAble A;\n"));
 }
 
-TEST(Stream_Example, example) {
-    yyout = stdout;
-    parse_string("show tables;");
-    //для этого запроса ща есть тестовый вывод в поток yyout, который выше
-    char a[100];
-    fscanf(yyout, "%s", a); //можно так читать
-    std::cout << a;
-}
