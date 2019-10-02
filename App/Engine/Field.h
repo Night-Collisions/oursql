@@ -45,9 +45,10 @@ class Field {
 
     void addData(const std::string&);
 
+    static std::set<FieldConstraint> checkConstraints(const std::string& constraints);
+
    private:
     bool checkDataForType(const DataType type, const std::string& data);
-    std::set<FieldConstraint> checkConstraints(const std::string& constraints);
 
     std::string name_;
     DataType type_;

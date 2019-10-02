@@ -29,6 +29,7 @@
     char type[20];
     char ident[20];
 	char *val; 
+    FILE *response;
 }
 
 %%
@@ -42,7 +43,7 @@ statement: create body |
 
 create: CREATE TABLE id { initTable($3); };
 
-show: SHOW TABLES;
+show: SHOW TABLES { fprintf(yyout, "%s", "youpta test !!!"); };
 
 show_create: SHOW CREATE TABLE id { };
 
@@ -77,7 +78,6 @@ id: ID { strcpy($$, yylval.ident);}
 void set_input_string(const char* in);
 void end_lexical_scan(void);
 
-/* This function parses a string */
 int parse_string(const char* in) {
   set_input_string(in);
   int rv = yyparse();

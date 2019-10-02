@@ -27,8 +27,8 @@ DataType string2Type(const std::string& s) {
 }
 
 void addField(char* name, char* type, char* constraints) {
-    Field f((std::string(name)), string2Type(std::string(type)),
-            std::string(constraints));
+    auto s = Field::checkConstraints(std::string(constraints));
+    Field f((std::string(name)), string2Type(std::string(type)), s);
     table->addField(f);
 }
 

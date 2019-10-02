@@ -9,6 +9,7 @@ int main() {
     yydebug = 0;
     yyin = stdin;
     flag = yyparse();
+    char resp[100];
     std::cout << flag << std::endl;
     return 0;
 }

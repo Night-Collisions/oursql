@@ -8,10 +8,10 @@
 
     extern FILE *yyin;
     extern FILE *yyout;
-
     int lineno = 1;
     //todo: free?
     char *tmp_str = (char *) malloc(100);
+
 %}
 
 %option noyywrap
@@ -70,7 +70,7 @@ FOREIGN_KEY   "foreign"[ \t\r\f]+"key"
                               sscanf(yytext, "%s", tmp_str);
                               yylval.val = tmp_str;
                               return FCONST; 
-                            }
+                           }
 
 {ICONST}                   { 
                               sscanf(yytext, "%s", tmp_str);

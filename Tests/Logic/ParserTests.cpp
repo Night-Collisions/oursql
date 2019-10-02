@@ -151,7 +151,10 @@ TEST(Parser_CreateTable, MultyConstraint) {
         parse_string("create table a(b int not null primary key unique);\n"));
     auto table = getTable();
     Table expect_table(
-        "a", {{"b", DataType::integer, {FieldConstraint::not_null, FieldConstraint::primary_key, FieldConstraint::unique}}});
+        "a", {{"b",
+               DataType::integer,
+               {FieldConstraint::not_null, FieldConstraint::primary_key,
+                FieldConstraint::unique}}});
     EXPECT_EQ(table, expect_table);
 }
 
@@ -161,8 +164,7 @@ TEST(Parser_CreateTable, WrongMultyConstraint) {
 }
 
 TEST(Parser_CreateTable, WrongConstraint) {
-    ASSERT_TRUE(
-        parse_string("create table a(b int null);\n"));
+    ASSERT_TRUE(parse_string("create table a(b int null);\n"));
 }
 
 TEST(Parser_CreateTable, MixedConstraint) {
@@ -172,7 +174,9 @@ TEST(Parser_CreateTable, MixedConstraint) {
     auto table = getTable();
     Table expect_table(
         "a", {{"b", DataType::integer},
-              {"h", DataType::integer, {FieldConstraint::primary_key, FieldConstraint::unique}},
+              {"h",
+               DataType::integer,
+               {FieldConstraint::primary_key, FieldConstraint::unique}},
               {"с", DataType::real, {FieldConstraint::foreign_key}},
               {"d", DataType::text}});
     EXPECT_EQ(table, expect_table);
@@ -243,10 +247,20 @@ TEST(Parser_ShowCreateTable, Wrong1) {
 }
 
 TEST(Parser_ShowCreateTable, Wrong2) {
+
     ASSERT_TRUE(parse_string("show create table 1A;\n"));
 }
 
 TEST(Parser_ShowCreateTable, AnyCase) {
+
     ASSERT_FALSE(parse_string("Show creaTe tAble A;\n"));
 }
 
+TEST(Stream_Example, example) {
+    yyout = stdout;
+    parse_string("show tables;");
+    //для этого запроса ща есть тестовый вывод в поток yyout, который выше
+    char a[100];
+    fscanf(yyout, "%s", a); //можно так читать
+    std::cout << a;
+}
