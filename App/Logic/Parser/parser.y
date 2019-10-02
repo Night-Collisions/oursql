@@ -43,7 +43,7 @@ statement: create body |
 
 create: CREATE TABLE id { initTable($3); };
 
-show: SHOW TABLES { fprintf(yyout, "%s", "youpta test !!!"); };
+show: SHOW TABLES { yyerror("32423432424"); };
 
 show_create: SHOW CREATE TABLE id { };
 
