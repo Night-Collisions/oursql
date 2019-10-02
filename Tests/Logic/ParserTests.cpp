@@ -1,8 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "../../App/Engine/Field.h"
-#include "../../App/Engine/Table.h"
+#include "../test.h"
 #include "parser.cpp"
 
 extern Table getTable();
