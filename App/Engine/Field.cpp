@@ -1,7 +1,37 @@
 #include "Field.h"
+
+#include <array>
+#include <map>
 #include <iostream>
 
-std::map<std::string, FieldConstraint> Field::constraint_map_;
+//---DataType---//
+std::array<std::string, static_cast<unsigned int>(DataType::Count)>
+    DataType2Names = {"int", "real", "text"};
+std::map<std::string, DataType> Name2DataType = {{DataType2Names[0], DataType::integer},
+                                                 {DataType2Names[1], DataType::real},
+                                                 {DataType2Names[2], DataType::text}};
+
+std::string DataType2String(const DataType& type) {
+    return DataType2Names[static_cast<unsigned int>(type)];
+}
+
+DataType String2DataType(const std::string& s) { return Name2DataType.at(s); }
+//------//
+
+//---FieldConstraint---//
+std::array<std::string, static_cast<unsigned int>(FieldConstraint::Count)>
+    FieldConstraint2Names = {"primary key", "foreign key", "not null", "unique"};
+std::map<std::string, FieldConstraint> Name2FieldConstraint = {{FieldConstraint2Names[0], FieldConstraint::primary_key},
+                                                 {FieldConstraint2Names[1], FieldConstraint::foreign_key},
+                                                 {FieldConstraint2Names[2], FieldConstraint::not_null},
+                                                 {FieldConstraint2Names[3], FieldConstraint::unique}};
+
+std::string FieldConstraint2String(const FieldConstraint& c) {
+    return FieldConstraint2Names[static_cast<unsigned int>(c)];
+}
+
+FieldConstraint String2FieldConstraint(const std::string& s) { return Name2FieldConstraint.at(s); }
+//------//
 
 void Field::addData(const std::string& data) {
     if (!checkDataForType(type_, data)) {
@@ -69,29 +99,21 @@ std::set<FieldConstraint> Field::checkConstraints(
     const std::string& constraints) {
     // TODO: проверить, чтобы не было дубликатов констрейнтов
 
-
     std::set<FieldConstraint> res;
 
     auto separated = split(constraints, ' ');
 
-    //std::cout << separated[0];
+    // std::cout << separated[0];
 
     for (auto& c : separated) {
         std::cout << c << std::endl;
-        if (constraint_map_.find(c) == constraint_map_.end()) {
+        if (Name2FieldConstraint.find(c) == Name2FieldConstraint.end()) {
             // the so-called constraint doesn't exists
             // TODO: throw exception?
         } else {
-            res.insert(constraint_map_[c]);
+            res.insert(Name2FieldConstraint[c]);
         }
     }
 
     return res;
-}
-
-void Field::initMap() {
-    constraint_map_["not_null"] = FieldConstraint::not_null;
-    constraint_map_["primary_key"] = FieldConstraint::primary_key;
-    constraint_map_["foreign_key"] = FieldConstraint::foreign_key;
-    constraint_map_["unique"] = FieldConstraint::unique;
 }

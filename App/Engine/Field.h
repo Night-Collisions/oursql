@@ -8,12 +8,19 @@
 
 enum class DataType : unsigned int { integer, real, text, Count };
 
+std::string DataType2String(const DataType&);
+DataType String2DataType(const std::string&);
+
 enum class FieldConstraint : unsigned int {
     primary_key,
     foreign_key,
     not_null,
-    unique
+    unique,
+    Count
 };
+
+std::string FieldConstraint2String(const FieldConstraint&);
+FieldConstraint String2FieldConstraint(const std::string&);
 
 class Field {
    public:
@@ -27,11 +34,7 @@ class Field {
           const std::string& constraints)
         : name_(std::move(name)),
           type_(type),
-          constraint_(checkConstraints(constraints)) {
-        if (constraint_map_.empty()) {
-            initMap();
-        }
-    }
+          constraint_(checkConstraints(constraints)) {}
 
     [[nodiscard]] DataType getType() const { return type_; };
     [[nodiscard]] std::string getName() const { return name_; };
@@ -45,9 +48,6 @@ class Field {
    private:
     bool checkDataForType(const DataType type, const std::string& data);
     std::set<FieldConstraint> checkConstraints(const std::string& constraints);
-    static void initMap();
-
-    static std::map<std::string, FieldConstraint> constraint_map_;
 
     std::string name_;
     DataType type_;
