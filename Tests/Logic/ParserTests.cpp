@@ -267,4 +267,19 @@ TEST(Parser_ShowCreateTable, IncorrectKeyWord) {
     ASSERT_TRUE(parse_string("Show creaTe tAbles A;\n"));
 }
 
+TEST(Parser_ShowCreateTable, VarName) {
+    ASSERT_FALSE(parse_string("create table a(null int);\n"));
+}
+
+TEST(Parser_ShowCreateTable, ConstraintAsName1) {
+    ASSERT_TRUE(parse_string("create table a(not null int);\n"));
+}
+
+TEST(Parser_ShowCreateTable, ConstraintAsName2) {
+    ASSERT_TRUE(parse_string("create table a(unique int);\n"));
+}
+
+TEST(Parser_ShowCreateTable, ConstraintAsName3) {
+    ASSERT_TRUE(parse_string("create table a(primary key int);\n"));
+}
 
