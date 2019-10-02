@@ -6,6 +6,34 @@
 
 extern Table getTable();
 
+bool operator==(const Field& a, const Field& b) {
+    return a.getName() == b.getName() && a.getType() == b.getType() &&
+           a.getConstraint() == b.getConstraint();
+}
+
+bool operator==(const Table& a, const Table& b) {
+    auto a_fields = a.getFields();
+    auto b_fields = b.getFields();
+    if (a.getName() != b.getName() || a_fields.size() != b_fields.size()) {
+        return false;
+    }
+    for (const auto& i : a_fields) {
+        bool eq = false;
+        for (const auto& j : b_fields) {
+            if (i == j) {
+                eq = true;
+                break;
+            }
+        }
+        if (!eq) {
+            return false;
+        }
+    }
+    return true;
+}
+
+TEST(Parser_empty, semi) { ASSERT_TRUE(parse_string(";")); }
+
 TEST(Parser_CreateTable, SimpleTest) {
     ASSERT_FALSE(parse_string("create table MyTable(Name text);\n"));
     auto table = getTable();
@@ -44,6 +72,20 @@ TEST(Parser_CreateTable, WrongStyleComand) {
     ASSERT_FALSE(parse_string("Create tAbLE MyTable(i Int);\n"));
 }
 
+TEST(Parser_CreateTable, SameParam) {
+    ASSERT_FALSE(parse_string("create table MyTable(a int, a text);\n"));
+}
+
+TEST(Parser_CreateTable, TwoPrimaryKey) {
+    ASSERT_FALSE(parse_string(
+        "create table MyTable(a int primary key, b text primary key);\n"));
+}
+
+TEST(Parser_CreateTable, TwoSamyContr) {
+    ASSERT_FALSE(parse_string(
+        "create table MyTable(a int unique unique);\n"));
+}
+
 TEST(Parser_CreateTable, WrongDataType1) {
     ASSERT_TRUE(parse_string("create table MyTable(create table MyTable);\n"));
 }
@@ -58,6 +100,10 @@ TEST(Parser_CreateTable, WrongParam1) {
 
 TEST(Parser_CreateTable, WrongParam2) {
     ASSERT_TRUE(parse_string("create table MyTable(int);\n"));
+}
+
+TEST(Parser_CreateTable, TypeGoesFirst) {
+    ASSERT_TRUE(parse_string("create table MyTable(int a);\n"));
 }
 
 TEST(Parser_CreateTable, WrongParam3) {
@@ -107,24 +153,25 @@ TEST(Parser_CreateTable, WithWalue) {
 }
 
 TEST(Parser_CreateTable, Constraint) {
-    ASSERT_FALSE(
-        parse_string("create table a(b int not null, h int primary key, c real "
-                     "foreign key, d text unique);\n"));
+    ASSERT_FALSE(parse_string(
+        "create table a(b int not null, h int primary key, d text unique);\n"));
     auto table = getTable();
     Table expect_table(
         "a", {{"b", DataType::integer, {FieldConstraint::not_null}},
               {"h", DataType::integer, {FieldConstraint::primary_key}},
-              {"с", DataType::real, {FieldConstraint::foreign_key}},
               {"d", DataType::text, {FieldConstraint::unique}}});
     EXPECT_EQ(table, expect_table);
 }
 
 TEST(Parser_CreateTable, MultyConstraint) {
     ASSERT_FALSE(
-        parse_string("create table a(b int not null primary key unique);\n"));
+        parse_string("create table a(b int not null unique primary key);\n"));
     auto table = getTable();
     Table expect_table(
-        "a", {{"b", DataType::integer, {FieldConstraint::not_null, FieldConstraint::primary_key, FieldConstraint::unique}}});
+        "a", {{"b",
+               DataType::integer,
+               {FieldConstraint::not_null, FieldConstraint::primary_key,
+                FieldConstraint::unique}}});
     EXPECT_EQ(table, expect_table);
 }
 
@@ -134,19 +181,18 @@ TEST(Parser_CreateTable, WrongMultyConstraint) {
 }
 
 TEST(Parser_CreateTable, WrongConstraint) {
-    ASSERT_TRUE(
-        parse_string("create table a(b int null);\n"));
+    ASSERT_TRUE(parse_string("create table a(b int null);\n"));
 }
 
 TEST(Parser_CreateTable, MixedConstraint) {
-    ASSERT_FALSE(
-        parse_string("create table a(b int, h int primary key unique, c real "
-                     "foreign KEY, d text);\n"));
+    ASSERT_FALSE(parse_string(
+        "create table a(b int, h int primary key unique, d text);\n"));
     auto table = getTable();
     Table expect_table(
         "a", {{"b", DataType::integer},
-              {"h", DataType::integer, {FieldConstraint::primary_key, FieldConstraint::unique}},
-              {"с", DataType::real, {FieldConstraint::foreign_key}},
+              {"h",
+               DataType::integer,
+               {FieldConstraint::primary_key, FieldConstraint::unique}},
               {"d", DataType::text}});
     EXPECT_EQ(table, expect_table);
 }
@@ -223,3 +269,22 @@ TEST(Parser_ShowCreateTable, AnyCase) {
     ASSERT_FALSE(parse_string("Show creaTe tAble A;\n"));
 }
 
+TEST(Parser_ShowCreateTable, IncorrectKeyWord) {
+    ASSERT_TRUE(parse_string("Show creaTe tAbles A;\n"));
+}
+
+TEST(Parser_ShowCreateTable, VarName) {
+    ASSERT_FALSE(parse_string("create table a(null int);\n"));
+}
+
+TEST(Parser_ShowCreateTable, ConstraintAsName1) {
+    ASSERT_TRUE(parse_string("create table a(not null int);\n"));
+}
+
+TEST(Parser_ShowCreateTable, ConstraintAsName2) {
+    ASSERT_TRUE(parse_string("create table a(unique int);\n"));
+}
+
+TEST(Parser_ShowCreateTable, ConstraintAsName3) {
+    ASSERT_TRUE(parse_string("create table a(primary key int);\n"));
+}

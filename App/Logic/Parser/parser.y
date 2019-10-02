@@ -8,15 +8,17 @@
     extern FILE *yyout;
     extern int lineno;
     extern int yylex();
-    void yyerror(char *s);
+    void yyerror(const char *s);
 %}
+
+%error-verbose
 
 %token CREATE SHOW DROP
 %token TABLE TABLES
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA
 %token ID ICONST FCONST SCONST
 %token INT REAL TEXT
-%token NOT_NULL PRIMARY_KEY FOREIGN_KEY UNIQUE
+%token NOT_NULL PRIMARY_KEY UNIQUE
 
 %start expression
 
@@ -29,6 +31,7 @@
     char type[20];
     char ident[20];
 	char *val; 
+    FILE *response;
 }
 
 %%
@@ -38,11 +41,11 @@ expression: statements;
 statements: statement SEMI | statements statement SEMI;
 
 statement: create body |
-    show_create | show | drop;
+    show_create | show | drop | error SEMI {yyerrok; yyclearin;};
 
-create: CREATE TABLE id { initTable($3); };
+create: CREATE TABLE id { initTable($3); } ;
 
-show: SHOW TABLES;
+show: SHOW TABLES ;
 
 show_create: SHOW CREATE TABLE id { };
 
@@ -53,17 +56,24 @@ body: LPAREN decl RPAREN;
 decl: variable | decl COMMA variable;
 
 variable: id type {
-    addField($1, $2, "");
+    try {
+        addField($1, $2, "");
+    } catch (std::invalid_argument& e) {
+        yyerror(e.what());
+    }
 } | id type constraints {
-    addField($1, $2, $3);
+    try {
+        addField($1, $2, $3);
+    } catch (std::invalid_argument& e) {
+        yyerror(e.what());
+    }
 };
 
 constraints: constraint | 
     constraints constraint { strcat($$, $2); };
 
 constraint: NOT_NULL { strcpy($$, "not_null "); } | 
-    PRIMARY_KEY { strcpy($$, "primary_key "); }| 
-    FOREIGN_KEY { strcpy($$, "foreign_key "); } | 
+    PRIMARY_KEY { strcpy($$, "primary_key "); }|
     UNIQUE { strcpy($$, "unique "); }; 
 
 type: INT { strcpy($$, "int"); } |
@@ -77,7 +87,6 @@ id: ID { strcpy($$, yylval.ident);}
 void set_input_string(const char* in);
 void end_lexical_scan(void);
 
-/* This function parses a string */
 int parse_string(const char* in) {
   set_input_string(in);
   int rv = yyparse();

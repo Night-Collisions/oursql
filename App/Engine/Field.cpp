@@ -1,8 +1,11 @@
 #include "Field.h"
 
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <map>
+#include <set>
+#include <stdexcept>
 
 //---DataType---//
 std::array<std::string, static_cast<unsigned int>(DataType::Count)>
@@ -21,13 +24,11 @@ DataType String2DataType(const std::string& s) { return Name2DataType.at(s); }
 
 //---FieldConstraint---//
 std::array<std::string, static_cast<unsigned int>(FieldConstraint::Count)>
-    FieldConstraint2Names = {"primary key", "foreign key", "not null",
-                             "unique"};
+    FieldConstraint2Names = {"primary_key", "not_null", "unique"};
 std::map<std::string, FieldConstraint> Name2FieldConstraint = {
     {FieldConstraint2Names[0], FieldConstraint::primary_key},
-    {FieldConstraint2Names[1], FieldConstraint::foreign_key},
-    {FieldConstraint2Names[2], FieldConstraint::not_null},
-    {FieldConstraint2Names[3], FieldConstraint::unique}};
+    {FieldConstraint2Names[1], FieldConstraint::not_null},
+    {FieldConstraint2Names[2], FieldConstraint::unique}};
 
 std::string FieldConstraint2String(const FieldConstraint& c) {
     return FieldConstraint2Names[static_cast<unsigned int>(c)];
@@ -40,9 +41,28 @@ FieldConstraint String2FieldConstraint(const std::string& s) {
 
 void Field::addData(const std::string& data) {
     if (!checkDataForType(type_, data)) {
-        throw 1;
+        throw std::invalid_argument("Data type mismatch");
     }
     data_.push_back(data);
+}
+
+void Field::checkConstraint(const std::set<FieldConstraint>& constraint) {
+    std::array<std::set<FieldConstraint>,
+               static_cast<unsigned int>(FieldConstraint::Count)>
+        incompatible = {std::set<FieldConstraint>{},
+                        std::set<FieldConstraint>{},
+                        std::set<FieldConstraint>{}};
+    for (const auto& i : constraint) {
+        std::set<FieldConstraint> buff;
+        std::set_intersection(
+            incompatible[static_cast<unsigned int>(i)].begin(),
+            incompatible[static_cast<unsigned int>(i)].end(),
+            constraint.begin(), constraint.end(),
+            std::inserter(buff, buff.begin()));
+        if (buff.size() > 0) {
+            throw std::invalid_argument("Incompatible constraints");
+        }
+    }
 }
 
 bool Field::checkDataForType(const DataType type, const std::string& data) {
@@ -62,7 +82,7 @@ bool Field::checkDataForType(const DataType type, const std::string& data) {
             return true;
         },
         [](const std::string& s) {
-            bool foundPoint = false;
+            bool found_point = false;
             for (unsigned int i =
                      ((s.size() > 2 && s[0] == '-' && std::isdigit(s[1]))
                           ? (1)
@@ -70,10 +90,10 @@ bool Field::checkDataForType(const DataType type, const std::string& data) {
                  i < s.size(); i++) {
                 if (!std::isdigit(s[i])) {
                     if (s[i] == '.') {
-                        if (foundPoint) {
+                        if (found_point) {
                             return false;
                         }
-                        foundPoint = true;
+                        found_point = true;
                     }
                     return false;
                 }
@@ -85,15 +105,15 @@ bool Field::checkDataForType(const DataType type, const std::string& data) {
 }
 
 std::vector<std::string> split(const std::string& s, const char sep) {
-    int cnt = 0;
+    int siz = 1;
     std::vector<std::string> res;
-    res.resize(cnt + 1);
+    res.resize(siz);
 
-    for (auto& i : s) {
+    for (auto& i : s.substr(0, s.size() - 1)) {
         if (i == sep) {
-            res.resize(++cnt);
+            res.resize(++siz);
         } else {
-            res[cnt].push_back(i);
+            res[siz - 1].push_back(i);
         }
     }
 
@@ -102,21 +122,20 @@ std::vector<std::string> split(const std::string& s, const char sep) {
 
 std::set<FieldConstraint> Field::checkConstraints(
     const std::string& constraints) {
-    // TODO: проверить, чтобы не было дубликатов констрейнтов
-
     std::set<FieldConstraint> res;
 
     auto separated = split(constraints, ' ');
 
-    // std::cout << separated[0];
-
     for (auto& c : separated) {
-        std::cout << c << std::endl;
         if (Name2FieldConstraint.find(c) == Name2FieldConstraint.end()) {
             // the so-called constraint doesn't exists
             // TODO: throw exception?
         } else {
-            res.insert(Name2FieldConstraint[c]);
+            auto constraint = Name2FieldConstraint[c];
+            if (res.find(constraint) != res.end()) {
+                throw std::invalid_argument("Duplicate constraints");
+            }
+            res.insert(constraint);
         }
     }
 

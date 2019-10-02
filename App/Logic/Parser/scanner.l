@@ -1,17 +1,19 @@
 %{
+    #include <iostream>
     #include <stdio.h>
     #include "parser.hpp"
 
-    void yyerror(char *s) {
-      fprintf (stderr, "%s\n", s);
+    void yyerror(const char *s) {
+      //fprintf (stderr, "%s\n", s);
+      std::cerr << s << std::endl;
     }
 
     extern FILE *yyin;
     extern FILE *yyout;
-
     int lineno = 1;
     //todo: free?
     char *tmp_str = (char *) malloc(100);
+
 %}
 
 %option noyywrap
@@ -30,7 +32,6 @@ SCONST        {dquote}.*{dquote}
 
 NOT_NULL      "not"[ \t\r\f]+"null"
 PRIMARY_KEY   "primary"[ \t\r\f]+"key"
-FOREIGN_KEY   "foreign"[ \t\r\f]+"key"
 
 %%
 
@@ -58,7 +59,6 @@ FOREIGN_KEY   "foreign"[ \t\r\f]+"key"
 
 {NOT_NULL}                 { return NOT_NULL; }
 {PRIMARY_KEY}              { return PRIMARY_KEY; }
-{FOREIGN_KEY}              { return FOREIGN_KEY; }
 "unique"                   { return UNIQUE; }
 
 {ID}                       { 
@@ -70,7 +70,7 @@ FOREIGN_KEY   "foreign"[ \t\r\f]+"key"
                               sscanf(yytext, "%s", tmp_str);
                               yylval.val = tmp_str;
                               return FCONST; 
-                            }
+                           }
 
 {ICONST}                   { 
                               sscanf(yytext, "%s", tmp_str);

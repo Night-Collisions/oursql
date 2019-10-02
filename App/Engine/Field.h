@@ -13,7 +13,6 @@ DataType String2DataType(const std::string&);
 
 enum class FieldConstraint : unsigned int {
     primary_key,
-    foreign_key,
     not_null,
     unique,
     Count
@@ -26,12 +25,10 @@ class Field {
    public:
     Field(std::string name, const DataType type,
           const std::set<FieldConstraint>& constraints = {})
-        : name_(std::move(name)), type_(type), constraint_(constraints) {}
-
-    Field(std::string name, const DataType type, const std::string& constraints)
-        : name_(std::move(name)),
-          type_(type),
-          constraint_(checkConstraints(constraints)) {}
+        : name_(std::move(name)), type_(type) {
+        checkConstraint(constraints);
+        constraint_ = constraints;
+    }
 
     [[nodiscard]] DataType getType() const { return type_; };
     [[nodiscard]] std::string getName() const { return name_; };
@@ -42,9 +39,12 @@ class Field {
 
     void addData(const std::string&);
 
+    static std::set<FieldConstraint> checkConstraints(
+        const std::string& constraints);
+
    private:
-    static bool checkDataForType(const DataType type, const std::string& data);
-    std::set<FieldConstraint> checkConstraints(const std::string& constraints);
+    static void checkConstraint(const std::set<FieldConstraint>&);
+    bool checkDataForType(const DataType type, const std::string& data);
 
     std::string name_;
     DataType type_;
