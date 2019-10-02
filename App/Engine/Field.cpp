@@ -1,15 +1,16 @@
 #include "Field.h"
 
 #include <array>
-#include <map>
 #include <iostream>
+#include <map>
 
 //---DataType---//
 std::array<std::string, static_cast<unsigned int>(DataType::Count)>
     DataType2Names = {"int", "real", "text"};
-std::map<std::string, DataType> Name2DataType = {{DataType2Names[0], DataType::integer},
-                                                 {DataType2Names[1], DataType::real},
-                                                 {DataType2Names[2], DataType::text}};
+std::map<std::string, DataType> Name2DataType = {
+    {DataType2Names[0], DataType::integer},
+    {DataType2Names[1], DataType::real},
+    {DataType2Names[2], DataType::text}};
 
 std::string DataType2String(const DataType& type) {
     return DataType2Names[static_cast<unsigned int>(type)];
@@ -20,17 +21,21 @@ DataType String2DataType(const std::string& s) { return Name2DataType.at(s); }
 
 //---FieldConstraint---//
 std::array<std::string, static_cast<unsigned int>(FieldConstraint::Count)>
-    FieldConstraint2Names = {"primary key", "foreign key", "not null", "unique"};
-std::map<std::string, FieldConstraint> Name2FieldConstraint = {{FieldConstraint2Names[0], FieldConstraint::primary_key},
-                                                 {FieldConstraint2Names[1], FieldConstraint::foreign_key},
-                                                 {FieldConstraint2Names[2], FieldConstraint::not_null},
-                                                 {FieldConstraint2Names[3], FieldConstraint::unique}};
+    FieldConstraint2Names = {"primary key", "foreign key", "not null",
+                             "unique"};
+std::map<std::string, FieldConstraint> Name2FieldConstraint = {
+    {FieldConstraint2Names[0], FieldConstraint::primary_key},
+    {FieldConstraint2Names[1], FieldConstraint::foreign_key},
+    {FieldConstraint2Names[2], FieldConstraint::not_null},
+    {FieldConstraint2Names[3], FieldConstraint::unique}};
 
 std::string FieldConstraint2String(const FieldConstraint& c) {
     return FieldConstraint2Names[static_cast<unsigned int>(c)];
 }
 
-FieldConstraint String2FieldConstraint(const std::string& s) { return Name2FieldConstraint.at(s); }
+FieldConstraint String2FieldConstraint(const std::string& s) {
+    return Name2FieldConstraint.at(s);
+}
 //------//
 
 void Field::addData(const std::string& data) {
