@@ -85,15 +85,15 @@ bool Field::checkDataForType(const DataType type, const std::string& data) {
 }
 
 std::vector<std::string> split(const std::string& s, const char sep) {
-    int cnt = 0;
+    int siz = 1;
     std::vector<std::string> res;
-    res.resize(cnt + 1);
+    res.resize(siz);
 
-    for (auto& i : s) {
+    for (auto& i : s.substr(0, s.size() - 1)) {
         if (i == sep) {
-            res.resize(++cnt);
+            res.resize(++siz);
         } else {
-            res[cnt].push_back(i);
+            res[siz - 1].push_back(i);
         }
     }
 
@@ -111,7 +111,7 @@ std::set<FieldConstraint> Field::checkConstraints(
     // std::cout << separated[0];
 
     for (auto& c : separated) {
-        std::cout << c << std::endl;
+       // std::cout << c << std::endl;
         if (Name2FieldConstraint.find(c) == Name2FieldConstraint.end()) {
             // the so-called constraint doesn't exists
             // TODO: throw exception?
