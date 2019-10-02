@@ -31,12 +31,9 @@ bool operator==(const Table& a, const Table& b) {
         }
     }
     return true;
-
 }
 
-TEST(Parser_empty, semi) {
-    ASSERT_TRUE(parse_string(";"));
-}
+TEST(Parser_empty, semi) { ASSERT_TRUE(parse_string(";")); }
 
 TEST(Parser_CreateTable, SimpleTest) {
     ASSERT_FALSE(parse_string("create table MyTable(Name text);\n"));
@@ -74,6 +71,20 @@ TEST(Parser_CreateTable, EqDataType) {
 
 TEST(Parser_CreateTable, WrongStyleComand) {
     ASSERT_FALSE(parse_string("Create tAbLE MyTable(i Int);\n"));
+}
+
+TEST(Parser_CreateTable, SameParam) {
+    ASSERT_TRUE(parse_string("create table MyTable(a int, a text);\n"));
+}
+
+TEST(Parser_CreateTable, TwoPrimaryKey) {
+    ASSERT_TRUE(parse_string(
+        "create table MyTable(a int primary key, b text primary key);\n"));
+}
+
+TEST(Parser_CreateTable, TwoSamyContr) {
+    ASSERT_TRUE(parse_string(
+        "create table MyTable(a int unique unique);\n"));
 }
 
 TEST(Parser_CreateTable, WrongDataType1) {
@@ -143,14 +154,12 @@ TEST(Parser_CreateTable, WithWalue) {
 }
 
 TEST(Parser_CreateTable, Constraint) {
-    ASSERT_FALSE(
-        parse_string("create table a(b int not null, h int primary key, c real "
-                     "foreign key, d text unique);\n"));
+    ASSERT_FALSE(parse_string(
+        "create table a(b int not null, h int primary key, d text unique);\n"));
     auto table = getTable();
     Table expect_table(
         "a", {{"b", DataType::integer, {FieldConstraint::not_null}},
               {"h", DataType::integer, {FieldConstraint::primary_key}},
-              {"c", DataType::real, {FieldConstraint::foreign_key}},
               {"d", DataType::text, {FieldConstraint::unique}}});
     EXPECT_EQ(table, expect_table);
 }
@@ -177,16 +186,14 @@ TEST(Parser_CreateTable, WrongConstraint) {
 }
 
 TEST(Parser_CreateTable, MixedConstraint) {
-    ASSERT_FALSE(
-        parse_string("create table a(b int, h int primary key unique, c real "
-                     "foreign KEY, d text);\n"));
+    ASSERT_FALSE(parse_string(
+        "create table a(b int, h int primary key unique, d text);\n"));
     auto table = getTable();
     Table expect_table(
         "a", {{"b", DataType::integer},
               {"h",
                DataType::integer,
                {FieldConstraint::primary_key, FieldConstraint::unique}},
-              {"c", DataType::real, {FieldConstraint::foreign_key}},
               {"d", DataType::text}});
     EXPECT_EQ(table, expect_table);
 }
@@ -282,4 +289,3 @@ TEST(Parser_ShowCreateTable, ConstraintAsName2) {
 TEST(Parser_ShowCreateTable, ConstraintAsName3) {
     ASSERT_TRUE(parse_string("create table a(primary key int);\n"));
 }
-

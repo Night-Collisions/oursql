@@ -18,7 +18,7 @@
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA
 %token ID ICONST FCONST SCONST
 %token INT REAL TEXT
-%token NOT_NULL PRIMARY_KEY FOREIGN_KEY UNIQUE
+%token NOT_NULL PRIMARY_KEY UNIQUE
 
 %start expression
 
@@ -65,8 +65,7 @@ constraints: constraint |
     constraints constraint { strcat($$, $2); };
 
 constraint: NOT_NULL { strcpy($$, "not_null "); } | 
-    PRIMARY_KEY { strcpy($$, "primary_key "); }| 
-    FOREIGN_KEY { strcpy($$, "foreign_key "); } | 
+    PRIMARY_KEY { strcpy($$, "primary_key "); }|
     UNIQUE { strcpy($$, "unique "); }; 
 
 type: INT { strcpy($$, "int"); } |

@@ -1,8 +1,10 @@
 #include "Field.h"
 
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <map>
+#include <set>
 
 //---DataType---//
 std::array<std::string, static_cast<unsigned int>(DataType::Count)>
@@ -21,13 +23,11 @@ DataType String2DataType(const std::string& s) { return Name2DataType.at(s); }
 
 //---FieldConstraint---//
 std::array<std::string, static_cast<unsigned int>(FieldConstraint::Count)>
-    FieldConstraint2Names = {"primary_key", "foreign_key", "not_null",
-                             "unique"};
+    FieldConstraint2Names = {"primary_key", "not_null", "unique"};
 std::map<std::string, FieldConstraint> Name2FieldConstraint = {
     {FieldConstraint2Names[0], FieldConstraint::primary_key},
-    {FieldConstraint2Names[1], FieldConstraint::foreign_key},
-    {FieldConstraint2Names[2], FieldConstraint::not_null},
-    {FieldConstraint2Names[3], FieldConstraint::unique}};
+    {FieldConstraint2Names[1], FieldConstraint::not_null},
+    {FieldConstraint2Names[2], FieldConstraint::unique}};
 
 std::string FieldConstraint2String(const FieldConstraint& c) {
     return FieldConstraint2Names[static_cast<unsigned int>(c)];
@@ -43,6 +43,25 @@ void Field::addData(const std::string& data) {
         throw 1;
     }
     data_.push_back(data);
+}
+
+void Field::checkConstraint(const std::set<FieldConstraint>& constraint) {
+    std::array<std::set<FieldConstraint>,
+               static_cast<unsigned int>(FieldConstraint::Count)>
+        incompatible = {std::set<FieldConstraint>{},
+                        std::set<FieldConstraint>{},
+                        std::set<FieldConstraint>{}};
+    for (const auto& i : constraint) {
+        std::set<FieldConstraint> buff;
+        std::set_intersection(
+            incompatible[static_cast<unsigned int>(i)].begin(),
+            incompatible[static_cast<unsigned int>(i)].end(),
+            constraint.begin(), constraint.end(),
+            std::inserter(buff, buff.begin()));
+        if (buff.size() > 0) {
+            throw 1;
+        }
+    }
 }
 
 bool Field::checkDataForType(const DataType type, const std::string& data) {
@@ -113,7 +132,11 @@ std::set<FieldConstraint> Field::checkConstraints(
             // the so-called constraint doesn't exists
             // TODO: throw exception?
         } else {
-            res.insert(Name2FieldConstraint[c]);
+            auto constraint = Name2FieldConstraint[c];
+            if (res.find(constraint) == res.end()) {
+                throw 1;
+            }
+            res.insert(constraint);
         }
     }
 
