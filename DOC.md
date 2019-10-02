@@ -45,7 +45,9 @@ create table a( tmp int unique primary key, abc real);
 Показывает оператор create table, который создал данную таблицу. 
 
 
-# show tables;
+# show tables
+
+Синтаксис: show tables;
 
 Выдает список существующих таблиц.
 
