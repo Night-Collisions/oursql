@@ -6,11 +6,11 @@
 
 TEST(Engine_Exists, SimpleTest) {
     std::string name = "Engine_Exists_SimpleTest";
-    std::ofstream(name.c_str()).close();
-    std::ofstream((name + "_meta").c_str()).close();
+    std::ofstream(getPathToTable(name)).close();
+    std::ofstream(getPathToTableMeta(name)).close();
     EXPECT_TRUE(exists(name));
-    std::remove(name.c_str());
-    std::remove((name + "_meta").c_str());
+    std::remove(getPathToTable(name).c_str());
+    std::remove(getPathToTableMeta(name).c_str());
 }
 
 TEST(Engine_Exists, NotExists) {
@@ -20,13 +20,13 @@ TEST(Engine_Exists, NotExists) {
 
 TEST(Engine_Drop, SimpleTest) {
     std::string name = "Engine_Drop_SimpleTest";
-    std::ofstream(name.c_str()).close();
-    std::ofstream((name + "_meta").c_str()).close();
+    std::ofstream(getPathToTable(name)).close();
+    std::ofstream(getPathToTableMeta(name)).close();
     EXPECT_TRUE(exists(name));
     EXPECT_FALSE(drop(name));
     EXPECT_FALSE(exists(name));
-    EXPECT_FALSE(static_cast<bool>(std::ifstream(name)));
-    EXPECT_FALSE(static_cast<bool>(std::ifstream(name + "_meta")));
+    EXPECT_FALSE(static_cast<bool>(std::ifstream(getPathToTable(name).c_str())));
+    EXPECT_FALSE(static_cast<bool>(std::ifstream(getPathToTableMeta(name).c_str())));
 }
 
 TEST(Engine_Drop, NotExists) {
@@ -37,8 +37,8 @@ TEST(Engine_Drop, NotExists) {
 
 TEST(Engine_Drop, DoubleDrop) {
     std::string name = "Engine_Drop_DoubleDrop";
-    std::ofstream(name.c_str()).close();
-    std::ofstream((name + "_meta").c_str()).close();
+    std::ofstream(getPathToTable(name)).close();
+    std::ofstream(getPathToTableMeta(name)).close();
     ASSERT_FALSE(drop(name));
     EXPECT_TRUE(drop(name));
 }
@@ -54,7 +54,7 @@ TEST(Engine_Create, SimpleTest) {
     };
     create(Table(name, fields));
 
-    std::ifstream metafile(name + "_meta");
+    std::ifstream metafile(getPathToTableMeta(name));
     std::stringstream sstream;
     sstream << metafile.rdbuf();
     const char* expected = "{\"name\":\"Engine_Create_SimpleTest\",\"fields\":["

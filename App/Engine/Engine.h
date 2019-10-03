@@ -21,4 +21,8 @@ bool drop(const std::string& name);
 
 bool exists(const std::string& name);
 
+std::string getPathToTable(const std::string& name);
+
+std::string getPathToTableMeta(const std::string& name);
+
 #endif

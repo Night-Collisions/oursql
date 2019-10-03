@@ -1,10 +1,10 @@
 #include "Engine.h"
 
-static inline std::string getPathToTable(const std::string& name) {
+std::string getPathToTable(const std::string& name) {
     return "DataBD/" + name;
 }
 
-static inline std::string getPathToTableMeta(const std::string& name) {
+std::string getPathToTableMeta(const std::string& name) {
     return getPathToTable(name) + "_meta";
 }
 
