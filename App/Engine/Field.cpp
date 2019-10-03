@@ -20,7 +20,6 @@ std::string DataType2String(const DataType& type) {
 }
 
 DataType String2DataType(const std::string& s) { return Name2DataType.at(s); }
-//------//
 
 //---FieldConstraint---//
 std::array<std::string, static_cast<unsigned int>(FieldConstraint::Count)>
