@@ -43,7 +43,7 @@ TEST(AGT, TEST_6) {
     buffer_on = 1;
     parse_string("create table a(b int not null, c real unique, d text primary key); show create table a;");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE a(\n    b int  not null,\n    c real unique,\n    d text primary key\n);");
+    EXPECT_EQ(buffer, "CREATE TABLE a(\n    b int not null,\n    c real unique,\n    d text primary key\n);");
 }
 
 TEST(AGT, TEST_7) {
@@ -57,7 +57,7 @@ TEST(AGT, TEST_8) {
     buffer_on = 1;
     parse_string("show ghgh;");
     clearDB();
-    EXPECT_EQ(buffer, "syntax error, unexpected ID, expecting CREATE or TABLES\nsyntax error, unexpected $end, expecting SEMI\n");
+    EXPECT_EQ(buffer, "syntax error, unexpected ID, expecting CREATE\nsyntax error, unexpected $end, expecting SEMI\n");
 }
 
 TEST(AGT, TEST_9) {
@@ -141,14 +141,14 @@ TEST(AGT, TEST_20) {
     buffer_on = 1;
     parse_string("create table a(b text not null unique primary key); show create table a;");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE a(\n    b text primary key  not null unique\n);");
+    EXPECT_EQ(buffer, "CREATE TABLE a(\n    b text primary key not null unique\n);");
 }
 
 TEST(AGT, TEST_21) {
     buffer_on = 1;
     parse_string("CREATE TABLE A(C INT NOT NULL); SHOW CREATE TABLE A;");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE A(\n    C int  not null\n);");
+    EXPECT_EQ(buffer, "CREATE TABLE A(\n    C int not null\n);");
 }
 
 TEST(AGT, TEST_22) {
@@ -156,5 +156,12 @@ TEST(AGT, TEST_22) {
     parse_string("create table a(b text primary key, c int primary key);");
     clearDB();
     EXPECT_EQ(buffer, "Primary key already exists\nPrimary key already exists\n");
+}
+
+TEST(AGT, TEST_23) {
+    buffer_on = 1;
+    parse_string("create table rt(a int);");
+    clearDB();
+    EXPECT_EQ(buffer, "");
 }
 

@@ -28,6 +28,10 @@ ADD_FLEX_BISON_DEPENDENCY(SCANNER PARSER)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 endmacro()
 
+macro(init WAY)
+    file(MAKE_DIRECTORY ${WAY}/DataBD)
+endmacro()
+
 include(FetchContent)
 
 FetchContent_Declare(
