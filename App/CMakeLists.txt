@@ -4,14 +4,14 @@ set(HEADERS
         Engine/Field.h
         Engine/Table.h
         Logic/TableManager.h
+        Engine/Engine.h
         )
 
 set(DEFINITIONS
         Engine/Field.cpp
         Engine/Table.cpp
         Logic/TableManager.cpp
-        Engine/Engine.cpp
-        Engine/Engine.h)
+        Engine/Engine.cpp)
 
 assemble_parser(Logic/Parser/)
 
