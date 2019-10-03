@@ -1,25 +1,27 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "Test.h"
 #include "parser.cpp"
 
 TEST(AGT, TEST_1) {
-    parse_string("show tables;");
-    //  TODO: фигня для провекри ответа
+    buffer_on = 1;
+    parse_string("create table();");
+    clearDB();
+    EXPECT_EQ(buffer, "syntax error, unexpected LPAREN, expecting ID\nsyntax error, unexpected $end, expecting SEMI\n");
 }
 
 TEST(AGT, TEST_2) {
-    parse_string("drop table a;");
-    //  TODO: фигня для провекри ответа
+    buffer_on = 1;
+    parse_string("create table a(b int);");
+    clearDB();
+    EXPECT_EQ(buffer, "");
 }
 
 TEST(AGT, TEST_3) {
-    parse_string("create table b ( a real);");
-    //  TODO: фигня для провекри ответа
-}
-
-TEST(AGT, TEST_4) {
-    parse_string("create");
-    //  TODO: фигня для провекри ответа
+    buffer_on = 1;
+    parse_string("create table a(b int not null);");
+    clearDB();
+    EXPECT_EQ(buffer, "");
 }
 

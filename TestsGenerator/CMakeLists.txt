@@ -8,7 +8,7 @@ set(DEFINITIONS
 
 assemble_parser(../App/Logic/Parser/)
 
-add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
+add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} ../Tests/Test.cpp ../Tests/Test.h)
 
 target_link_libraries(${PROJECT_NAME} OurSql_APP_SURSE)
 

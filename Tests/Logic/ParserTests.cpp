@@ -12,14 +12,15 @@ TEST(Parser_CreateTable, SimpleTest) {
     ASSERT_FALSE(parse_string("create table MyTable(Name text);\n"));
     auto table = getTable();
     Table expect_table("MyTable", {{"Name", DataType::text}});
+    clearDB();
     EXPECT_EQ(table, expect_table);
 }
 
 TEST(Parser_CreateTable, UPCASE) {
-    parse_string("CREATE TABLE MyTablE(DatA REAL);\n");
     ASSERT_FALSE(parse_string("CREATE TABLE MyTablE(DatA REAL);\n"));
     auto table = getTable();
     Table expect_table("MyTablE", {{"DatA", DataType::real}});
+    clearDB();
     EXPECT_EQ(table, expect_table);
 }
 
@@ -31,6 +32,7 @@ TEST(Parser_CreateTable, AnySpase) {
     Table expect_table("a", {{"f", DataType::integer},
                              {"h", DataType::real},
                              {"E", DataType::text}});
+    clearDB();
     EXPECT_EQ(table, expect_table);
 }
 
@@ -39,6 +41,7 @@ TEST(Parser_CreateTable, EqDataType) {
     auto table = getTable();
     Table expect_table("a",
                        {{"b", DataType::integer}, {"h", DataType::integer}});
+    clearDB();
     EXPECT_EQ(table, expect_table);
 }
 
@@ -133,6 +136,7 @@ TEST(Parser_CreateTable, Constraint) {
         "a", {{"b", DataType::integer, {FieldConstraint::not_null}},
               {"h", DataType::integer, {FieldConstraint::primary_key}},
               {"d", DataType::text, {FieldConstraint::unique}}});
+    clearDB();
     EXPECT_EQ(table, expect_table);
 }
 
@@ -145,6 +149,7 @@ TEST(Parser_CreateTable, MultyConstraint) {
                DataType::integer,
                {FieldConstraint::not_null, FieldConstraint::primary_key,
                 FieldConstraint::unique}}});
+    clearDB();
     EXPECT_EQ(table, expect_table);
 }
 
@@ -167,6 +172,7 @@ TEST(Parser_CreateTable, MixedConstraint) {
                DataType::integer,
                {FieldConstraint::primary_key, FieldConstraint::unique}},
               {"d", DataType::text}});
+    clearDB();
     EXPECT_EQ(table, expect_table);
 }
 

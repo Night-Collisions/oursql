@@ -1,7 +1,7 @@
 #include "Engine.h"
 
 static inline std::string getPathToTable(const std::string& name) {
-    return name;
+    return "DataBD/" + name;
 }
 
 static inline std::string getPathToTableMeta(const std::string& name) {

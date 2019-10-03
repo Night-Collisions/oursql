@@ -13,7 +13,7 @@
 
     int logging = 0;
     std::string buffer;
-    buffer_on = 0;
+    int buffer_on = 0;
 %}
 
 %error-verbose

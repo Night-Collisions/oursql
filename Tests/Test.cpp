@@ -25,3 +25,20 @@ bool operator==(const Table& a, const Table& b) {
     }
     return true;
 }
+
+void clearDB() {
+    std::string command;
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+    const char *delete_command = "rmdir /Q /S ";
+    const char *create_dir_command = "md ";
+#else
+#endif
+    
+    std::string name = "DataBD";
+    
+    command = delete_command + name;
+    std::system(command.c_str());
+
+    command = create_dir_command + name;
+    std::system(command.c_str());
+}

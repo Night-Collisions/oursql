@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 
+#include "../Tests/Test.h"
 #include "parser.cpp"
 
 const std::string file = "../../Tests/AutoGenTests.cpp";
@@ -37,6 +38,7 @@ void createTestsFile() {
     f_out << "#include <gmock/gmock.h>\n"
              "#include <gtest/gtest.h>\n"
              "\n"
+             "#include \"Test.h\""
              "#include \"parser.cpp\""
              "\n\n";
     f_out.close();
@@ -56,14 +58,25 @@ unsigned int countTest(std::ifstream& f) {
 void createTest(const std::string& class_test, unsigned int id,
                 const std::string& request, const std::string& answer) {
     std::ofstream f(file, std::ios::app);
+    std::string expect;
+    for (const auto& i : answer) {
+        if (i != '\n') {
+            expect.push_back(i);
+        } else {
+            expect.append("\\n");
+        }
+    }
     f << "TEST(" << class_test << ", TEST_" << id << ") {\n"
+      << "    buffer_on = 1;\n"
       << "    parse_string(\"" << request << "\");\n"
-      << "    //  TODO: фигня для провекри ответа\n"
+      << "    clearDB();\n"
+      << "    EXPECT_EQ(buffer, \"" << expect << "\");\n"
       << "}\n\n";
     f.close();
 }
 
 int main() {
+    buffer_on = 1;
     std::string request;
     std::string answer;
     std::string s;
@@ -88,8 +101,10 @@ int main() {
         } else {
             request = s;
             parse_string(request.c_str());
-            // TODO: read answer
+            answer = buffer;
+            std::cout << answer << std::endl;
         }
+        clearDB();
         std::getline(std::cin, s);
     }
     return 0;

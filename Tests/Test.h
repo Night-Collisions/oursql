@@ -8,4 +8,6 @@ bool operator==(const Field& a, const Field& b);
 
 bool operator==(const Table& a, const Table& b);
 
+void clearDB();
+
 #endif
