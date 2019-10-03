@@ -1,4 +1,4 @@
-#include "test.h"
+#include "Test.h"
 
 bool operator==(const Field& a, const Field& b) {
     return a.getName() == b.getName() && a.getType() == b.getType() &&
