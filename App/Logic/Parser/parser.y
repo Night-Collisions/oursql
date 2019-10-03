@@ -13,6 +13,7 @@
 
     int logging = 0;
     std::string buffer;
+    buffer_on = 0;
 %}
 
 %error-verbose
@@ -55,7 +56,7 @@ statement: create body {
             buffer = std::string(showCreateTable(showCreate($1)));
             fprintf(yyout, "%s", buffer.c_str());
         } catch(std::exception& e) {
-            buffer += std::string(e.what()) + " ";
+            buffer += std::string(e.what()) + "\n";
             yyerror(e.what());
             yyclearin;
         }
@@ -66,7 +67,7 @@ create: CREATE TABLE id {
         initTable($3);
 
     } catch(std::exception& e) {
-        buffer += std::string(e.what()) + " ";
+        buffer += std::string(e.what()) + "\n";
         yyerror(e.what());
         yyerrok;
         yyclearin;
@@ -82,7 +83,7 @@ drop: DROP TABLE id {
     try {
             dropTable($3);
         } catch(std::exception& e) {
-            buffer += std::string(e.what()) + " ";
+            buffer += std::string(e.what()) + "\n";
             yyerror(e.what());
             yyerrok;
             yyclearin;
@@ -96,7 +97,7 @@ variable: id type {
     try {
         addField($1, $2, "");
     } catch (std::invalid_argument& e) {
-        buffer += std::string(e.what()) + " ";
+        buffer += std::string(e.what()) + "\n";
         yyerror(e.what());
         yyerrok;
         yyclearin;
@@ -105,7 +106,7 @@ variable: id type {
     try {
         addField($1, $2, $3);
     } catch (std::invalid_argument& e) {
-        buffer += std::string(e.what())  + " ";
+        buffer += std::string(e.what())  + "\n";
         yyerror(e.what());
         yyerrok;
         yyclearin;
@@ -128,14 +129,17 @@ id: ID { strcpy($$, yylval.ident);}
 %%
 
 void yyerror(const char *s) {
-    buffer += std::string(s) + " ";
-    fprintf (stderr, "%s\n", s);
+    buffer += std::string(s) + "\n";
+    if (!buffer_on) { 
+        fprintf (stderr, "%s\n", s);
+    }
 }
 
 void set_input_string(const char* in);
 void end_lexical_scan(void);
 
 int parse_string(const char* in) {
+  buffer = "";
   set_input_string(in);
   int rv = yyparse();
   end_lexical_scan();
@@ -148,4 +152,8 @@ void set_logging(int i) {
 
 void clear_buffer() {
     buffer = "";
- }
+}
+
+void use_buffer(int k) {
+    buffer_on = 1;
+}
