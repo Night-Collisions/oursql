@@ -56,8 +56,7 @@ TEST(Parser_CreateTable, TwoPrimaryKey) {
 }
 
 TEST(Parser_CreateTable, TwoSamyContr) {
-    ASSERT_FALSE(parse_string(
-        "create table MyTable(a int unique unique);\n"));
+    ASSERT_FALSE(parse_string("create table MyTable(a int unique unique);\n"));
 }
 
 TEST(Parser_CreateTable, WrongDataType1) {
