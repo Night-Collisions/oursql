@@ -1,6 +1,8 @@
 #ifndef OURSQL_APP_ENGINE_ENGINE_H_
 #define OURSQL_APP_ENGINE_ENGINE_H_
 
+#define RAPIDJSON_HAS_STDSTRING 1
+
 #include <fstream>
 #include <sstream>
 #include <cstdio>

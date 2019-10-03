@@ -8,8 +8,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-set(ALL_TEST)
-
 macro(package_set_test TESTNAME)
     #data_directory(${TESTNAME} Tests/Data)
     target_link_libraries(${TESTNAME} gtest gmock gtest_main OurSql_APP_SURSE)
@@ -21,7 +19,7 @@ macro(package_set_test TESTNAME)
 endmacro()
 
 macro(package_add_test_with_parser TESTNAME)
-    add_executable(${TESTNAME} ${ARGN} ${FLEX_SCANNER_OUTPUTS} test.h)
+    add_executable(${TESTNAME} ${ARGN} ${FLEX_SCANNER_OUTPUTS} Test.h)
     package_set_test(${TESTNAME} ${ARGN})
 endmacro()
 
@@ -35,4 +33,4 @@ assemble_parser(../App/Logic/Parser/)
 package_add_test_with_parser(Logic Logic/ParserTests.cpp)
 package_add_test(Engine Engine/EngineTests.cpp)
 
-package_add_test_with_parser(ALL_TESTS ${ALL_TEST})
+package_add_test_with_parser(AutoGen AutoGenTests.cpp)
