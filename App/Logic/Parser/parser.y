@@ -65,6 +65,7 @@ create: CREATE TABLE id {
 
     } catch(std::exception& e) {
         yyerror(e.what());
+        yyerrok;
         yyclearin;
     } } ;
 
@@ -79,6 +80,7 @@ drop: DROP TABLE id {
             dropTable($3);
         } catch(std::exception& e) {
             yyerror(e.what());
+            yyerrok;
             yyclearin;
         }};
 
@@ -91,6 +93,7 @@ variable: id type {
         addField($1, $2, "");
     } catch (std::invalid_argument& e) {
         yyerror(e.what());
+        yyerrok;
         yyclearin;
     }
 } | id type constraints {
@@ -98,6 +101,7 @@ variable: id type {
         addField($1, $2, $3);
     } catch (std::invalid_argument& e) {
         yyerror(e.what());
+        yyerrok;
         yyclearin;
     }
 };

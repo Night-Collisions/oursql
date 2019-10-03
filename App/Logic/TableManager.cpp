@@ -10,14 +10,15 @@ static Table* table = nullptr;
 Table getTable() { return *table; }
 
 void initTable(char* name) {
-
     destroyTable();
+
     table = new Table();
     if (!exists(std::string(name))) {
+
         table->setName(std::string(name));
     } else {
-        throw QueryException("Table '" + getTable().getName() +
-            "' already exists");
+        throw QueryException("Table '" + std::string(name) +
+                             "' already exists");
     }
 }
 
@@ -37,17 +38,19 @@ DataType string2Type(const std::string& s) {
 }
 
 void addField(char* name, char* type, char* constraints) {
+    if (table == nullptr) {
+        return;
+    }
     auto s = Field::checkConstraints(std::string(constraints));
-    // if (!table->fieldExists(std::string(name))) {
     Field f((std::string(name)), string2Type(std::string(type)), s);
     table->addField(f);
-    // } else {
-    // TODO: такая переменная уже есть
-    // }
+
 }
 
-void destroyTable() { delete table; }
-
+void destroyTable() {
+    delete table;
+    table = nullptr;
+}
 
 const char* showCreateTable(const std::string& response) {
     if (response.empty()) {
