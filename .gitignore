@@ -9,6 +9,9 @@
 !App
 !App/**/
 
+!TestsGenerator
+!TestsGenerator/**/
+
 !**/CMakeLists.txt
 !**/*.cpp
 !**/*.tpp
