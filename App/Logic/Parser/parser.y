@@ -25,14 +25,14 @@
 %start expression
 
 %type <ident> id ID
-%type <constraint_str> constraints constraint 
+%type <constraint_str> constraints constraint
 %type <type> INT REAL TEXT type
 
 %union {
     char constraint_str[100];
     char type[20];
     char ident[20];
-	char *val; 
+	char *val;
     FILE *response;
 }
 
@@ -71,12 +71,12 @@ variable: id type {
     }
 };
 
-constraints: constraint | 
+constraints: constraint |
     constraints constraint { strcat($$, $2); };
 
-constraint: NOT_NULL { strcpy($$, "not_null "); } | 
+constraint: NOT_NULL { strcpy($$, "not_null "); } |
     PRIMARY_KEY { strcpy($$, "primary_key "); }|
-    UNIQUE { strcpy($$, "unique "); }; 
+    UNIQUE { strcpy($$, "unique "); };
 
 type: INT { strcpy($$, "int"); } |
         REAL { strcpy($$, "real"); } |
