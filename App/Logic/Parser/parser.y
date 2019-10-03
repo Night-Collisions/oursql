@@ -58,9 +58,8 @@ statement: create body {
         } catch(std::exception& e) {
             buffer += std::string(e.what()) + "\n";
             yyerror(e.what());
-            yyclearin;
         }
-    } | show | drop | error SEMI {yyerrok; yyclearin;};
+    } | show | drop | error SEMI {yyerrok; };
 
 create: CREATE TABLE id {     
     try {
@@ -70,7 +69,6 @@ create: CREATE TABLE id {
         buffer += std::string(e.what()) + "\n";
         yyerror(e.what());
         yyerrok;
-        yyclearin;
     } } ;
 
 show: SHOW TABLES ;
@@ -86,7 +84,6 @@ drop: DROP TABLE id {
             buffer += std::string(e.what()) + "\n";
             yyerror(e.what());
             yyerrok;
-            yyclearin;
         }};
 
 body: LPAREN decl RPAREN;
@@ -100,7 +97,6 @@ variable: id type {
         buffer += std::string(e.what()) + "\n";
         yyerror(e.what());
         yyerrok;
-        yyclearin;
     }
 } | id type constraints {
     try {
@@ -109,7 +105,6 @@ variable: id type {
         buffer += std::string(e.what())  + "\n";
         yyerror(e.what());
         yyerrok;
-        yyclearin;
     }
 };
 

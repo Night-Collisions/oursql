@@ -50,16 +50,16 @@ TEST(Parser_CreateTable, WrongStyleComand) {
 }
 
 TEST(Parser_CreateTable, SameParam) {
-    ASSERT_TRUE(parse_string("create table MyTable(a int, a text);\n"));
+    ASSERT_FALSE(parse_string("create table MyTable(a int, a text);\n"));
 }
 
 TEST(Parser_CreateTable, TwoPrimaryKey) {
-    ASSERT_TRUE(parse_string(
+    ASSERT_FALSE(parse_string(
         "create table MyTable(a int primary key, b text primary key);\n"));
 }
 
 TEST(Parser_CreateTable, TwoSamyContr) {
-    ASSERT_TRUE(parse_string("create table MyTable(a int unique unique);\n"));
+    ASSERT_FALSE(parse_string("create table MyTable(a int unique unique);\n"));
 }
 
 TEST(Parser_CreateTable, WrongDataType1) {

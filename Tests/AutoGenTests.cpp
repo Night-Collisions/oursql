@@ -25,3 +25,10 @@ TEST(AGT, TEST_3) {
     EXPECT_EQ(buffer, "");
 }
 
+TEST(AGT, TEST_4) {
+    buffer_on = 1;
+    parse_string("create table a(b int); show create table a;");
+    clearDB();
+    EXPECT_EQ(buffer, "CREATE TABLE a(\n    b int\n);");
+}
+
