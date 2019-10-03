@@ -1,4 +1,5 @@
 %{
+    #include "../../App/Engine/Engine.h"
     #include "../../App/Logic/TableManager.h"
     #include <stdio.h>
     #include <string>
@@ -9,6 +10,9 @@
     extern int lineno;
     extern int yylex();
     void yyerror(const char *s);
+
+    int logging = 0;
+    char buff[50];
 %}
 
 %error-verbose
@@ -22,7 +26,7 @@
 
 %start expression
 
-%type <ident> id ID
+%type <ident> id ID create show_create
 %type <constraint_str> constraints constraint 
 %type <type> INT REAL TEXT type
 
@@ -31,7 +35,7 @@
     char type[20];
     char ident[20];
 	char *val; 
-    FILE *response;
+    
 }
 
 %%
@@ -40,16 +44,43 @@ expression: statements;
 
 statements: statement SEMI | statements statement SEMI;
 
-statement: create body |
-    show_create | show | drop | error SEMI {yyerrok; yyclearin;};
+statement: create body {
+    int res = create(getTable());
+    if (logging) {
+        fprintf(yyout, "%d", res);
+    }
+} |
+    show_create {
+        try {
+            fprintf(yyout, "%s", showCreateTable(showCreate($1)));
+        } catch(std::exception& e) {
+            yyerror(e.what());
+            yyclearin;
+        }
+    } | show | drop | error SEMI {yyerrok; yyclearin;};
 
-create: CREATE TABLE id { initTable($3); } ;
+create: CREATE TABLE id {     
+    try {
+        initTable($3);
+
+    } catch(std::exception& e) {
+        yyerror(e.what());
+        yyclearin;
+    } } ;
 
 show: SHOW TABLES ;
 
-show_create: SHOW CREATE TABLE id { };
+show_create: SHOW CREATE TABLE id { 
+    strcpy($$, $4);
+};
 
-drop: DROP TABLE id {};
+drop: DROP TABLE id {
+    try {
+            dropTable($3);
+        } catch(std::exception& e) {
+            yyerror(e.what());
+            yyclearin;
+        }};
 
 body: LPAREN decl RPAREN;
 
@@ -60,12 +91,14 @@ variable: id type {
         addField($1, $2, "");
     } catch (std::invalid_argument& e) {
         yyerror(e.what());
+        yyclearin;
     }
 } | id type constraints {
     try {
         addField($1, $2, $3);
     } catch (std::invalid_argument& e) {
         yyerror(e.what());
+        yyclearin;
     }
 };
 
@@ -92,4 +125,8 @@ int parse_string(const char* in) {
   int rv = yyparse();
   end_lexical_scan();
   return rv;
+}
+
+void set_logging(int i) {
+    logging = i;
 }

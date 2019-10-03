@@ -1,14 +1,15 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "../test.h"
+#include "../../App/Engine/Field.h"
+#include "../../App/Engine/Table.h"
 #include "parser.cpp"
 
 extern Table getTable();
 
 bool operator==(const Field& a, const Field& b) {
     return a.getName() == b.getName() && a.getType() == b.getType() &&
-           a.getConstraint() == b.getConstraint();
+        a.getConstraint() == b.getConstraint();
 }
 
 bool operator==(const Table& a, const Table& b) {

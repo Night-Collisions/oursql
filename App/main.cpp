@@ -8,6 +8,8 @@ int main() {
     int flag;
     yydebug = 0;
     yyin = stdin;
+    yyout = stdout;
+  //  setLogging(1);
     flag = yyparse();
     char resp[100];
     std::cout << flag << std::endl;

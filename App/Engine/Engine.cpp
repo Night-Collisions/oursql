@@ -107,6 +107,7 @@ bool drop(const std::string& name) {
     }
     std::remove(getPathToTable(name).c_str());
     std::remove(getPathToTableMeta(name).c_str());
+    return false;
 }
 
 bool exists(const std::string& name) {

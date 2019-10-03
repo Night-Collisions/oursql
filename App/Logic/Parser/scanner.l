@@ -4,12 +4,13 @@
     #include "parser.hpp"
 
     void yyerror(const char *s) {
-      //fprintf (stderr, "%s\n", s);
-      std::cerr << s << std::endl;
+      fprintf (stderr, "%s\n", s);
     }
 
+    
     extern FILE *yyin;
     extern FILE *yyout;
+
     int lineno = 1;
     //todo: free?
     char *tmp_str = (char *) malloc(100);

@@ -1,19 +1,24 @@
 #include "TableManager.h"
 #include "../Engine/Engine.h"
+#include "../Exceptions/QueryException.h"
 
 #include <iostream>
 #include <map>
 
 static Table* table = nullptr;
 
+Table getTable() { return *table; }
+
 void initTable(char* name) {
+
     destroyTable();
     table = new Table();
- //   if (!exists(std::string(name))) {
+    if (!exists(std::string(name))) {
         table->setName(std::string(name));
-   // } else {
-        //TODO: сказать, что такая таблица уже существует
-  //  }
+    } else {
+        throw QueryException("Table '" + getTable().getName() +
+            "' already exists");
+    }
 }
 
 DataType string2Type(const std::string& s) {
@@ -33,14 +38,26 @@ DataType string2Type(const std::string& s) {
 
 void addField(char* name, char* type, char* constraints) {
     auto s = Field::checkConstraints(std::string(constraints));
-   // if (!table->fieldExists(std::string(name))) {
-        Field f((std::string(name)), string2Type(std::string(type)), s);
-        table->addField(f);
-   // } else {
-        //TODO: такая переменная уже есть
-   // }
+    // if (!table->fieldExists(std::string(name))) {
+    Field f((std::string(name)), string2Type(std::string(type)), s);
+    table->addField(f);
+    // } else {
+    // TODO: такая переменная уже есть
+    // }
 }
 
 void destroyTable() { delete table; }
 
-Table getTable() { return *table; }
+
+const char* showCreateTable(const std::string& response) {
+    if (response.empty()) {
+        throw QueryException("Table doesn't exist");
+    } else {
+        return response.c_str();
+    }
+}
+void dropTable(const char* name) {
+    if (drop(name)) {
+        throw QueryException("Table doesn't exist");
+    }
+}
