@@ -59,7 +59,7 @@ statement: create body {
             buffer += std::string(e.what()) + "\n";
             yyerror(e.what());
         }
-    } | show | drop | error SEMI {yyerrok; };
+    } | drop | error SEMI {yyerrok; };
 
 create: CREATE TABLE id {     
     try {

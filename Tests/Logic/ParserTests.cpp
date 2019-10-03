@@ -6,7 +6,7 @@
 
 extern Table getTable();
 
-TEST(Parser_empty, semi) { ASSERT_TRUE(parse_string(";")); }
+TEST(Parser_Empty, Semi) { ASSERT_TRUE(parse_string(";")); }
 
 TEST(Parser_CreateTable, SimpleTest) {
     ASSERT_FALSE(parse_string("create table MyTable(Name text);\n"));
@@ -174,34 +174,6 @@ TEST(Parser_CreateTable, MixedConstraint) {
               {"d", DataType::text}});
     clearDB();
     EXPECT_EQ(table, expect_table);
-}
-
-TEST(Parser_ShowTables, SimpleTest) {
-    ASSERT_FALSE(parse_string("show tables;\n"));
-}
-
-TEST(Parser_ShowTables, DifferentCase) {
-    ASSERT_FALSE(parse_string("SHoW TaBLeS;\n"));
-}
-
-TEST(Parser_ShowTables, AnySpase) {
-    ASSERT_FALSE(parse_string("  \n  show    tables  \n; \n"));
-}
-
-TEST(Parser_ShowTables, WrongShow1) {
-    ASSERT_TRUE(parse_string("show table A(f int);\n"));
-}
-
-TEST(Parser_ShowTables, WrongShow2) {
-    ASSERT_TRUE(parse_string("show table A();\n"));
-}
-
-TEST(Parser_ShowTables, WrongShow3) {
-    ASSERT_TRUE(parse_string("show table A;\n"));
-}
-
-TEST(Parser_ShowTables, WrongShow4) {
-    ASSERT_TRUE(parse_string("show table;\n"));
 }
 
 TEST(Parser_DropTable, SimpleTest) {
