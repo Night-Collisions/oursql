@@ -59,8 +59,8 @@ TEST(Engine_Create, SimpleTest) {
     sstream << metafile.rdbuf();
     const char* expected = "{\"name\":\"Engine_Create_SimpleTest\",\"fields\":["
                            "{\"name\":\"column1\",\"type\":0,\"constraints\":[]},"
-                           "{\"name\":\"column2\",\"type\":1,\"constraints\":[0,2,3]},"
-                           "{\"name\":\"column3\",\"type\":2,\"constraints\":[3]}]}";
+                           "{\"name\":\"column2\",\"type\":1,\"constraints\":[0,1,2]},"
+                           "{\"name\":\"column3\",\"type\":2,\"constraints\":[2]}]}";
 
     EXPECT_EQ(expected, sstream.str());
     drop(name);
@@ -113,7 +113,7 @@ TEST(Engine_ShowCreate, SimpleTest) {
 
     const char* expected = "CREATE TABLE Engine_ShowCreate_SimpleTest(\n"
                            "    column1 int,\n"
-                           "    column2 real primary key not null unique,\n"
+                           "    column2 real primary_key not_null unique,\n"
                            "    column3 text unique\n"
                            ");";
     EXPECT_EQ(expected, showCreate(name));
