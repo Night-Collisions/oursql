@@ -9,11 +9,8 @@ int main() {
     yydebug = 0;
     yyin = stdin;
     yyout = stdout;
-  //  setLogging(1);
-  std::string a;
-  std::cin >> a;
-    parse_string(a.c_str());
-    std::cout << "TEST TEST @@ " << buffer;
-    std::cout << flag << std::endl;
+    //  setLogging(1);
+    yyparse();
+
     return 0;
 }
