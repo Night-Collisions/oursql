@@ -113,7 +113,7 @@ TEST(Engine_ShowCreate, SimpleTest) {
 
     const char* expected = "CREATE TABLE Engine_ShowCreate_SimpleTest(\n"
                            "    column1 int,\n"
-                           "    column2 real primary_key not_null unique,\n"
+                           "    column2 real primary key not null unique,\n"
                            "    column3 text unique\n"
                            ");";
     EXPECT_EQ(expected, showCreate(name));

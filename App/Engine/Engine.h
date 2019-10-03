@@ -3,6 +3,7 @@
 
 #define RAPIDJSON_HAS_STDSTRING 1
 
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <cstdio>

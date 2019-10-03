@@ -89,7 +89,9 @@ std::string showCreate(const std::string& name) {
         query.append("\n    " + field.getName() + " " + DataType2String(field.getType()));
 
         for (const auto& constraint : field.getConstraint()) {
-            query.append(" " + FieldConstraint2String(constraint));
+            std::string constraint_str = FieldConstraint2String(constraint);
+            std::replace(constraint_str.begin(), constraint_str.end(), '_', ' ');
+            query.append(" " + constraint_str);
         }
 
         if (i != table.getFields().size() - 1) {
