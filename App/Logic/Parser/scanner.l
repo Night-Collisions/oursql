@@ -2,11 +2,6 @@
     #include <iostream>
     #include <stdio.h>
     #include "parser.hpp"
-
-    void yyerror(const char *s) {
-      fprintf (stderr, "%s\n", s);
-    }
-
     
     extern FILE *yyin;
     extern FILE *yyout;
@@ -88,7 +83,7 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "\n"                       { lineno += 1; }
 [ \t\r\f]+                 ; //ignore spaces
 
-.                          { yyerror("Unknown character"); }
+.                          {  }
 
 
 %%
