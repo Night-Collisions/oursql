@@ -1,8 +1,16 @@
 #include "Table.h"
 
+#include <algorithm>
+
 void Table::addField(const Field& field) {
+    auto lowerCase = [](const std::string& s) {
+        auto data = s;
+        std::transform(data.begin(), data.end(), data.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        return data;
+    };
     for (const auto& i : fields_) {
-        if (i.getName() == field.getName()) {
+        if (lowerCase(i.getName()) == lowerCase(field.getName())) {
             throw std::invalid_argument("Field '" + i.getName() +
                                         "' already exists");
         }
