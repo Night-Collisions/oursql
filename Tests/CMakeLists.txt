@@ -24,7 +24,7 @@ macro(package_add_test_with_parser TESTNAME)
 endmacro()
 
 macro(package_add_test TESTNAME)
-    add_executable(${TESTNAME} ${ARGN})
+    add_executable(${TESTNAME} ${ARGN} Test.h Test.cpp)
     package_set_test(${TESTNAME} ${ARGN})
 endmacro()
 
