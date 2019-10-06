@@ -34,6 +34,7 @@ void QueryManager::execute(const Query& query) {
 }
 
 void QueryManager::createTable(const Query& query) {
+    //TODO: накидать исключений
     std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
 
     std::vector<Field> columns;
@@ -50,5 +51,5 @@ void QueryManager::createTable(const Query& query) {
 
     Table table(name, columns);
 
-    create(table);
+    create(table); //TODO: она что то возвращает, надо кинуть исключение
 }
