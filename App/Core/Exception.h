@@ -32,8 +32,6 @@ class Exception {
         return getStarMessage() + ": " + message_;
     }
 
-    operator bool() const { return type_ != ExceptionType::null; }
-
    protected:
     std::string getStarMessage() const {
         return "~~Error " + std::to_string(getNumber());
