@@ -14,6 +14,7 @@ class QueryManager {
    private:
     static void createTable(const Query& query);
     static void showCreateTable(const Query& query);
+    static void dropTable(const Query& query);
 
     static void checkConstraints(const std::set<FieldConstraint>& constraint);
 };
