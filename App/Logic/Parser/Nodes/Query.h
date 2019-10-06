@@ -15,7 +15,7 @@ class Query : public Node {
         }
     }
 
-    std::vector<Node*> getChildren() { return children_; }
+    [[nodiscard]] std::vector<Node*> getChildren() const { return children_; }
 
    private:
     std::vector<Node*> children_;

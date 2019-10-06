@@ -12,14 +12,12 @@ class Table {
     Table(const std::string& name, const std::vector<Field>& fields)
         : name_(name), fields_(fields) {}
 
-    void setName(const std::string& name) { name_ = name; }
+    [[deprecated]] void setName(const std::string& name) { name_ = name; }
 
-    std::string getName() const { return name_; }
-    std::vector<Field> getFields() const { return fields_; }
+    [[nodiscard]] std::string getName() const { return name_; }
+    [[nodiscard]] std::vector<Field> getFields() const { return fields_; }
 
-    void addField(const Field& field);
-
-    bool fieldExists(const std::string& name);
+    [[deprecated]] void addField(const Field& field);
 
    private:
     std::string name_;

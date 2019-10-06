@@ -22,7 +22,7 @@
 
     Query *parseTree;
     std::vector<Variable *> varList;
-    std::vector<FieldConstraint> constraintList;
+    std::set<FieldConstraint> constraintList;
 
     exc::Exception* exception;
 %}
@@ -61,10 +61,10 @@ expression:
 
 statements: 
     statement {
-        varList.resize(0);
+        varList.clear();
     } | 
     statements statement {
-        varList.resize(0);
+        varList.clear();
     };
 
 statement: 
@@ -114,15 +114,15 @@ variable:
         $$ = new Variable($1->getName(), $2);
     } | id type constraints {
         $$ = new Variable($1->getName(), $2, constraintList);
-        constraintList.resize(0);
+        constraintList.clear();
     };
 
 constraints: 
     constraint {
-        constraintList.push_back($1);
+        constraintList.insert($1);
     } | 
     constraints constraint {
-        constraintList.push_back($2);
+        constraintList.insert($2);
     };
 
 constraint: 
@@ -148,8 +148,8 @@ void set_input_string(const char* in);
 void end_lexical_scan(void);
 
 void destroy() {
-    varList.resize(0);
-    constraintList.resize(0);
+    varList.clear();
+    constraintList.clear();
 }
 
 Query* parse_string(const char* in, exc::Exception* ex) {
