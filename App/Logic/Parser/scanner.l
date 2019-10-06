@@ -1,12 +1,22 @@
 %{
     #include <iostream>
     #include <stdio.h>
+    
+    #include "../../App/Logic/Parser/Nodes/Node.h"
+    #include "../../App/Logic/Parser/Nodes/Query.h"
+    #include "../../App/Logic/Parser/Nodes/VarList.h"
+    #include "../../App/Logic/Parser/Nodes/Command.h"
+    #include "../../App/Logic/Parser/Nodes/Variable.h"
+    #include "../../App/Logic/Parser/Nodes/Ident.h"
+
+    #include "../../App/Engine/Engine.h"
     #include "parser.hpp"
     
     extern FILE *yyin;
     extern FILE *yyout;
 
     int lineno = 1;
+    long long int symbols = 0;
     //todo: free?
     char *tmp_str = (char *) malloc(100);
 
@@ -58,25 +68,23 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "unique"                   { return UNIQUE; }
 
 {ID}                       { 
-                              sscanf(yytext, "%s", yylval.ident); 
+                              sscanf(yytext, "%s", tmp_str);
+                              yylval.name = new std::string(tmp_str); 
                               return ID; 
                            }
 
 {FCONST}                   { 
-                              sscanf(yytext, "%s", tmp_str);
-                              yylval.val = tmp_str;
+
                               return FCONST; 
                            }
 
 {ICONST}                   { 
-                              sscanf(yytext, "%s", tmp_str);
-                              yylval.val = tmp_str;
+
                               return ICONST; 
                            }
                            
 {SCONST}                   {
-                              sscanf(yytext, "%s", tmp_str);
-                              yylval.val = tmp_str;
+
                               return SCONST; 
                            }        
 

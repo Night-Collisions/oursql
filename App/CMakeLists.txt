@@ -4,10 +4,17 @@ set(HEADERS
         Engine/Field.h
         Engine/Engine.h
         Engine/Table.h
+        Engine/Engine.h
         Logic/TableManager.h
-        Logic/Reciever.h
         Core/Exception.h
-        Exceptions/QueryException.h
+        Logic/Parser/Nodes/Node.h
+        Logic/Parser/Nodes/Query.h
+        Logic/Parser/Nodes/Command.h
+        Logic/Parser/Nodes/VarList.h
+        Logic/Parser/Nodes/Variable.h
+        Logic/Parser/Nodes/Ident.h
+        Logic/Parser/ParserManager.h
+        Logic/QueryManager.h
         )
 
 set(DEFINITIONS
@@ -15,9 +22,17 @@ set(DEFINITIONS
         Engine/Engine.cpp
         Engine/Table.cpp
         Logic/TableManager.cpp
-        Logic/Reciever.cpp
         Core/Exception.cpp
-        Exceptions/QueryException.cpp)
+        Engine/Engine.cpp
+        Logic/Parser/Nodes/Node.cpp
+        Logic/Parser/Nodes/Query.cpp
+        Logic/Parser/Nodes/Command.cpp
+        Logic/Parser/Nodes/VarList.cpp
+        Logic/Parser/Nodes/Variable.cpp
+        Logic/Parser/Nodes/Ident.cpp
+        Logic/Parser/ParserManager.cpp
+        Logic/QueryManager.cpp
+        )
 
 assemble_parser(Logic/Parser/)
 
