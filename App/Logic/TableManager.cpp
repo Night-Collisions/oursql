@@ -1,3 +1,4 @@
+/*
 #include "TableManager.h"
 #include "../Engine/Engine.h"
 #include "../Exceptions/QueryException.h"
@@ -14,7 +15,6 @@ void initTable(char* name) {
 
     table = new Table();
     if (!exists(std::string(name))) {
-
         table->setName(std::string(name));
     } else {
         throw QueryException("Table '" + std::string(name) +
@@ -44,7 +44,6 @@ void addField(char* name, char* type, char* constraints) {
     auto s = Field::checkConstraints(std::string(constraints));
     Field f((std::string(name)), string2Type(std::string(type)), s);
     table->addField(f);
-
 }
 
 void destroyTable() {
@@ -64,3 +63,4 @@ void dropTable(const char* name) {
         throw QueryException("Table doesn't exist");
     }
 }
+*/

@@ -1,6 +1,14 @@
 %{
+    #include "../../App/Logic/Parser/Nodes/Node.h"
+    #include "../../App/Logic/Parser/Nodes/Query.h"
+    #include "../../App/Logic/Parser/Nodes/VarList.h"
+    #include "../../App/Logic/Parser/Nodes/Command.h"
+    #include "../../App/Logic/Parser/Nodes/Variable.h"
+    #include "../../App/Logic/Parser/Nodes/Ident.h"
+
     #include "../../App/Engine/Engine.h"
-    #include "../../App/Logic/TableManager.h"
+    #include "../../App/Engine/Field.h"
+
     #include <stdio.h>
     #include <string>
     #include <cstring>
@@ -11,12 +19,12 @@
     extern int yylex();
     void yyerror(const char *s);
 
-    int logging = 0;
-    std::string buffer;
-    int buffer_on = 0;
+    Query *parseTree;
+    std::vector<Variable *> varList;
+    std::vector<FieldConstraint> constraintList;
 %}
 
-%error-verbose
+%define parse.error verbose
 
 %token CREATE SHOW DROP
 %token TABLE TABLES
@@ -25,130 +33,128 @@
 %token INT REAL TEXT
 %token NOT_NULL PRIMARY_KEY UNIQUE
 
+%type<query> create show_create drop_table
+%type<ident> id
+%type<var> variable
+%type<dataType> type
+%type<constraint> constraint
+
 %start expression
 
-%type <ident> id ID create show_create
-%type <constraint_str> constraints constraint 
-%type <type> INT REAL TEXT type
-
 %union {
-    char constraint_str[100];
-    char type[20];
-    char ident[20];
-	char *val; 
-    
+    FieldConstraint constraint;
+    Ident *ident;
+    Command *command;
+    Query *query;
+    Variable *var;
+    DataType dataType;
+    std::string *name;
 }
 
 %%
 
-expression: statements;
+expression: 
+    statements SEMI;
 
-statements: statement SEMI | statements statement SEMI;
+statements: 
+    statement {
+        varList.resize(0);
+    } | 
+    statements statement {
+        varList.resize(0);
+    };
 
-statement: create body {
-    int res = create(getTable());
-    if (logging) {
-        fprintf(yyout, "%d", res);
-    }
-} |
-    show_create {
-        try {
-            buffer = std::string(showCreateTable(showCreate($1)));
-            fprintf(yyout, "%s", buffer.c_str());
-        } catch(std::exception& e) {
-            buffer += std::string(e.what()) + "\n";
-            yyerror(e.what());
-        }
-    } | drop | error SEMI {yyerrok; };
+statement: 
+    create |
+    show_create | 
+    drop_table | 
+    error SEMI { yyerrok; };
 
-create: CREATE TABLE id {     
-    try {
-        initTable($3);
+create: 
+    CREATE TABLE id LPAREN variables RPAREN {     
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::create_table));
+        children.push_back($3);
+        children.push_back(new VarList(varList));
 
-    } catch(std::exception& e) {
-        buffer += std::string(e.what()) + "\n";
-        yyerror(e.what());
-        yyerrok;
-    } } ;
+        parseTree = new Query(children);
+    };
 
-show: SHOW TABLES ;
+show_create: 
+    SHOW CREATE TABLE id {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::show_create_table));
+        children.push_back($4);
 
-show_create: SHOW CREATE TABLE id { 
-    strcpy($$, $4);
-};
+        parseTree = new Query(children);
+    };
 
-drop: DROP TABLE id {
-    try {
-            dropTable($3);
-        } catch(std::exception& e) {
-            buffer += std::string(e.what()) + "\n";
-            yyerror(e.what());
-            yyerrok;
-        }};
+drop_table: 
+    DROP TABLE id {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::drop_table));
+        children.push_back($3);
 
-body: LPAREN decl RPAREN;
+        parseTree = new Query(children);
+    };
 
-decl: variable | decl COMMA variable;
+variables: 
+    variable {
+        varList.push_back($1);
+    } | 
+    variables COMMA variable {
+        varList.push_back($3);
+    };
 
-variable: id type {
-    try {
-        addField($1, $2, "");
-    } catch (std::invalid_argument& e) {
-        buffer += std::string(e.what()) + "\n";
-        yyerror(e.what());
-        yyerrok;
-    }
-} | id type constraints {
-    try {
-        addField($1, $2, $3);
-    } catch (std::invalid_argument& e) {
-        buffer += std::string(e.what())  + "\n";
-        yyerror(e.what());
-        yyerrok;
-    }
-};
+variable: 
+    id type {
+        $$ = new Variable($1->getName(), $2);
+    } | id type constraints {
+        $$ = new Variable($1->getName(), $2, constraintList);
+        constraintList.resize(0);
+    };
 
-constraints: constraint | 
-    constraints constraint { strcat($$, $2); };
+constraints: 
+    constraint {
+        constraintList.push_back($1);
+    } | 
+    constraints constraint {
+        constraintList.push_back($2);
+    };
 
-constraint: NOT_NULL { strcpy($$, "not_null "); } | 
-    PRIMARY_KEY { strcpy($$, "primary_key "); }|
-    UNIQUE { strcpy($$, "unique "); }; 
+constraint: 
+    NOT_NULL { $$ = FieldConstraint::not_null;  } | 
+    PRIMARY_KEY { $$ = FieldConstraint::primary_key; }|
+    UNIQUE { $$ = FieldConstraint::unique; }; 
 
-type: INT { strcpy($$, "int"); } |
-        REAL { strcpy($$, "real"); } |
-        TEXT { strcpy($$, "text"); };
+type: 
+    INT { $$ = DataType::integer; } |
+    REAL { $$ = DataType::real; } |
+    TEXT { $$ = DataType::text; };
 
-id: ID { strcpy($$, yylval.ident);}
+id: 
+    ID { $$ = new Ident(*yylval.name); }
 
 %%
 
 void yyerror(const char *s) {
-    buffer += std::string(s) + "\n";
-    if (!buffer_on) { 
-        fprintf (stderr, "%s\n", s);
-    }
+    fprintf (stderr, "%s\n", s);
 }
 
 void set_input_string(const char* in);
 void end_lexical_scan(void);
 
-int parse_string(const char* in) {
-  buffer = "";
-  set_input_string(in);
-  int rv = yyparse();
-  end_lexical_scan();
-  return rv;
+void destroy() {
+    varList.resize(0);
+    constraintList.resize(0);
 }
 
-void set_logging(int i) {
-    logging = i;
-}
+Query* parse_string(const char* in) {
+    destroy();
 
-void clear_buffer() {
-    buffer = "";
-}
-
-void use_buffer(int k) {
-    buffer_on = 1;
+    set_input_string(in);
+    yyparse();
+    end_lexical_scan();
+    
+    return parseTree;
 }

@@ -1,3 +1,4 @@
+/*
 #ifndef OURSQL_APP_LOGIC_TABLEMANAGER_H_
 #define OURSQL_APP_LOGIC_TABLEMANAGER_H_
 
@@ -14,3 +15,4 @@ void dropTable(const char* name);
 Table getTable();
 
 #endif  // OURSQL_APP_LOGIC_TABLEMANAGER_H_
+*/

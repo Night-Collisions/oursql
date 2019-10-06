@@ -1,13 +1,11 @@
 #include <iostream>
 
-// TODO: вынести все их мэйн в отдельную функцию int run()
-
-#include "parser.cpp"
+#include "Logic/Parser/ParserManager.h"
 
 int main() {
-    yydebug = 0;
-    yyin = stdin;
-    yyout = stdout;
-    yyparse();
+
+    ParserManager pm;
+    auto a = pm.getParseTree(stdin);
+
     return 0;
 }
