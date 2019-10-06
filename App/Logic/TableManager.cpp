@@ -49,7 +49,6 @@ void addField(char* name, char* type, char* constraints) {
 
 const char* showCreateTable(const std::string& response) {
     if (response.empty()) {
-
     } else {
         return response.c_str();
     }

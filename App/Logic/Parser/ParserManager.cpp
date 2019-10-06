@@ -3,12 +3,13 @@
 #include "ParserManager.h"
 #include "parser.cpp"
 
-Query* ParserManager::getParseTree(const std::string& query) {
+Query* ParserManager::getParseTree(const std::string& query,
+                                   exc::Exception* exception) {
     yydebug = debug_;
-    return parse_string(query.c_str());
+    return parse_string(query.c_str(), exception);
 }
 
-Query* ParserManager::getParseTree(FILE* input) {
+Query* ParserManager::getParseTree(FILE* input, exc::Exception* exception) {
     yydebug = debug_;
 
     char c = ' ';
@@ -24,5 +25,5 @@ Query* ParserManager::getParseTree(FILE* input) {
         }
     }
 
-    return parse_string(query.c_str());
+    return parse_string(query.c_str(), exception);
 }

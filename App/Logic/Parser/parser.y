@@ -5,6 +5,7 @@
     #include "../../App/Logic/Parser/Nodes/Command.h"
     #include "../../App/Logic/Parser/Nodes/Variable.h"
     #include "../../App/Logic/Parser/Nodes/Ident.h"
+    #include "../../App/Core/Exception.h"
 
     #include "../../App/Engine/Engine.h"
     #include "../../App/Engine/Field.h"
@@ -22,6 +23,8 @@
     Query *parseTree;
     std::vector<Variable *> varList;
     std::vector<FieldConstraint> constraintList;
+
+    exc::Exception* exception;
 %}
 
 %error-verbose
@@ -149,12 +152,15 @@ void destroy() {
     constraintList.resize(0);
 }
 
-Query* parse_string(const char* in) {
+Query* parse_string(const char* in, exc::Exception* ex) {
     destroy();
+    ex = nullptr;
 
     set_input_string(in);
     yyparse();
     end_lexical_scan();
+
+    ex = exception;
     
     return parseTree;
 }
