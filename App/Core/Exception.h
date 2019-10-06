@@ -7,7 +7,6 @@
 
 namespace exc {
 enum class ExceptionType : unsigned int {
-    null,
     data_type_mismatch,
     repeat_field_in_table,
     access_table_nonexistent = 701,
@@ -44,14 +43,7 @@ class Exception {
     const std::string message_;
 };
 
-class NullException : Exception {
-   public:
-    NullException() : Exception(ExceptionType::null, "") {}
-
-    std::string getMessage() const { return ""; };
-};
-
-class ExceptionInCommand : protected Exception {
+class ExceptionInCommand : public Exception {
    public:
     ExceptionInCommand(const std::string& command, const ExceptionType type,
                        const std::string& message)
@@ -64,7 +56,7 @@ class ExceptionInCommand : protected Exception {
     const std::string command_;
 };
 
-class RepeatFieldName : ExceptionInCommand {
+class RepeatFieldName : public ExceptionInCommand {
    public:
     RepeatFieldName(const std::string& command, const std::string& table_name,
                     const std::string& field_name)
@@ -74,7 +66,7 @@ class RepeatFieldName : ExceptionInCommand {
 };
 
 namespace constr {
-class IncompatibleConstraints : ExceptionInCommand {
+class IncompatibleConstraints : public ExceptionInCommand {
    public:
     IncompatibleConstraints(const std::string& command,
                             const std::string& field_name,
@@ -86,7 +78,7 @@ class IncompatibleConstraints : ExceptionInCommand {
                                  field_name + "."){};
 };
 
-class RedundantConstraints : ExceptionInCommand {
+class RedundantConstraints : public ExceptionInCommand {
    public:
     RedundantConstraints(const std::string& command,
                          const std::string& field_name,
@@ -97,7 +89,7 @@ class RedundantConstraints : ExceptionInCommand {
                                  field_name + ".") {}
 };
 
-class DuplicatedPrimaryKey : ExceptionInCommand {
+class DuplicatedPrimaryKey : public ExceptionInCommand {
    public:
     DuplicatedPrimaryKey(const std::string& command,
                          const std::string& field_name1,
@@ -109,14 +101,14 @@ class DuplicatedPrimaryKey : ExceptionInCommand {
 }  // namespace constr
 
 namespace acc {
-class TableNonexistent : ExceptionInCommand {
+class TableNonexistent : public ExceptionInCommand {
    public:
     TableNonexistent(const std::string& table_name, const std::string& command)
         : ExceptionInCommand(command, ExceptionType::access_table_nonexistent,
                              "table " + table_name + " nonexistent.") {}
 };
 
-class FieldNonexistent : ExceptionInCommand {
+class FieldNonexistent : public ExceptionInCommand {
    public:
     FieldNonexistent(const std::string& field_name,
                      const std::string& table_name, const std::string& command)
@@ -126,7 +118,7 @@ class FieldNonexistent : ExceptionInCommand {
 };
 };  // namespace acc
 
-class TableException : protected Exception {
+class TableException : public Exception {
    public:
     TableException(const std::string& table_name, const ExceptionType type,
                    const std::string& message)
@@ -141,7 +133,7 @@ class TableException : protected Exception {
 };
 
 namespace cr_table {
-class CreateTableException : protected TableException {
+class CreateTableException : public TableException {
    public:
     CreateTableException(const std::string& table_name,
                          const ExceptionType type, const std::string& message)
@@ -152,21 +144,21 @@ class CreateTableException : protected TableException {
     }
 };
 
-class TableName : CreateTableException {
+class TableName : public CreateTableException {
     TableName(const std::string& table_name)
         : CreateTableException(table_name,
                                ExceptionType::create_table_name_table,
                                "wrong name of table!") {}
 };
 
-class RepeatTableName : CreateTableException {
+class RepeatTableName : public CreateTableException {
     RepeatTableName(const std::string& table_name)
         : CreateTableException(table_name,
                                ExceptionType::create_table_repeat_table_name,
                                "this table name is repeated!") {}
 };
 
-class CreateTableExceptionInField : protected CreateTableException {
+class CreateTableExceptionInField : public CreateTableException {
    public:
     CreateTableExceptionInField(const std::string& table_name,
                                 const std::string& field_name,
@@ -184,7 +176,7 @@ class CreateTableExceptionInField : protected CreateTableException {
     const std::string field_name_;
 };
 
-class FieldName : CreateTableExceptionInField {
+class FieldName : public CreateTableExceptionInField {
    public:
     FieldName(const std::string& table_name, const std::string& field_name)
         : CreateTableExceptionInField(table_name, field_name,
@@ -193,7 +185,7 @@ class FieldName : CreateTableExceptionInField {
 };
 };  // namespace cr_table
 
-class DataTypeMismatch : Exception {
+class DataTypeMismatch : public Exception {
    public:
     DataTypeMismatch(const DataType type, const std::string& data)
         : Exception(ExceptionType::data_type_mismatch,
