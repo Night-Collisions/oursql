@@ -8,14 +8,14 @@
 namespace exc {
 enum class ExceptionType : unsigned int {
     data_type_mismatch,
-    repeat_field_in_table,
+    repeat_column_in_table,
     access_table_nonexistent = 701,
-    access_field_nonexistent,
+    access_column_nonexistent,
     incompatible_constraints = 801,
     redundant_constraints,
     duplicated_primary_key,
     create_table_name_table = 1001,
-    create_table_name_field,
+    create_table_name_column,
     create_table_repeat_table_name
 };
 
@@ -54,47 +54,47 @@ class ExceptionInCommand : public Exception {
     const std::string command_;
 };
 
-class RepeatFieldName : public ExceptionInCommand {
+class RepeatColumnName : public ExceptionInCommand {
    public:
-    RepeatFieldName(const std::string& command, const std::string& table_name,
-                    const std::string& field_name)
+    RepeatColumnName(const std::string& command, const std::string& table_name,
+                    const std::string& column_name)
         : ExceptionInCommand(
-              command, ExceptionType::repeat_field_in_table,
-              "repeat field " + field_name + " in table " + table_name + ".") {}
+              command, ExceptionType::repeat_column_in_table,
+              "repeat column " + column_name + " in table " + table_name + ".") {}
 };
 
 namespace constr {
 class IncompatibleConstraints : public ExceptionInCommand {
    public:
     IncompatibleConstraints(const std::string& command,
-                            const std::string& field_name,
-                            const FieldConstraint& a, const FieldConstraint& b)
+                            const std::string& column_name,
+                            const ColumnConstraint& a, const ColumnConstraint& b)
         : ExceptionInCommand(command, ExceptionType::incompatible_constraints,
-                             FieldConstraint2String(a) +
+                             ColumnConstraint2String(a) +
                                  " can't be used with " +
-                                 FieldConstraint2String(b) + " in field " +
-                                 field_name + "."){};
+                                 ColumnConstraint2String(b) + " in column " +
+                                 column_name + "."){};
 };
 
 class RedundantConstraints : public ExceptionInCommand {
    public:
     RedundantConstraints(const std::string& command,
-                         const std::string& field_name,
-                         const FieldConstraint& a)
+                         const std::string& column_name,
+                         const ColumnConstraint& a)
         : ExceptionInCommand(command, ExceptionType::redundant_constraints,
                              "duplicate of constraint " +
-                                 FieldConstraint2String(a) + " in field " +
-                                 field_name + ".") {}
+                                 ColumnConstraint2String(a) + " in column " +
+                                 column_name + ".") {}
 };
 
 class DuplicatedPrimaryKey : public ExceptionInCommand {
    public:
     DuplicatedPrimaryKey(const std::string& command,
-                         const std::string& field_name1,
-                         const std::string& field_name2)
+                         const std::string& column_name1,
+                         const std::string& column_name2)
         : ExceptionInCommand(command, ExceptionType::duplicated_primary_key,
-                             "primary key is used in the field " + field_name1 +
-                                 " and in " + field_name2 + ".") {}
+                             "primary key is used in the column " + column_name1 +
+                                 " and in " + column_name2 + ".") {}
 };
 }  // namespace constr
 
@@ -106,12 +106,12 @@ class TableNonexistent : public ExceptionInCommand {
                              "table " + table_name + " nonexistent.") {}
 };
 
-class FieldNonexistent : public ExceptionInCommand {
+class ColumnNonexistent : public ExceptionInCommand {
    public:
-    FieldNonexistent(const std::string& field_name,
+    ColumnNonexistent(const std::string& column_name,
                      const std::string& table_name, const std::string& command)
-        : ExceptionInCommand(command, ExceptionType::access_field_nonexistent,
-                             "field " + field_name + "in table " + table_name +
+        : ExceptionInCommand(command, ExceptionType::access_column_nonexistent,
+                             "column " + column_name + "in table " + table_name +
                                  " nonexistent.") {}
 };
 };  // namespace acc
@@ -156,30 +156,30 @@ class RepeatTableName : public CreateTableException {
                                "this table name is repeated!") {}
 };
 
-class CreateTableExceptionInField : public CreateTableException {
+class CreateTableExceptionInColumn : public CreateTableException {
    public:
-    CreateTableExceptionInField(const std::string& table_name,
-                                const std::string& field_name,
+    CreateTableExceptionInColumn(const std::string& table_name,
+                                const std::string& column_name,
                                 const ExceptionType type,
                                 const std::string& message)
         : CreateTableException(table_name, type, message),
-          field_name_(field_name) {}
+          column_name_(column_name) {}
 
     std::string getStarMessage() const {
-        return CreateTableException::getStarMessage() + "in field " +
-               field_name_;
+        return CreateTableException::getStarMessage() + "in column " +
+               column_name_;
     }
 
    protected:
-    const std::string field_name_;
+    const std::string column_name_;
 };
 
-class FieldName : public CreateTableExceptionInField {
+class ColumnName : public CreateTableExceptionInColumn {
    public:
-    FieldName(const std::string& table_name, const std::string& field_name)
-        : CreateTableExceptionInField(table_name, field_name,
-                                      ExceptionType::create_table_name_field,
-                                      "wrong name of field!") {}
+    ColumnName(const std::string& table_name, const std::string& column_name)
+        : CreateTableExceptionInColumn(table_name, column_name,
+                                      ExceptionType::create_table_name_column,
+                                      "wrong name of column!") {}
 };
 };  // namespace cr_table
 

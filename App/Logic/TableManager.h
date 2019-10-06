@@ -7,7 +7,7 @@
 #include "../Engine/Table.h"
 
 void initTable(char* name);
-void addField(char* name, char* type, char* constraints);
+void addColumn(char* name, char* type, char* constraints);
 void destroyTable();
 
 const char* showCreateTable(const std::string& response);

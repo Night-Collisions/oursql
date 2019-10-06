@@ -16,21 +16,21 @@ bool create(const Table& table) {
     rapidjson::Document d(rapidjson::kObjectType);
     d.AddMember("name", table.getName(), d.GetAllocator());
 
-    rapidjson::Value fields(rapidjson::kArrayType);
-    for (const auto& field : table.getFields()) {
-        rapidjson::Value field_value(rapidjson::kObjectType);
-        field_value.AddMember("name", field.getName(),d.GetAllocator());
-        field_value.AddMember("type", static_cast<unsigned int>(field.getType()), d.GetAllocator());
+    rapidjson::Value columns(rapidjson::kArrayType);
+    for (const auto& column : table.getColumns()) {
+        rapidjson::Value column_value(rapidjson::kObjectType);
+        column_value.AddMember("name", column.getName(),d.GetAllocator());
+        column_value.AddMember("type", static_cast<unsigned int>(column.getType()), d.GetAllocator());
 
         rapidjson::Value constraints(rapidjson::kArrayType);
-        for (const auto& constraint : field.getConstraint()) {
+        for (const auto& constraint : column.getConstraint()) {
             constraints.PushBack(static_cast<unsigned int>(constraint), d.GetAllocator());
         }
-        field_value.AddMember("constraints", constraints, d.GetAllocator());
+        column_value.AddMember("constraints", constraints, d.GetAllocator());
 
-        fields.PushBack(field_value, d.GetAllocator());
+        columns.PushBack(column_value, d.GetAllocator());
     }
-    d.AddMember("fields", fields, d.GetAllocator());
+    d.AddMember("columns", columns, d.GetAllocator());
 
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -58,18 +58,18 @@ Table show(const std::string& name) {
     Table table;
     table.setName(d["name"].GetString());
 
-    const rapidjson::Value& fields_value = d["fields"];
-    for (auto& field_value : fields_value.GetArray()) {
-        std::set<FieldConstraint> constraints;
+    const rapidjson::Value& columns_value = d["columns"];
+    for (auto& column_value : columns_value.GetArray()) {
+        std::set<ColumnConstraint> constraints;
 
-        const rapidjson::Value& constraints_value = field_value["constraints"];
+        const rapidjson::Value& constraints_value = column_value["constraints"];
         for (auto& constraint_value : constraints_value.GetArray()) {
-            constraints.insert(static_cast<FieldConstraint >(constraint_value.GetInt()));
+            constraints.insert(static_cast<ColumnConstraint >(constraint_value.GetInt()));
         }
 
-        table.addField(Column(
-                field_value["name"].GetString(),
-                static_cast<DataType>(field_value["type"].GetInt()),
+        table.addColumn(Column(
+                column_value["name"].GetString(),
+                static_cast<DataType>(column_value["type"].GetInt()),
                 constraints
         ));
     }
@@ -84,17 +84,17 @@ std::string showCreate(const std::string& name) {
     Table table = show(name);
     std::string query("CREATE TABLE " + table.getName() + "(");
 
-    for (unsigned int i = 0; i < table.getFields().size(); ++i) {
-        Column field = table.getFields()[i];
-        query.append("\n    " + field.getName() + " " + DataType2String(field.getType()));
+    for (unsigned int i = 0; i < table.getColumns().size(); ++i) {
+        Column column = table.getColumns()[i];
+        query.append("\n    " + column.getName() + " " + DataType2String(column.getType()));
 
-        for (const auto& constraint : field.getConstraint()) {
-            std::string constraint_str = FieldConstraint2String(constraint);
+        for (const auto& constraint : column.getConstraint()) {
+            std::string constraint_str = ColumnConstraint2String(constraint);
             std::replace(constraint_str.begin(), constraint_str.end(), '_', ' ');
             query.append(" " + constraint_str);
         }
 
-        if (i != table.getFields().size() - 1) {
+        if (i != table.getColumns().size() - 1) {
             query.append(",");
         }
     }

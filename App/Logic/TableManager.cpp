@@ -38,13 +38,13 @@ DataType string2Type(const std::string& s) {
     }
 }
 
-void addField(char* name, char* type, char* constraints) {
+void addColumn(char* name, char* type, char* constraints) {
     if (table == nullptr) {
         return;
     }
     auto s = Column::checkConstraints(std::string(constraints));
     Column f((std::string(name)), string2Type(std::string(type)), s);
-    table->addField(f);
+    table->addColumn(f);
 }
 
 const char* showCreateTable(const std::string& response) {

@@ -2,27 +2,27 @@
 
 #include <algorithm>
 
-void Table::addField(const Column& field) {
+void Table::addColumn(const Column& column) {
     auto lowerCase = [](const std::string& s) {
         auto data = s;
         std::transform(data.begin(), data.end(), data.begin(),
                        [](unsigned char c) { return std::tolower(c); });
         return data;
     };
-    for (const auto& i : fields_) {
-        if (lowerCase(i.getName()) == lowerCase(field.getName())) {
+    for (const auto& i : columns_) {
+        if (lowerCase(i.getName()) == lowerCase(column.getName())) {
             throw std::invalid_argument("Column '" + i.getName() +
                                         "' already exists");
         }
     }
-    auto constraint = field.getConstraint();
-    if (constraint.find(FieldConstraint::primary_key) != constraint.end()) {
-        for (const auto& i : fields_) {
+    auto constraint = column.getConstraint();
+    if (constraint.find(ColumnConstraint::primary_key) != constraint.end()) {
+        for (const auto& i : columns_) {
             auto buff = i.getConstraint();
-            if (buff.find(FieldConstraint::primary_key) != buff.end()) {
+            if (buff.find(ColumnConstraint::primary_key) != buff.end()) {
                 throw std::invalid_argument("Primary key already exists");
             }
         }
     }
-    fields_.emplace_back(field);
+    columns_.emplace_back(column);
 }

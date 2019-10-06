@@ -21,20 +21,20 @@ std::string DataType2String(const DataType& type) {
 
 DataType String2DataType(const std::string& s) { return Name2DataType.at(s); }
 
-//---FieldConstraint---//
-std::array<std::string, static_cast<unsigned int>(FieldConstraint::Count)>
-    FieldConstraint2Names = {"primary_key", "not_null", "unique"};
-std::map<std::string, FieldConstraint> Name2FieldConstraint = {
-    {FieldConstraint2Names[0], FieldConstraint::primary_key},
-    {FieldConstraint2Names[1], FieldConstraint::not_null},
-    {FieldConstraint2Names[2], FieldConstraint::unique}};
+//---ColumnConstraint---//
+std::array<std::string, static_cast<unsigned int>(ColumnConstraint::Count)>
+    ColumnConstraint2Names = {"primary_key", "not_null", "unique"};
+std::map<std::string, ColumnConstraint> Name2ColumnConstraint = {
+    {ColumnConstraint2Names[0], ColumnConstraint::primary_key},
+    {ColumnConstraint2Names[1], ColumnConstraint::not_null},
+    {ColumnConstraint2Names[2], ColumnConstraint::unique}};
 
-std::string FieldConstraint2String(const FieldConstraint& c) {
-    return FieldConstraint2Names[static_cast<unsigned int>(c)];
+std::string ColumnConstraint2String(const ColumnConstraint& c) {
+    return ColumnConstraint2Names[static_cast<unsigned int>(c)];
 }
 
-FieldConstraint String2FieldConstraint(const std::string& s) {
-    return Name2FieldConstraint.at(s);
+ColumnConstraint String2ColumnConstraint(const std::string& s) {
+    return Name2ColumnConstraint.at(s);
 }
 //------//
 
@@ -45,14 +45,14 @@ void Column::addData(const std::string& data) {
     data_.push_back(data);
 }
 
-void Column::checkConstraint(const std::set<FieldConstraint>& constraint) {
-    std::array<std::set<FieldConstraint>,
-               static_cast<unsigned int>(FieldConstraint::Count)>
-        incompatible = {std::set<FieldConstraint>{},
-                        std::set<FieldConstraint>{},
-                        std::set<FieldConstraint>{}};
+void Column::checkConstraint(const std::set<ColumnConstraint>& constraint) {
+    std::array<std::set<ColumnConstraint>,
+               static_cast<unsigned int>(ColumnConstraint::Count)>
+        incompatible = {std::set<ColumnConstraint>{},
+                        std::set<ColumnConstraint>{},
+                        std::set<ColumnConstraint>{}};
     for (const auto& i : constraint) {
-        std::set<FieldConstraint> buff;
+        std::set<ColumnConstraint> buff;
         std::set_intersection(
             incompatible[static_cast<unsigned int>(i)].begin(),
             incompatible[static_cast<unsigned int>(i)].end(),
@@ -119,18 +119,18 @@ std::vector<std::string> split(const std::string& s, const char sep) {
     return res;
 }
 
-std::set<FieldConstraint> Column::checkConstraints(
+std::set<ColumnConstraint> Column::checkConstraints(
     const std::string& constraints) {
-    std::set<FieldConstraint> res;
+    std::set<ColumnConstraint> res;
 
     auto separated = split(constraints, ' ');
 
     for (auto& c : separated) {
-        if (Name2FieldConstraint.find(c) == Name2FieldConstraint.end()) {
+        if (Name2ColumnConstraint.find(c) == Name2ColumnConstraint.end()) {
             // the so-called constraint doesn't exists
             // TODO: throw exception?
         } else {
-            auto constraint = Name2FieldConstraint[c];
+            auto constraint = Name2ColumnConstraint[c];
             if (res.find(constraint) != res.end()) {
                 throw std::invalid_argument("Duplicate constraints");
             }

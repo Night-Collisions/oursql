@@ -12,7 +12,7 @@ class Variable : public Node {
         : Node(NodeType::variable), name_(name), dataType_(type) {}
 
     Variable(const std::string& name, DataType type,
-             const std::set<FieldConstraint>& constraints)
+             const std::set<ColumnConstraint>& constraints)
         : Node(NodeType::variable),
           name_(name),
           dataType_(type),
@@ -20,12 +20,12 @@ class Variable : public Node {
 
     std::string getName() { return name_; }
     DataType getType() { return dataType_; }
-    std::set<FieldConstraint> getConstraints() { return constraints_; }
+    std::set<ColumnConstraint> getConstraints() { return constraints_; }
 
    private:
     std::string name_;
     DataType dataType_;
-    std::set<FieldConstraint> constraints_;
+    std::set<ColumnConstraint> constraints_;
 };
 
 #endif  // OURSQL_APP_LOGIC_PARSER_NODES_VARIABLE_H_

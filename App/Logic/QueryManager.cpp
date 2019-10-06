@@ -41,14 +41,14 @@ void QueryManager::createTable(const Query& query) {
     create(table); //TODO: она что то возвращает, надо кинуть исключение
 }
 
-void QueryManager::checkConstraints(const std::set<FieldConstraint>& constraint) {
-    std::array<std::set<FieldConstraint>,
-               static_cast<unsigned int>(FieldConstraint::Count)>
-        incompatible = {std::set<FieldConstraint>{},
-                        std::set<FieldConstraint>{},
-                        std::set<FieldConstraint>{}};
+void QueryManager::checkConstraints(const std::set<ColumnConstraint>& constraint) {
+    std::array<std::set<ColumnConstraint>,
+               static_cast<unsigned int>(ColumnConstraint::Count)>
+        incompatible = {std::set<ColumnConstraint>{},
+                        std::set<ColumnConstraint>{},
+                        std::set<ColumnConstraint>{}};
     for (const auto& i : constraint) {
-        std::set<FieldConstraint> buff;
+        std::set<ColumnConstraint> buff;
         std::set_intersection(
             incompatible[static_cast<unsigned int>(i)].begin(),
             incompatible[static_cast<unsigned int>(i)].end(),

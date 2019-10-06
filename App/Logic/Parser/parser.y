@@ -8,7 +8,7 @@
     #include "../../App/Core/Exception.h"
 
     #include "../../App/Engine/Engine.h"
-    #include "../../App/Engine/Field.h"
+    #include "../../App/Engine/Column.h"
 
     #include <stdio.h>
     #include <string>
@@ -22,7 +22,7 @@
 
     Query *parseTree;
     std::vector<Variable *> varList;
-    std::set<FieldConstraint> constraintList;
+    std::set<ColumnConstraint> constraintList;
 
     exc::Exception* exception;
 %}
@@ -45,7 +45,7 @@
 %start expression
 
 %union {
-    FieldConstraint constraint;
+    ColumnConstraint constraint;
     Ident *ident;
     Command *command;
     Query *query;
@@ -126,9 +126,9 @@ constraints:
     };
 
 constraint: 
-    NOT_NULL { $$ = FieldConstraint::not_null;  } | 
-    PRIMARY_KEY { $$ = FieldConstraint::primary_key; }|
-    UNIQUE { $$ = FieldConstraint::unique; }; 
+    NOT_NULL { $$ = ColumnConstraint::not_null;  } |
+    PRIMARY_KEY { $$ = ColumnConstraint::primary_key; }|
+    UNIQUE { $$ = ColumnConstraint::unique; };
 
 type: 
     INT { $$ = DataType::integer; } |

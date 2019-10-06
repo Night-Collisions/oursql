@@ -16,7 +16,7 @@ class QueryManager {
     static void showCreateTable(const Query& query);
     static void dropTable(const Query& query);
 
-    static void checkConstraints(const std::set<FieldConstraint>& constraint);
+    static void checkConstraints(const std::set<ColumnConstraint>& constraint);
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_
