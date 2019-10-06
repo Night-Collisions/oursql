@@ -10,9 +10,10 @@ class QueryManager {
     QueryManager() = delete;
 
     static void execute(const Query& query);
-    static void createTable(const Query& query);
 
    private:
+    static void createTable(const Query& query);
+    
     static void checkConstraints(const std::set<FieldConstraint>& constraint);
 };
 
