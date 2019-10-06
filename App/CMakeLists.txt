@@ -12,6 +12,7 @@ set(HEADERS
         Logic/Parser/Nodes/Variable.h
         Logic/Parser/Nodes/Ident.h
         Logic/Parser/ParserManager.h
+        Logic/QueryManager.h
         )
 
 set(DEFINITIONS
@@ -26,6 +27,7 @@ set(DEFINITIONS
         Logic/Parser/Nodes/Variable.cpp
         Logic/Parser/Nodes/Ident.cpp
         Logic/Parser/ParserManager.cpp
+        Logic/QueryManager.cpp
         )
 
 assemble_parser(Logic/Parser/)

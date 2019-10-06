@@ -1,7 +1,6 @@
-/*
+
 #include "TableManager.h"
 #include "../Engine/Engine.h"
-#include "../Exceptions/QueryException.h"
 
 #include <iostream>
 #include <map>
@@ -10,15 +9,17 @@ static Table* table = nullptr;
 
 Table getTable() { return *table; }
 
+void destroyTable() {
+    delete table;
+    table = nullptr;
+}
+
 void initTable(char* name) {
     destroyTable();
 
     table = new Table();
     if (!exists(std::string(name))) {
         table->setName(std::string(name));
-    } else {
-        throw QueryException("Table '" + std::string(name) +
-                             "' already exists");
     }
 }
 
@@ -46,21 +47,14 @@ void addField(char* name, char* type, char* constraints) {
     table->addField(f);
 }
 
-void destroyTable() {
-    delete table;
-    table = nullptr;
-}
-
 const char* showCreateTable(const std::string& response) {
     if (response.empty()) {
-        throw QueryException("Table doesn't exist");
+
     } else {
         return response.c_str();
     }
 }
 void dropTable(const char* name) {
     if (drop(name)) {
-        throw QueryException("Table doesn't exist");
     }
 }
-*/
