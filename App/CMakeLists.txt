@@ -2,9 +2,11 @@ project(OurSql_APP)
 
 set(HEADERS
         Engine/Field.h
+        Engine/Engine.h
         Engine/Table.h
         Engine/Engine.h
         Logic/TableManager.h
+        Core/Exception.h
         Logic/Parser/Nodes/Node.h
         Logic/Parser/Nodes/Query.h
         Logic/Parser/Nodes/Command.h
@@ -17,8 +19,10 @@ set(HEADERS
 
 set(DEFINITIONS
         Engine/Field.cpp
+        Engine/Engine.cpp
         Engine/Table.cpp
         Logic/TableManager.cpp
+        Core/Exception.cpp
         Engine/Engine.cpp
         Logic/Parser/Nodes/Node.cpp
         Logic/Parser/Nodes/Query.cpp
