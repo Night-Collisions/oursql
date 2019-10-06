@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-void Table::addField(const Field& field) {
+void Table::addField(const Column& field) {
     auto lowerCase = [](const std::string& s) {
         auto data = s;
         std::transform(data.begin(), data.end(), data.begin(),
@@ -11,7 +11,7 @@ void Table::addField(const Field& field) {
     };
     for (const auto& i : fields_) {
         if (lowerCase(i.getName()) == lowerCase(field.getName())) {
-            throw std::invalid_argument("Field '" + i.getName() +
+            throw std::invalid_argument("Column '" + i.getName() +
                                         "' already exists");
         }
     }

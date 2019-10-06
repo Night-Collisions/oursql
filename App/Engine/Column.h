@@ -21,9 +21,9 @@ enum class FieldConstraint : unsigned int {
 std::string FieldConstraint2String(const FieldConstraint&);
 FieldConstraint String2FieldConstraint(const std::string&);
 
-class Field {
+class Column {
    public:
-    Field(std::string name, const DataType type,
+    Column(std::string name, const DataType type,
           const std::set<FieldConstraint>& constraints = {})
         : name_(std::move(name)), type_(type) {
         checkConstraint(constraints);

@@ -67,7 +67,7 @@ Table show(const std::string& name) {
             constraints.insert(static_cast<FieldConstraint >(constraint_value.GetInt()));
         }
 
-        table.addField(Field(
+        table.addField(Column(
                 field_value["name"].GetString(),
                 static_cast<DataType>(field_value["type"].GetInt()),
                 constraints
@@ -85,7 +85,7 @@ std::string showCreate(const std::string& name) {
     std::string query("CREATE TABLE " + table.getName() + "(");
 
     for (unsigned int i = 0; i < table.getFields().size(); ++i) {
-        Field field = table.getFields()[i];
+        Column field = table.getFields()[i];
         query.append("\n    " + field.getName() + " " + DataType2String(field.getType()));
 
         for (const auto& constraint : field.getConstraint()) {

@@ -1,7 +1,7 @@
 project(OurSql_APP)
 
 set(HEADERS
-        Engine/Field.h
+        Engine/Column.h
         Engine/Engine.h
         Engine/Table.h
         Engine/Engine.h
@@ -18,7 +18,7 @@ set(HEADERS
         )
 
 set(DEFINITIONS
-        Engine/Field.cpp
+        Engine/Column.cpp
         Engine/Engine.cpp
         Engine/Table.cpp
         Logic/TableManager.cpp

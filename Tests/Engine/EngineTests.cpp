@@ -45,7 +45,7 @@ TEST(Engine_Drop, DoubleDrop) {
 
 TEST(Engine_Create, SimpleTest) {
     std::string name = "Engine_Create_SimpleTest";
-    std::vector<Field> fields = {
+    std::vector<Column> fields = {
             {"column1", DataType::integer},
             {"column2", DataType::real, {
                 FieldConstraint::not_null, FieldConstraint::unique, FieldConstraint::primary_key}
@@ -68,7 +68,7 @@ TEST(Engine_Create, SimpleTest) {
 
 TEST(Engine_Create, DoubleCreate) {
     std::string name = "Engine_Create_DoubleCreate";
-    std::vector<Field> fields = {
+    std::vector<Column> fields = {
             {"column1", DataType::integer},
             {"column2", DataType::real, {
                 FieldConstraint::not_null, FieldConstraint::unique, FieldConstraint::primary_key}
@@ -82,7 +82,7 @@ TEST(Engine_Create, DoubleCreate) {
 
 TEST(Engine_Show, SimpleTest) {
     std::string name = "Engine_Show_SimpleTest";
-    std::vector<Field> fields = {
+    std::vector<Column> fields = {
             {"column1", DataType::integer},
             {"column2", DataType::real, {
                 FieldConstraint::not_null, FieldConstraint::unique, FieldConstraint::primary_key}
@@ -102,7 +102,7 @@ TEST(Engine_Show, NotExists) {
 
 TEST(Engine_ShowCreate, SimpleTest) {
     std::string name = "Engine_ShowCreate_SimpleTest";
-    std::vector<Field> fields = {
+    std::vector<Column> fields = {
             {"column1", DataType::integer},
             {"column2", DataType::real, {
                 FieldConstraint::not_null, FieldConstraint::unique, FieldConstraint::primary_key}

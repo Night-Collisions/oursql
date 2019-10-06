@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "../Engine/Field.h"
+#include "../Engine/Column.h"
 
 namespace exc {
 enum class ExceptionType : unsigned int {

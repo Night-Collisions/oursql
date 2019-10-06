@@ -2,7 +2,7 @@
 #define OURSQL_APP_LOGIC_QUERYMANAGER_H_
 
 #include <set>
-#include "../Engine/Field.h"
+#include "../Engine/Column.h"
 #include "Parser/Nodes/Query.h"
 
 class QueryManager {
@@ -13,7 +13,8 @@ class QueryManager {
 
    private:
     static void createTable(const Query& query);
-    
+    static void showCreateTable(const Query& query);
+
     static void checkConstraints(const std::set<FieldConstraint>& constraint);
 };
 

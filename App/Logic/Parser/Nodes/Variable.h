@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "../../../Engine/Field.h"
+#include "../../../Engine/Column.h"
 #include "Node.h"
 
 class Variable : public Node {

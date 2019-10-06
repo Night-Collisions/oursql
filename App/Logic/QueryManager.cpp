@@ -1,6 +1,6 @@
 #include "QueryManager.h"
-#include "../../App/Engine/Field.h"
 #include "../../App/Engine/Table.h"
+#include "../Engine/Column.h"
 #include "../Engine/Engine.h"
 #include "Parser/Nodes/Command.h"
 #include "Parser/Nodes/Ident.h"
@@ -37,7 +37,7 @@ void QueryManager::createTable(const Query& query) {
     //TODO: накидать исключений
     std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
 
-    std::vector<Field> columns;
+    std::vector<Column> columns;
     auto vars = static_cast<VarList*>(query.getChildren()[2])->getVars();
     for (auto& v : vars) {
         std::string col_name = v->getName();
@@ -45,7 +45,7 @@ void QueryManager::createTable(const Query& query) {
         auto constraints = v->getConstraints();
         checkConstraints(constraints); //TODO: внутри кидать новые исключения
 
-        Field f(col_name, type, constraints);
+        Column f(col_name, type, constraints);
         columns.emplace_back(f);
     }
 

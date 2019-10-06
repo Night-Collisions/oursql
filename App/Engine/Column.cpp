@@ -1,4 +1,4 @@
-#include "Field.h"
+#include "Column.h"
 
 #include <algorithm>
 #include <array>
@@ -38,14 +38,14 @@ FieldConstraint String2FieldConstraint(const std::string& s) {
 }
 //------//
 
-void Field::addData(const std::string& data) {
+void Column::addData(const std::string& data) {
     if (!checkDataForType(type_, data)) {
         throw std::invalid_argument("Data type mismatch");
     }
     data_.push_back(data);
 }
 
-void Field::checkConstraint(const std::set<FieldConstraint>& constraint) {
+void Column::checkConstraint(const std::set<FieldConstraint>& constraint) {
     std::array<std::set<FieldConstraint>,
                static_cast<unsigned int>(FieldConstraint::Count)>
         incompatible = {std::set<FieldConstraint>{},
@@ -64,7 +64,7 @@ void Field::checkConstraint(const std::set<FieldConstraint>& constraint) {
     }
 }
 
-bool Field::checkDataForType(const DataType type, const std::string& data) {
+bool Column::checkDataForType(const DataType type, const std::string& data) {
     bool (*isAccording[static_cast<unsigned int>(DataType::Count)])(
         const std::string&) = {
 
@@ -119,7 +119,7 @@ std::vector<std::string> split(const std::string& s, const char sep) {
     return res;
 }
 
-std::set<FieldConstraint> Field::checkConstraints(
+std::set<FieldConstraint> Column::checkConstraints(
     const std::string& constraints) {
     std::set<FieldConstraint> res;
 

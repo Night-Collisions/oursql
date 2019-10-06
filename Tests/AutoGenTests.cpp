@@ -127,7 +127,7 @@ TEST(AGT, TEST_18) {
     buffer_on = 1;
     parse_string("create table a(MyField int, myfield text);");
     clearDB();
-    EXPECT_EQ(buffer, "Field 'MyField' already exists\nField 'MyField' already exists\n");
+    EXPECT_EQ(buffer, "Column 'MyField' already exists\nColumn 'MyField' already exists\n");
 }
 
 TEST(AGT, TEST_19) {

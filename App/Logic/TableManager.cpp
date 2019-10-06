@@ -42,8 +42,8 @@ void addField(char* name, char* type, char* constraints) {
     if (table == nullptr) {
         return;
     }
-    auto s = Field::checkConstraints(std::string(constraints));
-    Field f((std::string(name)), string2Type(std::string(type)), s);
+    auto s = Column::checkConstraints(std::string(constraints));
+    Column f((std::string(name)), string2Type(std::string(type)), s);
     table->addField(f);
 }
 
