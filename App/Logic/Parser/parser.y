@@ -24,7 +24,7 @@
     std::vector<FieldConstraint> constraintList;
 %}
 
-%define parse.error verbose
+%error-verbose
 
 %token CREATE SHOW DROP
 %token TABLE TABLES

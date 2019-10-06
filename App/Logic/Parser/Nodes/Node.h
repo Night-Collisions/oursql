@@ -4,7 +4,7 @@
 
 enum class NodeType {
     node,
-    query, //root
+    query,  // root
     command,
     varList,
     variable,
@@ -17,7 +17,7 @@ class Node {
     explicit Node(NodeType type) : nodeType_(type) {}
     virtual ~Node() = default;
 
-    virtual NodeType getNodeType() { return nodeType_; }
+    virtual NodeType getNodeType() const { return nodeType_; }
 
    private:
     NodeType nodeType_;
