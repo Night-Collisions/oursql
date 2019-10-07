@@ -29,14 +29,15 @@
 
 %error-verbose
 
-%token CREATE SHOW DROP
-%token TABLE TABLES
-%token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA
+%token CREATE SHOW DROP SELECT
+%token TABLE TABLES VALUES
+%token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA ASTERISK
+%token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ 
 %token ID ICONST FCONST SCONST
 %token INT REAL TEXT
 %token NOT_NULL PRIMARY_KEY UNIQUE
 
-%type<query> create show_create drop_table
+%type<query> create show_create drop_table select
 %type<ident> id
 %type<var> variable
 %type<dataType> type
@@ -71,7 +72,26 @@ statement:
     create |
     show_create | 
     drop_table | 
+    select |
     error SEMI { yyerrok; };
+
+select:
+     SELECT select_list FROM id WHERE where_condition
+
+select_list: 
+    ASTERISK |
+    ASTERISK COMMA id;
+
+where_condition: 
+    id relation id;
+
+relation:
+    EQUAL |
+    GREATER |
+    GREATER_EQ |
+    LESS |
+    LESS_EQ |
+    NOT_EQ;
 
 create: 
     CREATE TABLE id LPAREN variables RPAREN {     
