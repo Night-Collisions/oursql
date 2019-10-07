@@ -23,6 +23,7 @@
     Query *parseTree;
     std::vector<Variable *> varList;
     std::set<ColumnConstraint> constraintList;
+    std::vector<Ident* > identList;
 
     exc::Exception* exception;
 %}

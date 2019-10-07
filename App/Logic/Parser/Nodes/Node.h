@@ -11,7 +11,9 @@ enum class NodeType {
     id,
     constraintList,
     selectList,
-    condition
+    condition,
+    identList,
+    constant
 };
 
 class Node {
