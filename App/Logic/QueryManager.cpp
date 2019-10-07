@@ -1,4 +1,5 @@
 #include "QueryManager.h"
+
 #include "../../App/Engine/Table.h"
 #include "../Engine/Column.h"
 #include "../Engine/Engine.h"
@@ -7,21 +8,21 @@
 #include "Parser/Nodes/VarList.h"
 
 void QueryManager::execute(const Query& query) {
-    switch (static_cast<Command*>(query.getChildren()[0])->getCommandType()) {
-        case CommandType::create_table:
-            createTable(query);
-            break;
-        case CommandType::show_create_table:
-            showCreateTable(query);
-            break;
-        case CommandType::drop_table:
-            dropTable(query);
-            break;
+    void (* const commandsExtions[static_cast<unsigned int>(CommandType::Count)])(
+        const Query& query) = {
+        [](const Query&) {},
+        createTable,
+        showCreateTable,
+        dropTable
+    };
+    CommandType command = static_cast<Command*>(query.getChildren()[0])->getCommandType();
+    if (command != CommandType::Count) {
+        commandsExtions[static_cast<unsigned int>(command)](query);
     }
 }
 
 void QueryManager::createTable(const Query& query) {
-    //TODO: накидать исключений
+    // TODO: накидать исключений
     std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
 
     std::vector<Column> columns;
@@ -30,7 +31,7 @@ void QueryManager::createTable(const Query& query) {
         std::string col_name = v->getName();
         DataType type = v->getType();
         auto constraints = v->getConstraints();
-        checkConstraints(constraints); //TODO: внутри кидать новые исключения
+        checkConstraints(constraints);  // TODO: внутри кидать новые исключения
 
         Column f(col_name, type, constraints);
         columns.emplace_back(f);
@@ -38,10 +39,11 @@ void QueryManager::createTable(const Query& query) {
 
     Table table(name, columns);
 
-    create(table); //TODO: она что то возвращает, надо кинуть исключение
+    create(table);  // TODO: она что то возвращает, надо кинуть исключение
 }
 
-void QueryManager::checkConstraints(const std::set<ColumnConstraint>& constraint) {
+void QueryManager::checkConstraints(
+    const std::set<ColumnConstraint>& constraint) {
     std::array<std::set<ColumnConstraint>,
                static_cast<unsigned int>(ColumnConstraint::Count)>
         incompatible = {std::set<ColumnConstraint>{},
