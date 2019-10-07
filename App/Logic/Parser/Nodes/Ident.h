@@ -11,6 +11,7 @@ class Ident : public Node {
         : Node(NodeType::id), table_name_(table_name), name_(name) {}
 
     std::string getName() { return name_; }
+    std::string getTableName() {return table_name_; }
 
    private:
     std::string name_;

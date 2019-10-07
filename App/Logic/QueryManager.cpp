@@ -8,14 +8,11 @@
 #include "Parser/Nodes/VarList.h"
 
 void QueryManager::execute(const Query& query) {
-    void (* const commandsActions[static_cast<unsigned int>(CommandType::Count)])(
-        const Query& query) = {
-        [](const Query&) {},
-        createTable,
-        showCreateTable,
-        dropTable
-    };
-    CommandType command = static_cast<Command*>(query.getChildren()[0])->getCommandType();
+    void (*const commandsActions[static_cast<unsigned int>(
+        CommandType::Count)])(const Query& query) = {
+        [](const Query&) {}, createTable, showCreateTable, dropTable};
+    CommandType command =
+        static_cast<Command*>(query.getChildren()[0])->getCommandType();
     if (command != CommandType::Count) {
         commandsActions[static_cast<unsigned int>(command)](query);
     }
@@ -60,4 +57,13 @@ void QueryManager::checkConstraints(
             throw std::invalid_argument("Incompatible constraints");
         }
     }
+}
+
+std::string QueryManager::showCreateTable(const Query& query) {
+    if (query.getChildren().size() != 2) {
+        // TODO: исключение, неправильно составлени команда, так как запрос
+        // должен быть из двух частей
+    }
+
+    return showCreate(static_cast<Ident*>(query.getChildren()[1])->getName());
 }
