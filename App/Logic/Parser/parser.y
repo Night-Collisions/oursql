@@ -37,14 +37,14 @@
 %error-verbose
 
 %token CREATE SHOW DROP SELECT INSERT
-%token TABLE TABLES VALUES INTO
+%token TABLE TABLES VALUES INTO FROM WHERE
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA ASTERISK
 %token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ 
 %token ID ICONST FCONST SCONST
 %token INT REAL TEXT
 %token NOT_NULL PRIMARY_KEY UNIQUE
 
-%type<query> create show_create drop_table select
+%type<query> create show_create drop_table select insert
 %type<ident> id
 %type<var> variable
 %type<dataType> type
@@ -52,6 +52,7 @@
 %type<iConst> int_const
 %type<rConst> real_const
 %type<tConst> text_const
+%type<anyConstant> constant
 
 %start expression
 
@@ -66,6 +67,7 @@
     IntConstant *iConst;
     RealConstant *rConst;
     TextConstant *tConst;
+    Node *anyConstant;
 }
 
 %%
@@ -185,8 +187,22 @@ drop_table:
 // --- insert
 
 insert: 
-    INSERT INTO id LPAREN column_list RPAREN VALUES LPAREN value_list RPAREN |
-    INSERT INTO id VALUES LPAREN value_list RPAREN;
+    INSERT INTO id LPAREN column_list RPAREN VALUES LPAREN value_list RPAREN {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::insert));
+        children.push_back(identList);
+        children.push_back(constraintList);
+
+        parseTree = new Query(children);
+    } |
+    INSERT INTO id VALUES LPAREN value_list RPAREN {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::insert));
+        children.push_back(nullptr);
+        children.push_back(constraintList);
+
+        parseTree = new Query(children);
+    };
 
 column_list: 
     id {
@@ -207,23 +223,23 @@ value_list:
 // ---
 
 constant:
-    ICONST |
-    FCONST |
-    SCONST;
+    int_const { $$ = $1; } |
+    real_const { $$ = $1; } |
+    text_const { $$ = $1; };
 
 int_const:
     ICONST {
-        $$ = 
+        $$ = yylval.iConst;
     };
 
 real_const:
     FCONST {
-
+	$$ = yylval.rConst;
     };
 
 text_const:
     SCONST {
-
+	$$ = yylval.tConst;
     };
 
 type: 
