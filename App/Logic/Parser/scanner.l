@@ -43,6 +43,7 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 
 "//".*\n                   ; // ingore comments
 
+"*"                        { return ASTERISK; }
 "("                        { return LPAREN; }
 ")"                        { return RPAREN; }
 "]"                        { return LBRACK; }
@@ -52,12 +53,26 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 ";"                        { return SEMI; }
 "."                        { return DOT; }
 ","                        { return COMMA; }
+"="                        { return EQUAL; }
+"<"                        { return LESS; }
+">"                        { return GREATER; }
+"<="                       { return LESS_EQ; }
+">="                       { return GREATER_EQ; }
+"!="                       { return NOT_EQ; }
+
 
 "create"                   { return CREATE; }
 "show"                     { return SHOW; }
 "drop"                     { return DROP; }
 "tables"                   { return TABLES; }
 "table"                    { return TABLE; }
+"select"                   { return SELECT; }
+"from"                     { return FROM; }
+"where"                    { return WHERE; }
+"insert"                   { return INSERT; }
+"into"                     { return INTO; }
+"values"                   { return VALUES; }
+
 
 "int"                      { return INT; }
 "text"                     { return TEXT; }

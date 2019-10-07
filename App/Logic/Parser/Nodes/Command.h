@@ -4,7 +4,14 @@
 #include <string>
 #include "Node.h"
 
-enum class CommandType : unsigned int { unknown, create_table, show_create_table, drop_table, Count };
+enum class CommandType : unsigned int {
+    unknown,
+    create_table,
+    show_create_table,
+    drop_table,
+    select,
+    Count
+};
 
 class Command : public Node {
    public:
