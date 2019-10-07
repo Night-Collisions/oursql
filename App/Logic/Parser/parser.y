@@ -5,6 +5,11 @@
     #include "../../App/Logic/Parser/Nodes/Command.h"
     #include "../../App/Logic/Parser/Nodes/Variable.h"
     #include "../../App/Logic/Parser/Nodes/Ident.h"
+    #include "../../App/Logic/Parser/Nodes/IntConstant.h"
+    #include "../../App/Logic/Parser/Nodes/RealConstant.h"
+    #include "../../App/Logic/Parser/Nodes/TextConstant.h"
+    #include "../../App/Logic/Parser/Nodes/ConstantList.h"
+    #include "../../App/Logic/Parser/Nodes/IdentList.h"
     #include "../../App/Core/Exception.h"
 
     #include "../../App/Engine/Engine.h"
@@ -24,6 +29,7 @@
     std::vector<Variable *> varList;
     std::set<ColumnConstraint> constraintList;
     std::vector<Ident* > identList;
+    std::vector<Constant*> constantList;
 
     exc::Exception* exception;
 %}
@@ -43,6 +49,9 @@
 %type<var> variable
 %type<dataType> type
 %type<constraint> constraint
+%type<iConst> int_const
+%type<rConst> real_const
+%type<tConst> text_const
 
 %start expression
 
@@ -54,6 +63,9 @@
     Variable *var;
     DataType dataType;
     std::string *name;
+    IntConstant *iConst;
+    RealConstant *rConst;
+    TextConstant *tConst;
 }
 
 %%
@@ -177,11 +189,19 @@ insert:
     INSERT INTO id VALUES LPAREN value_list RPAREN;
 
 column_list: 
-    id | id COMMA id;
+    id {
+        identList.push_back(new Ident($1));
+    } | column_list COMMA id {
+        identList.push_back(new Ident($3));
+    };
 
 value_list:
-    constant |
-    constant COMMA constant;
+    constant {
+        constantList.push_back($1);
+    } |
+    value_list COMMA constant {
+        constantList.push_back($3);
+    };
 
 
 // ---
@@ -190,6 +210,21 @@ constant:
     ICONST |
     FCONST |
     SCONST;
+
+int_const:
+    ICONST {
+        $$ = 
+    };
+
+real_const:
+    FCONST {
+
+    };
+
+text_const:
+    SCONST {
+
+    };
 
 type: 
     INT { $$ = DataType::integer; } |

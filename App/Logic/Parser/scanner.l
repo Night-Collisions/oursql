@@ -8,6 +8,11 @@
     #include "../../App/Logic/Parser/Nodes/Command.h"
     #include "../../App/Logic/Parser/Nodes/Variable.h"
     #include "../../App/Logic/Parser/Nodes/Ident.h"
+    #include "../../App/Logic/Parser/Nodes/IntConstant.h"
+    #include "../../App/Logic/Parser/Nodes/RealConstant.h"
+    #include "../../App/Logic/Parser/Nodes/TextConstant.h"
+    #include "../../App/Logic/Parser/Nodes/ConstantList.h"
+    #include "../../App/Logic/Parser/Nodes/IdentList.h"
 
     #include "../../App/Engine/Engine.h"
     #include "parser.hpp"
@@ -89,17 +94,20 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
                            }
 
 {FCONST}                   { 
-
+                              sscanf(yytext, "%s", tmp_str);
+                              yylval.rConst = new RealConstant(std::stof(std::string(tmp_str)));
                               return FCONST; 
                            }
 
 {ICONST}                   { 
-
+                              sscanf(yytext, "%s", tmp_str);
+                              yylval.iConst = new IntConstant(std::stoi(std::string(tmp_str)));
                               return ICONST; 
                            }
                            
 {SCONST}                   {
-
+                              sscanf(yytext, "%s", tmp_str);
+                              yylval.tConst = new TextConstant(std::string(tmp_str));
                               return SCONST; 
                            }        
 
