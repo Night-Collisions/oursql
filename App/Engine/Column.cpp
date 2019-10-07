@@ -38,14 +38,16 @@ ColumnConstraint String2ColumnConstraint(const std::string& s) {
 }
 //------//
 
-void Column::addData(const std::string& data) {
+void Column::addData(const std::string& data, exc::Exception* e) {
+    RESET_EXCEPTION(e);
     if (!checkDataForType(type_, data)) {
-        throw std::invalid_argument("Data type mismatch");
+        SET_EXCEPTION(e, exc::DataTypeMismatch(type_, data));
+        return;
     }
     data_.push_back(data);
 }
 
-void Column::checkConstraint(const std::set<ColumnConstraint>& constraint) {
+bool Column::checkConstraint(const std::set<ColumnConstraint>& constraint, std::pair<ColumnConstraint, ColumnConstraint>& constraints) {
     std::array<std::set<ColumnConstraint>,
                static_cast<unsigned int>(ColumnConstraint::Count)>
         incompatible = {std::set<ColumnConstraint>{},
@@ -59,9 +61,11 @@ void Column::checkConstraint(const std::set<ColumnConstraint>& constraint) {
             constraint.begin(), constraint.end(),
             std::inserter(buff, buff.begin()));
         if (buff.size() > 0) {
-            throw std::invalid_argument("Incompatible constraints");
+            constraints = std::make_pair(i, *buff.begin());
+            return true;
         }
     }
+    return false;
 }
 
 bool Column::checkDataForType(const DataType type, const std::string& data) {
@@ -119,24 +123,26 @@ std::vector<std::string> split(const std::string& s, const char sep) {
     return res;
 }
 
-std::set<ColumnConstraint> Column::checkConstraints(
-    const std::string& constraints) {
-    std::set<ColumnConstraint> res;
-
-    auto separated = split(constraints, ' ');
-
-    for (auto& c : separated) {
-        if (Name2ColumnConstraint.find(c) == Name2ColumnConstraint.end()) {
-            // the so-called constraint doesn't exists
-            // TODO: throw exception?
-        } else {
-            auto constraint = Name2ColumnConstraint[c];
-            if (res.find(constraint) != res.end()) {
-                throw std::invalid_argument("Duplicate constraints");
-            }
-            res.insert(constraint);
-        }
-    }
-
-    return res;
-}
+//std::set<ColumnConstraint> Column::string2SetConstraint(
+//    const std::string& constraints, exc::Exception* e) {
+//    RESET_EXCEPTION(e);
+//
+//    std::set<ColumnConstraint> res;
+//    auto separated = split(constraints, ' ');
+//
+//    for (auto& c : separated) {
+//        if (Name2ColumnConstraint.find(c) == Name2ColumnConstraint.end()) {
+//            // the so-called constraint doesn't exists
+//            // TODO: throw exception?
+//        } else {
+//            auto constraint = Name2ColumnConstraint[c];
+//            if (res.find(constraint) != res.end()) {
+//                SET_EXCEPTION(e, exc::constr::RedundantConstraints(name_, constraint));
+//                return {};
+//            }
+//            res.insert(constraint);
+//        }
+//    }
+//
+//    return res;
+//}

@@ -17,7 +17,7 @@ class Table {
     [[nodiscard]] std::string getName() const { return name_; }
     [[nodiscard]] std::vector<Column> getColumns() const { return columns_; }
 
-    [[deprecated]] void addColumn(const Column& column);
+    [[deprecated]] void addColumn(const Column& column, exc::Exception* e);
 
    private:
     std::string name_;

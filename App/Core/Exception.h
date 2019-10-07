@@ -5,6 +5,16 @@
 
 #include "../Engine/Column.h"
 
+#define IS_EXCEPTION(pointer) pointer != nullptr
+
+#define RESET_EXCEPTION(pointer) \
+    delete pointer;              \
+    pointer = nullptr;
+
+#define SET_EXCEPTION(pointer, e) \
+    delete pointer;               \
+    pointer = static_cast<exc::Exception*>(new e);
+
 namespace exc {
 enum class ExceptionType : unsigned int {
     data_type_mismatch,
@@ -15,7 +25,7 @@ enum class ExceptionType : unsigned int {
     redundant_constraints,
     duplicated_primary_key,
     create_table_name_table = 1001,
-    create_table_name_column,
+    create_table_name_column,  // вынести
     create_table_repeat_table_name
 };
 
@@ -41,80 +51,14 @@ class Exception {
     const std::string message_;
 };
 
-class ExceptionInCommand : public Exception {
+class RepeatColumnName : public Exception {
    public:
-    ExceptionInCommand(const std::string& command, const ExceptionType type,
-                       const std::string& message)
-        : Exception(type, message), command_(command) {}
-
-   protected:
-    std::string getStarMessage() const {
-        return Exception::getStarMessage() + "in command \"" + command_ + "\"";
-    };
-    const std::string command_;
+    RepeatColumnName(const std::string& table_name,
+                     const std::string& column_name)
+        : Exception(ExceptionType::repeat_column_in_table,
+                    "repeat column " + column_name + " in table " + table_name +
+                        ".") {}
 };
-
-class RepeatColumnName : public ExceptionInCommand {
-   public:
-    RepeatColumnName(const std::string& command, const std::string& table_name,
-                    const std::string& column_name)
-        : ExceptionInCommand(
-              command, ExceptionType::repeat_column_in_table,
-              "repeat column " + column_name + " in table " + table_name + ".") {}
-};
-
-namespace constr {
-class IncompatibleConstraints : public ExceptionInCommand {
-   public:
-    IncompatibleConstraints(const std::string& command,
-                            const std::string& column_name,
-                            const ColumnConstraint& a, const ColumnConstraint& b)
-        : ExceptionInCommand(command, ExceptionType::incompatible_constraints,
-                             ColumnConstraint2String(a) +
-                                 " can't be used with " +
-                                 ColumnConstraint2String(b) + " in column " +
-                                 column_name + "."){};
-};
-
-class RedundantConstraints : public ExceptionInCommand {
-   public:
-    RedundantConstraints(const std::string& command,
-                         const std::string& column_name,
-                         const ColumnConstraint& a)
-        : ExceptionInCommand(command, ExceptionType::redundant_constraints,
-                             "duplicate of constraint " +
-                                 ColumnConstraint2String(a) + " in column " +
-                                 column_name + ".") {}
-};
-
-class DuplicatedPrimaryKey : public ExceptionInCommand {
-   public:
-    DuplicatedPrimaryKey(const std::string& command,
-                         const std::string& column_name1,
-                         const std::string& column_name2)
-        : ExceptionInCommand(command, ExceptionType::duplicated_primary_key,
-                             "primary key is used in the column " + column_name1 +
-                                 " and in " + column_name2 + ".") {}
-};
-}  // namespace constr
-
-namespace acc {
-class TableNonexistent : public ExceptionInCommand {
-   public:
-    TableNonexistent(const std::string& table_name, const std::string& command)
-        : ExceptionInCommand(command, ExceptionType::access_table_nonexistent,
-                             "table " + table_name + " nonexistent.") {}
-};
-
-class ColumnNonexistent : public ExceptionInCommand {
-   public:
-    ColumnNonexistent(const std::string& column_name,
-                     const std::string& table_name, const std::string& command)
-        : ExceptionInCommand(command, ExceptionType::access_column_nonexistent,
-                             "column " + column_name + "in table " + table_name +
-                                 " nonexistent.") {}
-};
-};  // namespace acc
 
 class TableException : public Exception {
    public:
@@ -129,6 +73,56 @@ class TableException : public Exception {
    protected:
     const std::string table_name_;
 };
+
+namespace constr {
+class IncompatibleConstraints : public Exception {
+   public:
+    IncompatibleConstraints(const std::string& column_name,
+                            const ColumnConstraint& a,
+                            const ColumnConstraint& b)
+        : Exception(ExceptionType::incompatible_constraints,
+                    ColumnConstraint2String(a) + " can't be used with " +
+                        ColumnConstraint2String(b) + " in column " +
+                        column_name + "."){};
+};
+
+class RedundantConstraints : public Exception {
+   public:
+    RedundantConstraints(const std::string& column_name,
+                         const ColumnConstraint& a)
+        : Exception(ExceptionType::redundant_constraints,
+                    "duplicate of constraint " + ColumnConstraint2String(a) +
+                        " in column " + column_name + ".") {}
+};
+
+class DuplicatedPrimaryKey : public TableException {
+   public:
+    DuplicatedPrimaryKey(const std::string& name_table,
+                         const std::string& column_name1,
+                         const std::string& column_name2)
+        : TableException(table_name, ExceptionType::duplicated_primary_key,
+                         "primary key is used in the column " + column_name1 +
+                             " and in " + column_name2 + ".") {}
+};
+}  // namespace constr
+
+namespace acc {
+class TableNonexistent : public Exception {
+   public:
+    TableNonexistent(const std::string& table_name)
+        : Exception(ExceptionType::access_table_nonexistent,
+                    "table " + table_name + " nonexistent.") {}
+};
+
+class ColumnNonexistent : public Exception {
+   public:
+    ColumnNonexistent(const std::string& column_name,
+                      const std::string& table_name)
+        : Exception(ExceptionType::access_column_nonexistent,
+                    "column " + column_name + "in table " + table_name +
+                        " nonexistent.") {}
+};
+};  // namespace acc
 
 namespace cr_table {
 class CreateTableException : public TableException {
@@ -159,9 +153,9 @@ class RepeatTableName : public CreateTableException {
 class CreateTableExceptionInColumn : public CreateTableException {
    public:
     CreateTableExceptionInColumn(const std::string& table_name,
-                                const std::string& column_name,
-                                const ExceptionType type,
-                                const std::string& message)
+                                 const std::string& column_name,
+                                 const ExceptionType type,
+                                 const std::string& message)
         : CreateTableException(table_name, type, message),
           column_name_(column_name) {}
 
@@ -178,13 +172,15 @@ class ColumnName : public CreateTableExceptionInColumn {
    public:
     ColumnName(const std::string& table_name, const std::string& column_name)
         : CreateTableExceptionInColumn(table_name, column_name,
-                                      ExceptionType::create_table_name_column,
-                                      "wrong name of column!") {}
+                                       ExceptionType::create_table_name_column,
+                                       "wrong name of column!") {}
 };
 };  // namespace cr_table
 
 class DataTypeMismatch : public Exception {
    public:
+    DataTypeMismatch(const std::string type) {}
+    DataTypeMismatch(const DataType& type) {}
     DataTypeMismatch(const DataType type, const std::string& data)
         : Exception(ExceptionType::data_type_mismatch,
                     "value " + data + " is not compatible with data type " +

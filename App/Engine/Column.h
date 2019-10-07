@@ -4,7 +4,10 @@
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
+
+#include "../Core/Exception.h"
 
 enum class DataType : unsigned int { integer, real, text, Count };
 
@@ -23,10 +26,16 @@ ColumnConstraint String2ColumnConstraint(const std::string&);
 
 class Column {
    public:
-    Column(std::string name, const DataType type,
-          const std::set<ColumnConstraint>& constraints = {})
+    Column(std::string name, const DataType type, exc::Exception* e,
+           const std::set<ColumnConstraint>& constraints = {})
         : name_(std::move(name)), type_(type) {
-        checkConstraint(constraints);
+        std::pair<ColumnConstraint, ColumnConstraint> err_constraints;
+        RESET_EXCEPTION(e);
+        if (checkConstraint(constraints, err_constraints)) {
+            SET_EXCEPTION(
+                e, exc::constr::IncompatibleConstraints(
+                       name_, err_constraints.first, err_constraints.second));
+        }
         constraint_ = constraints;
     }
 
@@ -37,13 +46,15 @@ class Column {
     };
     [[nodiscard]] std::vector<std::string> getData() const { return data_; };
 
-    void addData(const std::string&);
+    void addData(const std::string&, exc::Exception*);
 
-    static std::set<ColumnConstraint> checkConstraints(
-        const std::string& constraints);
+    //    static std::set<ColumnConstraint> string2SetConstraint(
+    //        const std::string& constraints, exc::Exception* e); Тебе точно
+    //        нужна жта функция?
 
    private:
-    static void checkConstraint(const std::set<ColumnConstraint>&);
+    static void checkConstraint(const std::set<ColumnConstraint>&,
+                                std::pair<ColumnConstraint, ColumnConstraint>&);
     bool checkDataForType(const DataType type, const std::string& data);
 
     std::string name_;
