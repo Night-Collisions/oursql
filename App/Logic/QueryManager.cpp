@@ -8,7 +8,7 @@
 #include "Parser/Nodes/VarList.h"
 
 void QueryManager::execute(const Query& query) {
-    void (* const commandsExtions[static_cast<unsigned int>(CommandType::Count)])(
+    void (* const commandsActions[static_cast<unsigned int>(CommandType::Count)])(
         const Query& query) = {
         [](const Query&) {},
         createTable,
@@ -17,7 +17,7 @@ void QueryManager::execute(const Query& query) {
     };
     CommandType command = static_cast<Command*>(query.getChildren()[0])->getCommandType();
     if (command != CommandType::Count) {
-        commandsExtions[static_cast<unsigned int>(command)](query);
+        commandsActions[static_cast<unsigned int>(command)](query);
     }
 }
 

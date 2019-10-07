@@ -13,6 +13,11 @@ set(HEADERS
         Logic/Parser/Nodes/VarList.h
         Logic/Parser/Nodes/Variable.h
         Logic/Parser/Nodes/Ident.h
+        Logic/Parser/Nodes/SelectList.h
+        Logic/Parser/Nodes/Condition.h
+        Logic/Parser/Nodes/IntConstant.h
+        Logic/Parser/Nodes/RealConstant.h
+        Logic/Parser/Nodes/TextConstant.h
         Logic/Parser/ParserManager.h
         Logic/QueryManager.h
         )
@@ -30,6 +35,11 @@ set(DEFINITIONS
         Logic/Parser/Nodes/VarList.cpp
         Logic/Parser/Nodes/Variable.cpp
         Logic/Parser/Nodes/Ident.cpp
+        Logic/Parser/Nodes/SelectList.cpp
+        Logic/Parser/Nodes/Condition.cpp
+        Logic/Parser/Nodes/IntConstant.cpp
+        Logic/Parser/Nodes/RealConstant.cpp
+        Logic/Parser/Nodes/TextConstant.cpp
         Logic/Parser/ParserManager.cpp
         Logic/QueryManager.cpp
         )
@@ -38,7 +48,7 @@ assemble_parser(Logic/Parser/)
 
 init(${PROJECT_BINARY_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Logic/Parser/Nodes/SelectList.cpp Logic/Parser/Nodes/SelectList.h Logic/Parser/Nodes/Condition.cpp Logic/Parser/Nodes/Condition.h)
+add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Logic/Parser/Nodes/SelectList.cpp Logic/Parser/Nodes/SelectList.h Logic/Parser/Nodes/Condition.cpp Logic/Parser/Nodes/Condition.h Logic/Parser/Nodes/IntConstant.cpp Logic/Parser/Nodes/IntConstant.h Logic/Parser/Nodes/RealConstant.cpp Logic/Parser/Nodes/RealConstant.h Logic/Parser/Nodes/TextConstant.cpp Logic/Parser/Nodes/TextConstant.h)
 
 add_library(${PROJECT_NAME}_SURSE ${HEADERS} ${DEFINITIONS})
 
