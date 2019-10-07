@@ -38,7 +38,7 @@ assemble_parser(Logic/Parser/)
 
 init(${PROJECT_BINARY_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Logic/Parser/Nodes/SelectList.cpp Logic/Parser/Nodes/SelectList.h)
+add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Logic/Parser/Nodes/SelectList.cpp Logic/Parser/Nodes/SelectList.h Logic/Parser/Nodes/Condition.cpp Logic/Parser/Nodes/Condition.h)
 
 add_library(${PROJECT_NAME}_SURSE ${HEADERS} ${DEFINITIONS})
 

@@ -29,8 +29,8 @@
 
 %error-verbose
 
-%token CREATE SHOW DROP SELECT
-%token TABLE TABLES VALUES
+%token CREATE SHOW DROP SELECT INSERT
+%token TABLE TABLES VALUES INTO
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA ASTERISK
 %token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ 
 %token ID ICONST FCONST SCONST
@@ -73,25 +73,10 @@ statement:
     show_create | 
     drop_table | 
     select |
-    error SEMI { yyerrok; };
+    insert |
+    error { yyerrok; };
 
-select:
-     SELECT select_list FROM id WHERE where_condition
-
-select_list: 
-    ASTERISK |
-    ASTERISK COMMA id;
-
-where_condition: 
-    id relation id;
-
-relation:
-    EQUAL |
-    GREATER |
-    GREATER_EQ |
-    LESS |
-    LESS_EQ |
-    NOT_EQ;
+// ---- create table
 
 create: 
     CREATE TABLE id LPAREN variables RPAREN {     
@@ -99,24 +84,6 @@ create:
         children.push_back(new Command(CommandType::create_table));
         children.push_back($3);
         children.push_back(new VarList(varList));
-
-        parseTree = new Query(children);
-    };
-
-show_create: 
-    SHOW CREATE TABLE id {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::show_create_table));
-        children.push_back($4);
-
-        parseTree = new Query(children);
-    };
-
-drop_table: 
-    DROP TABLE id {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::drop_table));
-        children.push_back($3);
 
         parseTree = new Query(children);
     };
@@ -149,6 +116,79 @@ constraint:
     NOT_NULL { $$ = ColumnConstraint::not_null;  } |
     PRIMARY_KEY { $$ = ColumnConstraint::primary_key; }|
     UNIQUE { $$ = ColumnConstraint::unique; };
+
+// --- select
+
+select:
+     SELECT select_list FROM id WHERE where_condition;
+
+select_list: 
+    ASTERISK |
+    ASTERISK COMMA select_list_element |
+    select_list_element |
+    select_list_element COMMA select_list_element;
+
+select_list_element:
+    id DOT id | 
+    id;
+
+where_condition: 
+    where_element relation where_element;
+
+where_element:
+    id |
+    constant;
+
+relation:
+    EQUAL |
+    GREATER |
+    GREATER_EQ |
+    LESS |
+    LESS_EQ |
+    NOT_EQ;
+
+// --- show create table
+
+show_create: 
+    SHOW CREATE TABLE id {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::show_create_table));
+        children.push_back($4);
+
+        parseTree = new Query(children);
+    };
+
+// --- drop table
+
+drop_table: 
+    DROP TABLE id {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::drop_table));
+        children.push_back($3);
+
+        parseTree = new Query(children);
+    };
+
+// --- insert
+
+insert: 
+    INSERT INTO id LPAREN column_list RPAREN VALUES LPAREN value_list RPAREN |
+    INSERT INTO id VALUES LPAREN value_list RPAREN;
+
+column_list: 
+    id | id COMMA id;
+
+value_list:
+    constant |
+    constant COMMA constant;
+
+
+// ---
+
+constant:
+    ICONST |
+    FCONST |
+    SCONST;
 
 type: 
     INT { $$ = DataType::integer; } |

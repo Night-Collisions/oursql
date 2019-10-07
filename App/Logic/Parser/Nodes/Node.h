@@ -10,6 +10,8 @@ enum class NodeType {
     variable,
     id,
     constraintList,
+    selectList,
+    condition
 };
 
 class Node {
