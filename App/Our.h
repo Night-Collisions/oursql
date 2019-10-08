@@ -4,7 +4,8 @@
 #include <iostream>
 
 namespace ourSQL {
-unsigned int perform(std::istream& in, std::ofstream& out);
+unsigned int perform(std::istream& in = std::cin, std::ostream& out = std::cout);
+void nonstop_perform(std::istream& in = std::cin, std::ostream& out = std::cout);
 }
 
 
