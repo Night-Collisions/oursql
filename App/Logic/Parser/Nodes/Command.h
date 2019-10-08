@@ -10,6 +10,7 @@ enum class CommandType : unsigned int {
     show_create_table,
     drop_table,
     select,
+    insert,
     Count
 };
 

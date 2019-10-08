@@ -9,14 +9,14 @@ class QueryManager {
    public:
     QueryManager() = delete;
 
-    static void execute(const Query& query);
+    static void execute(const Query& query, std::unique_ptr<exc::Exception>& e);
 
    private:
-    static void createTable(const Query& query);
-    static std::string showCreateTable(const Query& query);
-    static void dropTable(const Query& query);
+    static void createTable(const Query& query, std::unique_ptr<exc::Exception>& e);
+    static void showCreateTable(const Query& query, std::unique_ptr<exc::Exception>& e);
+    static void dropTable(const Query& query, std::unique_ptr<exc::Exception>& e);
 
-    static void checkConstraints(const std::set<ColumnConstraint>& constraint);
+    //static void checkConstraints(const std::set<ColumnConstraint>& constraint);
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_

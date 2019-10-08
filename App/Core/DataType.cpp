@@ -1,5 +1,8 @@
 #include "DataType.h"
 
+#include <array>
+#include <map>
+
 std::array<std::string, static_cast<unsigned int>(DataType::Count)>
     DataType2Names = {"int", "real", "text"};
 std::map<std::string, DataType> Name2DataType = {

@@ -1,5 +1,7 @@
 #include "QueryManager.h"
 
+#include <memory>
+
 #include "../../App/Engine/Table.h"
 #include "../Engine/Column.h"
 #include "../Engine/Engine.h"
@@ -7,19 +9,24 @@
 #include "Parser/Nodes/Ident.h"
 #include "Parser/Nodes/VarList.h"
 
-void QueryManager::execute(const Query& query) {
+#include "../../App/Core/Exception.h"
+
+void QueryManager::execute(const Query& query, std::unique_ptr<exc::Exception>& e) {
     void (*const commandsActions[static_cast<unsigned int>(
-        CommandType::Count)])(const Query& query) = {
-        [](const Query&) {}, createTable, showCreateTable, dropTable};
+        CommandType::Count)])(const Query& query, std::unique_ptr<exc::Exception>& e) = {
+        [](const Query&, std::unique_ptr<exc::Exception>& e) {}, createTable, showCreateTable,
+        dropTable};
     CommandType command =
         static_cast<Command*>(query.getChildren()[0])->getCommandType();
     if (command != CommandType::Count) {
-        commandsActions[static_cast<unsigned int>(command)](query);
+        commandsActions[static_cast<unsigned int>(command)](query, e);
     }
 }
 
-void QueryManager::createTable(const Query& query) {
+void QueryManager::createTable(const Query& query, std::unique_ptr<exc::Exception>& e) {
     // TODO: накидать исключений
+    e.reset(nullptr);
+
     std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
 
     std::vector<Column> columns;
@@ -27,10 +34,20 @@ void QueryManager::createTable(const Query& query) {
     for (auto& v : vars) {
         std::string col_name = v->getName();
         DataType type = v->getType();
-        auto constraints = v->getConstraints();
-        checkConstraints(constraints);  // TODO: внутри кидать новые исключения
+        auto constr_vector = v->getConstraints();
 
-        Column f(col_name, type, constraints);
+        std::set<ColumnConstraint> constr_set;
+
+        for (auto& c : constr_vector) {
+            if (constr_set.find(c) == constr_set.end()) {
+                constr_set.insert(c);
+            } else {
+                e.reset(new exc::constr::RedundantConstraints(name, v->getName()));
+                return;
+            }
+        }
+
+        Column f(col_name, type, e, constr_set);
         columns.emplace_back(f);
     }
 
@@ -39,7 +56,7 @@ void QueryManager::createTable(const Query& query) {
     create(table);  // TODO: она что то возвращает, надо кинуть исключение
 }
 
-void QueryManager::checkConstraints(
+/*void QueryManager::checkConstraints(
     const std::set<ColumnConstraint>& constraint) {
     std::array<std::set<ColumnConstraint>,
                static_cast<unsigned int>(ColumnConstraint::Count)>
@@ -57,13 +74,16 @@ void QueryManager::checkConstraints(
             throw std::invalid_argument("Incompatible constraints");
         }
     }
-}
+}*/
 
-std::string QueryManager::showCreateTable(const Query& query) {
+void QueryManager::showCreateTable(const Query& query, std::unique_ptr<exc::Exception>& e) {
     if (query.getChildren().size() != 2) {
         // TODO: исключение, неправильно составлени команда, так как запрос
         // должен быть из двух частей
     }
 
-    return showCreate(static_cast<Ident*>(query.getChildren()[1])->getName());
+    // TODO: print to output stream
+    showCreate(static_cast<Ident*>(query.getChildren()[1])->getName());
 }
+
+void QueryManager::dropTable(const Query& query, std::unique_ptr<exc::Exception>& e) {}

@@ -27,9 +27,9 @@
 
     Query *parseTree;
     std::vector<Variable *> varList;
-    std::set<ColumnConstraint> constraintList;
-    std::vector<Ident* > identList;
-    std::vector<Constant*> constantList;
+    std::vector<ColumnConstraint> constraintList;
+    std::vector<Ident*> identList;
+    std::vector<Node*> constantList;
 
     exc::Exception* exception;
 %}
@@ -121,10 +121,10 @@ variable:
 
 constraints: 
     constraint {
-        constraintList.insert($1);
+        constraintList.push_back($1);
     } | 
     constraints constraint {
-        constraintList.insert($2);
+        constraintList.push_back($2);
     };
 
 constraint: 
@@ -190,8 +190,8 @@ insert:
     INSERT INTO id LPAREN column_list RPAREN VALUES LPAREN value_list RPAREN {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::insert));
-        children.push_back(identList);
-        children.push_back(constraintList);
+        children.push_back(new IdentList(identList));
+        children.push_back(new ConstantList(constantList));
 
         parseTree = new Query(children);
     } |
@@ -199,16 +199,16 @@ insert:
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::insert));
         children.push_back(nullptr);
-        children.push_back(constraintList);
+        children.push_back(new ConstantList(constantList));
 
         parseTree = new Query(children);
     };
 
 column_list: 
     id {
-        identList.push_back(new Ident($1));
+        identList.push_back(new Ident(*$1));
     } | column_list COMMA id {
-        identList.push_back(new Ident($3));
+        identList.push_back(new Ident(*$3));
     };
 
 value_list:

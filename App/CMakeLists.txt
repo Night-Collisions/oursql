@@ -21,6 +21,7 @@ set(HEADERS
         Logic/Parser/Nodes/ConstantList.h
         Logic/Parser/Nodes/TextConstant.h
         Logic/Parser/ParserManager.h
+        Core/DataType.h
         Logic/QueryManager.h
         )
 
@@ -45,6 +46,7 @@ set(DEFINITIONS
         Logic/Parser/Nodes/TextConstant.cpp
         Logic/Parser/Nodes/IdentList.cpp
         Logic/Parser/ParserManager.cpp
+        Core/DataType.cpp
         Logic/QueryManager.cpp
         )
 
