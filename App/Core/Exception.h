@@ -9,6 +9,7 @@ namespace exc {
 enum class ExceptionType : unsigned int {
     data_type_mismatch,
     repeat_column_in_table,
+    syntax,
     access_table_nonexistent = 701,
     access_column_nonexistent,
     incompatible_constraints = 801,
@@ -29,7 +30,7 @@ class Exception {
     ExceptionType getType() const { return type_; }
 
     std::string getMessage() const {
-        return getStarMessage() + ": " + message_;
+        return getStarMessage() + ":\n " + message_;
     }
 
    protected:
@@ -39,6 +40,16 @@ class Exception {
 
     const ExceptionType type_;
     const std::string message_;
+};
+
+class SyntaxException : public Exception {
+   public:
+    SyntaxException(std::string& command) : Exception(ExceptionType::syntax, "wrong syntax!"), command_(command) {}
+   protected:
+    std::string getStarMessage() const {
+        return Exception::getStarMessage() + " in command: " + command_;
+    };
+   const std::string& command_;
 };
 
 class RepeatColumnName : public Exception {
