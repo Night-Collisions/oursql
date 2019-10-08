@@ -15,23 +15,23 @@ int read_sum(std::istream& s) {
 
 int main() {
 
-    std::stringstream ss;
+/*    std::stringstream ss;
     ss << 100 << ' ' << 200;
 
 
 
-    std::cout << read_sum(ss) << std::endl;
+    std::cout << read_sum(ss) << std::endl;*/
 
 
-//    ParserManager pm;
-//
-//    // auto a = pm.getParseTree();  // read from stdin by default
-//    std::unique_ptr<exc::Exception> e;
-//
-//    auto a = pm.getParseTree(stdin, e);  // or give a query string
-//
-//    QueryManager::execute(*a, e);
-//    delete a;  // это тоже работает
+    ParserManager pm;
+
+    // auto a = pm.getParseTree();  // read from stdin by default
+    std::unique_ptr<exc::Exception> e;
+
+    auto a = pm.getParseTree(e);  // or give a query string
+
+    QueryManager::execute(*a, e);
+    delete a;  // это тоже работает
 
     return 0;
 }

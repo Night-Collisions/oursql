@@ -44,7 +44,7 @@ class Exception {
 
 class SyntaxException : public Exception {
    public:
-    SyntaxException(std::string& command) : Exception(ExceptionType::syntax, "wrong syntax!"), command_(command) {}
+    SyntaxException(const std::string& command) : Exception(ExceptionType::syntax, "wrong syntax!"), command_(command) {}
    protected:
     std::string getStarMessage() const {
         return Exception::getStarMessage() + " in command: " + command_;

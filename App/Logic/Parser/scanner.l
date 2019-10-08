@@ -1,6 +1,8 @@
 %{
     #include <iostream>
     #include <stdio.h>
+    #include <iostream>
+    #include <sstream>
     
     #include "../../App/Logic/Parser/Nodes/Node.h"
     #include "../../App/Logic/Parser/Nodes/Query.h"

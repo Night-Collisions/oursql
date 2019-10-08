@@ -18,9 +18,12 @@
     #include <stdio.h>
     #include <string>
     #include <cstring>
+    #include <iostream>
+    #include <sstream>
 
     extern FILE *yyin;
     extern FILE *yyout;
+
     extern int lineno;
     extern int yylex();
     void yyerror(const char *s);
@@ -31,7 +34,7 @@
     std::vector<Ident*> identList;
     std::vector<Node*> constantList;
 
-    exc::Exception* exception;
+    std::unique_ptr<exc::Exception> ex;
 %}
 
 %error-verbose
@@ -88,8 +91,7 @@ statement:
     show_create | 
     drop_table | 
     select |
-    insert |
-    error { yyerrok; };
+    insert;
 
 // ---- create table
 
@@ -253,7 +255,7 @@ id:
 %%
 
 void yyerror(const char *s) {
-    fprintf (stderr, "%s\n", s);
+    ex.reset(new exc::SyntaxException(std::string(s)));
 }
 
 void set_input_string(const char* in);
@@ -264,15 +266,15 @@ void destroy() {
     constraintList.clear();
 }
 
-Query* parse_string(const char* in, exc::Exception* ex) {
+Query* parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) {
     destroy();
-    ex = nullptr;
+    exception.reset(nullptr);
 
     set_input_string(in);
     yyparse();
     end_lexical_scan();
 
-    ex = exception;
+    exception = std::move(ex);
     
     return parseTree;
 }
