@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "../Engine/Column.h"
+#include "DataType.h"
 
 #define IS_EXCEPTION(pointer) pointer != nullptr
 
@@ -14,6 +14,8 @@
 #define SET_EXCEPTION(pointer, e) \
     delete pointer;               \
     pointer = static_cast<exc::Exception*>(new e);
+
+
 
 namespace exc {
 enum class ExceptionType : unsigned int {
@@ -78,26 +80,26 @@ namespace constr {
 class IncompatibleConstraints : public Exception {
    public:
     IncompatibleConstraints(const std::string& column_name,
-                            const ColumnConstraint& a,
-                            const ColumnConstraint& b)
+                            const std::string& column_constraint1,
+                            const std::string& column_constraint2)
         : Exception(ExceptionType::incompatible_constraints,
-                    ColumnConstraint2String(a) + " can't be used with " +
-                        ColumnConstraint2String(b) + " in column " +
+                    column_constraint1 + " can't be used with " +
+                        column_constraint2 + " in column " +
                         column_name + "."){};
 };
 
-class RedundantConstraints : public Exception {
+class RedundantConstraints : public Exception { // TODO: добавить в место где они повторяются
    public:
     RedundantConstraints(const std::string& column_name,
-                         const ColumnConstraint& a)
+                         const std::string& column_constraint)
         : Exception(ExceptionType::redundant_constraints,
-                    "duplicate of constraint " + ColumnConstraint2String(a) +
+                    "duplicate of constraint " + column_constraint +
                         " in column " + column_name + ".") {}
 };
 
 class DuplicatedPrimaryKey : public TableException {
    public:
-    DuplicatedPrimaryKey(const std::string& name_table,
+    DuplicatedPrimaryKey(const std::string& table_name,
                          const std::string& column_name1,
                          const std::string& column_name2)
         : TableException(table_name, ExceptionType::duplicated_primary_key,
@@ -179,8 +181,6 @@ class ColumnName : public CreateTableExceptionInColumn {
 
 class DataTypeMismatch : public Exception {
    public:
-    DataTypeMismatch(const std::string type) {}
-    DataTypeMismatch(const DataType& type) {}
     DataTypeMismatch(const DataType type, const std::string& data)
         : Exception(ExceptionType::data_type_mismatch,
                     "value " + data + " is not compatible with data type " +

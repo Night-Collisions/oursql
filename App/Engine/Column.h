@@ -8,11 +8,7 @@
 #include <vector>
 
 #include "../Core/Exception.h"
-
-enum class DataType : unsigned int { integer, real, text, Count };
-
-std::string DataType2String(const DataType&);
-DataType String2DataType(const std::string&);
+#include "../Core/DataType.h"
 
 enum class ColumnConstraint : unsigned int {
     primary_key,
@@ -34,7 +30,7 @@ class Column {
         if (checkConstraint(constraints, err_constraints)) {
             SET_EXCEPTION(
                 e, exc::constr::IncompatibleConstraints(
-                       name_, err_constraints.first, err_constraints.second));
+                       name_, ColumnConstraint2String(err_constraints.first), ColumnConstraint2String(err_constraints.second)));
         }
         constraint_ = constraints;
     }
@@ -53,7 +49,7 @@ class Column {
     //        нужна жта функция?
 
    private:
-    static void checkConstraint(const std::set<ColumnConstraint>&,
+    static bool checkConstraint(const std::set<ColumnConstraint>&,
                                 std::pair<ColumnConstraint, ColumnConstraint>&);
     bool checkDataForType(const DataType type, const std::string& data);
 

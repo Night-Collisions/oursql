@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include "../Core/Exception.h"
 
 std::string getPathToTable(const std::string& name) {
     return "DataBD/" + name;
@@ -67,11 +68,13 @@ Table show(const std::string& name) {
             constraints.insert(static_cast<ColumnConstraint >(constraint_value.GetInt()));
         }
 
-        table.addColumn(Column(
-                column_value["name"].GetString(),
-                static_cast<DataType>(column_value["type"].GetInt()),
-                constraints
-        ));
+//        exc::Exception* e;
+//        RESET_EXCEPTION(e);
+//        table.addColumn(Column(
+//                column_value["name"].GetString(), e,
+//                static_cast<DataType>(column_value["type"].GetInt()),
+//                constraints
+//        ));
     }
 
     return table;

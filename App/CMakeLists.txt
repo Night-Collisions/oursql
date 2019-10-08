@@ -52,7 +52,7 @@ assemble_parser(Logic/Parser/)
 
 init(${PROJECT_BINARY_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Logic/Parser/Nodes/SelectList.cpp Logic/Parser/Nodes/SelectList.h Logic/Parser/Nodes/Condition.cpp Logic/Parser/Nodes/Condition.h Logic/Parser/Nodes/IntConstant.cpp Logic/Parser/Nodes/IntConstant.h Logic/Parser/Nodes/RealConstant.cpp Logic/Parser/Nodes/RealConstant.h Logic/Parser/Nodes/TextConstant.cpp Logic/Parser/Nodes/TextConstant.h Logic/Parser/Nodes/IdentList.cpp Logic/Parser/Nodes/IdentList.h Logic/Parser/Nodes/ConstantList.cpp Logic/Parser/Nodes/ConstantList.h)
+add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Engine/Column.h)
 
 add_library(${PROJECT_NAME}_SURSE ${HEADERS} ${DEFINITIONS})
 

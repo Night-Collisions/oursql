@@ -7,23 +7,9 @@
 #include <set>
 #include <stdexcept>
 
-//---DataType---//
-std::array<std::string, static_cast<unsigned int>(DataType::Count)>
-    DataType2Names = {"int", "real", "text"};
-std::map<std::string, DataType> Name2DataType = {
-    {DataType2Names[0], DataType::integer},
-    {DataType2Names[1], DataType::real},
-    {DataType2Names[2], DataType::text}};
-
-std::string DataType2String(const DataType& type) {
-    return DataType2Names[static_cast<unsigned int>(type)];
-}
-
-DataType String2DataType(const std::string& s) { return Name2DataType.at(s); }
-
 //---ColumnConstraint---//
 std::array<std::string, static_cast<unsigned int>(ColumnConstraint::Count)>
-    ColumnConstraint2Names = {"primary_key", "not_null", "unique"};
+    ColumnConstraint2Names = {"primary key", "not null", "unique"};
 std::map<std::string, ColumnConstraint> Name2ColumnConstraint = {
     {ColumnConstraint2Names[0], ColumnConstraint::primary_key},
     {ColumnConstraint2Names[1], ColumnConstraint::not_null},
@@ -122,27 +108,3 @@ std::vector<std::string> split(const std::string& s, const char sep) {
 
     return res;
 }
-
-//std::set<ColumnConstraint> Column::string2SetConstraint(
-//    const std::string& constraints, exc::Exception* e) {
-//    RESET_EXCEPTION(e);
-//
-//    std::set<ColumnConstraint> res;
-//    auto separated = split(constraints, ' ');
-//
-//    for (auto& c : separated) {
-//        if (Name2ColumnConstraint.find(c) == Name2ColumnConstraint.end()) {
-//            // the so-called constraint doesn't exists
-//            // TODO: throw exception?
-//        } else {
-//            auto constraint = Name2ColumnConstraint[c];
-//            if (res.find(constraint) != res.end()) {
-//                SET_EXCEPTION(e, exc::constr::RedundantConstraints(name_, constraint));
-//                return {};
-//            }
-//            res.insert(constraint);
-//        }
-//    }
-//
-//    return res;
-//}
