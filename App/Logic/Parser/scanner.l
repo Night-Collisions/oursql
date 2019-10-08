@@ -13,8 +13,10 @@
     #include "../../App/Logic/Parser/Nodes/IntConstant.h"
     #include "../../App/Logic/Parser/Nodes/RealConstant.h"
     #include "../../App/Logic/Parser/Nodes/TextConstant.h"
+    #include "../../App/Logic/Parser/Nodes/Relation.h"
     #include "../../App/Logic/Parser/Nodes/ConstantList.h"
     #include "../../App/Logic/Parser/Nodes/IdentList.h"
+    #include "../../App/Logic/Parser/Nodes/SelectList.h"
 
     #include "../../App/Engine/Engine.h"
     #include "parser.hpp"

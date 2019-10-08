@@ -13,7 +13,8 @@ enum class NodeType {
     selectList,
     condition,
     identList,
-    constant
+    constant,
+    relation
 };
 
 class Node {

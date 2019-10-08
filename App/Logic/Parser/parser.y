@@ -10,6 +10,8 @@
     #include "../../App/Logic/Parser/Nodes/TextConstant.h"
     #include "../../App/Logic/Parser/Nodes/ConstantList.h"
     #include "../../App/Logic/Parser/Nodes/IdentList.h"
+    #include "../../App/Logic/Parser/Nodes/Relation.h"
+    #include "../../App/Logic/Parser/Nodes/SelectList.h"
     #include "../../App/Core/Exception.h"
 
     #include "../../App/Engine/Engine.h"
@@ -33,6 +35,7 @@
     std::vector<ColumnConstraint> constraintList;
     std::vector<Ident*> identList;
     std::vector<Node*> constantList;
+    std::vector<Ident> selectList;
 
     std::unique_ptr<exc::Exception> ex;
 %}
@@ -48,14 +51,16 @@
 %token NOT_NULL PRIMARY_KEY UNIQUE
 
 %type<query> create show_create drop_table select insert
-%type<ident> id
+%type<ident> id select_list_element
 %type<var> variable
 %type<dataType> type
 %type<constraint> constraint
 %type<iConst> int_const
 %type<rConst> real_const
 %type<tConst> text_const
-%type<anyConstant> constant
+%type<anyConstant> constant where_element
+%type<relation> where_condition
+%type<relType> relation
 
 %start expression
 
@@ -71,6 +76,8 @@
     RealConstant *rConst;
     TextConstant *tConst;
     Node *anyConstant;
+    Relation *relation;
+    RelationType relType;
 }
 
 %%
@@ -137,32 +144,62 @@ constraint:
 // --- select
 
 select:
-     SELECT select_list FROM id WHERE where_condition;
+     SELECT select_list FROM id WHERE where_condition {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::select));
+        children.push_back($4);
+        children.push_back(new SelectList(selectList));
+        children.push_back($6);
+
+        parseTree = new Query(children);
+     } |
+    SELECT asterisk COMMA select_list FROM id WHERE where_condition {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::select));
+        children.push_back($6);
+        children.push_back(new SelectList(selectList));
+        children.push_back($8);
+
+        parseTree = new Query(children);
+    };
+
+asterisk:
+    ASTERISK {
+    	selectList.push_back(Ident("*"));
+    };
 
 select_list: 
-    ASTERISK |
-    ASTERISK COMMA select_list_element |
-    select_list_element |
-    select_list_element COMMA select_list_element;
+    select_list_element {
+        selectList.push_back(*$1);
+    } |
+    select_list COMMA select_list_element {
+        selectList.push_back(*$3);
+    };
 
 select_list_element:
-    id DOT id | 
-    id;
+    id DOT id {
+        $$ = new Ident((*$1).getTableName(), (*$3).getName());
+    } | 
+    id {
+        $$ = new Ident((*$1).getName());
+    };
 
 where_condition: 
-    where_element relation where_element;
+    where_element relation where_element {
+        $$ = new Relation($1, $2, $3);
+    };
 
 where_element:
-    id |
-    constant;
+    id { $$ = new Ident(*$1); } |
+    constant { $$ = $1; };
 
 relation:
-    EQUAL |
-    GREATER |
-    GREATER_EQ |
-    LESS |
-    LESS_EQ |
-    NOT_EQ;
+    EQUAL { $$ = RelationType::equal; } |
+    GREATER { $$ = RelationType::greater;} |
+    GREATER_EQ { $$ = RelationType::greater_eq;} |
+    LESS { $$ = RelationType::less; } |
+    LESS_EQ { $$ = RelationType::less_eq;} |
+    NOT_EQ { $$ = RelationType::not_equal;};
 
 // --- show create table
 
