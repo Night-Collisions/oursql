@@ -7,7 +7,7 @@
 
 namespace exc {
 enum class ExceptionType : unsigned int {
-    data_type_mismatch,
+    data_type_mismatch = 1,
     repeat_column_in_table,
     syntax,
     access_table_nonexistent = 701,

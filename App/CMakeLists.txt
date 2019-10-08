@@ -1,6 +1,7 @@
 project(OurSql_APP)
 
 set(HEADERS
+        Our.h
         Engine/Column.h
         Engine/Engine.h
         Engine/Table.h
@@ -26,6 +27,7 @@ set(HEADERS
         )
 
 set(DEFINITIONS
+        Our.cpp
         Engine/Column.cpp
         Engine/Engine.cpp
         Engine/Table.cpp
