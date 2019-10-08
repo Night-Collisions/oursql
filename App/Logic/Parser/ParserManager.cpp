@@ -4,12 +4,12 @@
 #include "parser.cpp"
 
 Query* ParserManager::getParseTree(const std::string& query,
-                                   exc::Exception* exception) {
+                                   std::unique_ptr<exc::Exception>& exception) {
     yydebug = debug_;
-    return parse_string(query.c_str(), exception);
+    return parse_string(query.c_str(), exception.get());
 }
 
-Query* ParserManager::getParseTree(FILE* input, exc::Exception* exception) {
+Query* ParserManager::getParseTree(FILE* input, std::unique_ptr<exc::Exception>& exception) {
     yydebug = debug_;
 
     char c = ' ';
@@ -25,5 +25,5 @@ Query* ParserManager::getParseTree(FILE* input, exc::Exception* exception) {
         }
     }
 
-    return parse_string(query.c_str(), exception);
+    return parse_string(query.c_str(), exception.get());
 }

@@ -5,18 +5,6 @@
 
 #include "DataType.h"
 
-#define IS_EXCEPTION(pointer) pointer != nullptr
-
-#define RESET_EXCEPTION(pointer) \
-    delete pointer;              \
-    pointer = nullptr;
-
-#define SET_EXCEPTION(pointer, e) \
-    delete pointer;               \
-    pointer = static_cast<exc::Exception*>(new e);
-
-
-
 namespace exc {
 enum class ExceptionType : unsigned int {
     data_type_mismatch,

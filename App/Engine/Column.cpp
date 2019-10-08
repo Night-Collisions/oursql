@@ -24,10 +24,10 @@ ColumnConstraint String2ColumnConstraint(const std::string& s) {
 }
 //------//
 
-void Column::addData(const std::string& data, exc::Exception* e) {
-    RESET_EXCEPTION(e);
+void Column::addData(const std::string& data, std::unique_ptr<exc::Exception>& e) {
+    e.reset(nullptr);
     if (!checkDataForType(type_, data)) {
-        SET_EXCEPTION(e, exc::DataTypeMismatch(type_, data));
+        e.reset(new exc::DataTypeMismatch(type_, data));
         return;
     }
     data_.push_back(data);
