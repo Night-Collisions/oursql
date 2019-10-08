@@ -1,11 +1,12 @@
 #include <iostream>
 
+#include "Logic/Parser/Nodes/Relation.h"
 #include "Logic/Parser/ParserManager.h"
 #include "Logic/QueryManager.h"
 
-#include <string>
 #include <iostream>
 #include <sstream>
+#include <string>
 
 int read_sum(std::istream& s) {
     int a, b;
@@ -28,7 +29,7 @@ int main() {
     // auto a = pm.getParseTree();  // read from stdin by default
     std::unique_ptr<exc::Exception> e;
 
-    auto a = pm.getParseTree(e);  // or give a query string
+    auto a = pm.getParseTree("select *, A, employers.B from employers where 5 = id;", e);
 
     QueryManager::execute(*a, e);
     delete a;  // это тоже работает
