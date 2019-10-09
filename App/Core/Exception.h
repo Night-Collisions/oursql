@@ -7,9 +7,10 @@
 
 namespace exc {
 enum class ExceptionType : unsigned int {
-    data_type_mismatch = 1,
-    repeat_column_in_table,
+    repeat_column_in_table = 1,
     syntax,
+    set_data_type_mismatch = 601,
+    compare_data_type_mismatch,
     access_table_nonexistent = 701,
     access_column_nonexistent,
     incompatible_constraints = 801,
@@ -63,7 +64,7 @@ class TableException : public Exception {
         : Exception(type, message), table_name_(table_name) {}
 
     std::string getStarMessage() const {
-        return Exception::getStarMessage() + "in table " + table_name_;
+        return Exception::getStarMessage() + " in table " + table_name_;
     }
 
    protected:
@@ -78,11 +79,12 @@ class IncompatibleConstraints : public Exception {
                             const std::string& column_constraint2)
         : Exception(ExceptionType::incompatible_constraints,
                     column_constraint1 + " can't be used with " +
-                        column_constraint2 + " in column " +
-                        column_name + "."){};
+                        column_constraint2 + " in column " + column_name +
+                        "."){};
 };
 
-class RedundantConstraints : public Exception { // TODO: добавить в место где они повторяются
+class RedundantConstraints
+    : public Exception {  // TODO: добавить в место где они повторяются
    public:
     RedundantConstraints(const std::string& column_name,
                          const std::string& column_constraint)
@@ -128,7 +130,7 @@ class CreateTableException : public TableException {
         : TableException(table_name, type, message){};
 
     std::string getStarMessage() const {
-        return Exception::getStarMessage() + "in create table " + table_name_;
+        return Exception::getStarMessage() + " in create table " + table_name_;
     }
 };
 
@@ -174,12 +176,20 @@ class ColumnName : public CreateTableExceptionInColumn {
 };
 };  // namespace cr_table
 
-class DataTypeMismatch : public Exception {
+class SetDataTypeMismatch : public Exception {
    public:
-    DataTypeMismatch(const DataType type, const std::string& data)
-        : Exception(ExceptionType::data_type_mismatch,
+    SetDataTypeMismatch(const DataType type, const std::string& data)
+        : Exception(ExceptionType::set_data_type_mismatch,
                     "value " + data + " is not compatible with data type " +
                         DataType2String(type) + ".") {}
+};
+
+class CompareDataTypeMismatch : public Exception {
+   public:
+    CompareDataTypeMismatch(const DataType type1, const DataType type2)
+        : Exception(ExceptionType::compare_data_type_mismatch,
+                    "can't compare " + DataType2String(type1) + " and " +
+                        DataType2String(type2) + ".") {}
 };
 };  // namespace exc
 

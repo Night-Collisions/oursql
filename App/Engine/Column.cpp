@@ -27,7 +27,7 @@ ColumnConstraint String2ColumnConstraint(const std::string& s) {
 void Column::addData(const std::string& data, std::unique_ptr<exc::Exception>& e) {
     e.reset(nullptr);
     if (!checkDataForType(type_, data)) {
-        e.reset(new exc::DataTypeMismatch(type_, data));
+        e.reset(new exc::SetDataTypeMismatch(type_, data));
         return;
     }
     data_.push_back(data);
