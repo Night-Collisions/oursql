@@ -32,6 +32,8 @@ void clearDB() {
     const char *delete_command = "rmdir /Q /S ";
     const char *create_dir_command = "md ";
 #else
+    const char *delete_command = "rm -rf ";
+    const char *create_dir_command = "mkdir ";
 #endif
     
     std::string name = "DataBD";
