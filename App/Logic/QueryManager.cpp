@@ -12,6 +12,8 @@
 #include "../../App/Core/Exception.h"
 #include "Conditions/ConditionChecker.h"
 #include "Parser/Nodes/Constant.h"
+#include "Parser/Nodes/ConstantList.h"
+#include "Parser/Nodes/IdentList.h"
 #include "Parser/Nodes/Relation.h"
 #include "Parser/Nodes/SelectList.h"
 
@@ -24,7 +26,12 @@ void QueryManager::execute(const Query& query,
         std::ostream& out) = {
         [](const Query&, std::unique_ptr<exc::Exception>& e,
            std::ostream& out) {},
-        createTable, showCreateTable, dropTable, select, insert};
+        createTable,
+        showCreateTable,
+        dropTable,
+        select,
+        insert,
+        update};
     CommandType command =
         static_cast<Command*>(query.getChildren()[0])->getCommandType();
     if (command != CommandType::Count) {
@@ -162,10 +169,51 @@ void QueryManager::select(const Query& query,
 
     auto doc = Engine::select(name, cols_to_engine, c, e);
 
-    //todo
+    // todo
 }
 void QueryManager::insert(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
+    e.reset(nullptr);
 
+    std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
+    auto idents = static_cast<IdentList*>(query.getChildren()[2])->getIdents();
+    auto constants =
+        static_cast<ConstantList*>(query.getChildren()[3])->getConstants();
+    auto table = Engine::show(name, e);
+
+    int min_vec = std::min(idents.size(), constants.size());
+
+    // TODO
 }
+
+bool QueryManager::compareTypes(const Table& t, Node* a, Node* b) {
+    DataType first = DataType::Count;
+    DataType second = DataType::Count;
+
+    if (a->getNodeType() == NodeType::id) {
+        for (auto& c : t.getColumns()) {
+            if (static_cast<Ident*>(a)->getName() == c.getName()) {
+                first = c.getType();
+            }
+        }
+    } else {
+        first = static_cast<Constant*>(a)->getDataType();
+    }
+
+    if (b->getNodeType() == NodeType::id) {
+        for (auto& c : t.getColumns()) {
+            if (static_cast<Ident*>(b)->getName() == c.getName()) {
+                second = c.getType();
+            }
+        }
+    } else {
+        second = static_cast<Constant*>(b)->getDataType();
+    }
+
+    return first == second;
+}
+
+void QueryManager::update(const Query& query,
+                          std::unique_ptr<exc::Exception>& e,
+                          std::ostream& out) {}

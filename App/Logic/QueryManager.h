@@ -3,6 +3,7 @@
 
 #include <set>
 #include "../Engine/Column.h"
+#include "../Engine/Table.h"
 #include "Parser/Nodes/Query.h"
 
 class QueryManager {
@@ -25,6 +26,12 @@ class QueryManager {
 
     static void insert(const Query& query,
                        std::unique_ptr<exc::Exception>& e, std::ostream& out);
+
+    static void update(const Query& query,
+                       std::unique_ptr<exc::Exception>& e, std::ostream& out);
+
+
+    bool compareTypes(const Table& t, Node* a, Node* b);
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_
