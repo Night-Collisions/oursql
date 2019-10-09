@@ -161,3 +161,55 @@ TEST(DROP_TABLE, TEST_3) {
                   "~~Exception 1:\n wrong syntax!\n"
                   "~~Exception in command:\"drop table;\"\n");
 }
+
+TEST(SELECT, TEST_1) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "select * from a;",
+        0, "");
+}
+
+TEST(SELECT, TEST_2) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b int, c int);"
+        "select *, c, a from a;",
+        0, "");
+}
+
+TEST(SELECT, TEST_3) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "select c, * from a;",
+        exc::ExceptionType::syntax,
+        "~~Exception 1:\n wrong syntax!\n"
+        "~~Exception in command:\"select c, * from a;\"\n");
+}
+
+TEST(SELECT, TEST_4) {
+    clearDB();
+    CHECK_REQUEST("select * from a;",
+                  exc::ExceptionType::access_table_nonexistent, "");
+}
+
+TEST(SELECT, TEST_5) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "select *, c, a, f from a;",
+        exc::ExceptionType::access_column_nonexistent, "");
+}
+
+TEST(SELECT, TEST_6) {
+    clearDB();
+    CHECK_REQUEST("crate table a(a int, b real, c text);"
+                  "drop table a;"
+                  "select * from a;",
+                  exc::ExceptionType::access_table_nonexistent, "");
+}
+
+//TODO удалили поле запрасили в селекте
+
+
