@@ -292,7 +292,7 @@ id:
 %%
 
 void yyerror(const char *s) {
-    ex.reset(new exc::SyntaxException(std::string(s)));
+    ex.reset(new exc::SyntaxException());
 }
 
 void set_input_string(const char* in);

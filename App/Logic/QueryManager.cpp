@@ -51,7 +51,9 @@ void QueryManager::createTable(const Query& query, std::unique_ptr<exc::Exceptio
         columns.emplace_back(f);
     }
 
-    Table table(name, columns);
+    Table table(name, columns, e);
+    if (e != nullptr)
+        return;
 
     create(table);  // TODO: она что то возвращает, надо кинуть исключение
 }

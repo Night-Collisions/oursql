@@ -1,6 +1,7 @@
 #ifndef OURSQL_EXCEPTIONS_H
 #define OURSQL_EXCEPTIONS_H
 
+#include <iostream>
 #include <string>
 
 #include "DataType.h"
@@ -30,12 +31,12 @@ class Exception {
     ExceptionType getType() const { return type_; }
 
     std::string getMessage() const {
-        return getStarMessage() + ":\n " + message_;
+        return getStarMessage() + ": " + message_;
     }
 
    protected:
-    std::string getStarMessage() const {
-        return "~~Error " + std::to_string(getNumber());
+    virtual std::string getStarMessage() const {
+        return "~~Exception " + std::to_string(getNumber());
     };
 
     const ExceptionType type_;
@@ -44,12 +45,7 @@ class Exception {
 
 class SyntaxException : public Exception {
    public:
-    SyntaxException(const std::string& command) : Exception(ExceptionType::syntax, "wrong syntax!"), command_(command) {}
-   protected:
-    std::string getStarMessage() const {
-        return Exception::getStarMessage() + " in command: " + command_;
-    };
-   const std::string& command_;
+    SyntaxException() : Exception(ExceptionType::syntax, "wrong syntax!") {}
 };
 
 class RepeatColumnName : public Exception {

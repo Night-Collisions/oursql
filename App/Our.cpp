@@ -3,11 +3,12 @@
 #include "Logic/Parser/ParserManager.h"
 #include "Logic/QueryManager.h"
 
-#define EXCEPTION_OURSQL_CHECK(e, out)       \
-    if (e != nullptr) {                      \
-        out << e->getMessage() << std::endl; \
-        delete a;                            \
-        return e->getNumber();               \
+#define EXCEPTION_OURSQL_CHECK(e, out, command)                             \
+    if (e != nullptr) {                                                     \
+        out << e->getMessage() << "\n"                                      \
+            << "~~Exception in command:\"" << command << "\"" << std::endl; \
+        delete a;                                                           \
+        return e->getNumber();                                              \
     };
 
 namespace ourSQL {
@@ -27,14 +28,19 @@ bool get_command(std::istream& in, std::string& command) {
 unsigned int perform(std::istream& in, std::ostream& out) {
     std::unique_ptr<exc::Exception> e = nullptr;
     std::string command;
-    while (get_command(in, command)) {
+    bool is_end = false;
+    do {
+        is_end = !get_command(in, command);
+        if (command.empty() || command == "/n") {
+            return 0;
+        }
         ParserManager pm;
         auto a = pm.getParseTree(command, e);
-        EXCEPTION_OURSQL_CHECK(e, out);
+        EXCEPTION_OURSQL_CHECK(e, out, command);
         QueryManager::execute(*a, e);
-        EXCEPTION_OURSQL_CHECK(e, out);
+        EXCEPTION_OURSQL_CHECK(e, out, command);
         delete a;
-    }
+    } while (!is_end);
     return 0;
 }
 

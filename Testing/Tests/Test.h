@@ -1,6 +1,8 @@
 #ifndef OURSQL_TEST_H
 #define OURSQL_TEST_H
 
+#include <sstream>
+
 #include "../../App/Engine/Column.h"
 #include "../../App/Engine/Table.h"
 
