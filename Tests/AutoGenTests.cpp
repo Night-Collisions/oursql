@@ -71,14 +71,17 @@ TEST(CREATE_TABLE, TEST_8) {
     CHECK_REQUEST("create table a(MyColumn int, mycolumn text);",
                   exc::ExceptionType::repeat_column_in_table,
                   "~~Exception 2: repeat column MyColumn in table a.\n"
-                  "~~Exception in command:\"create table a(MyColumn int, mycolumn text);\"\n");
+                  "~~Exception in command:\"create table a(MyColumn int, "
+                  "mycolumn text);\"\n");
     clearDB();
 }
 
 TEST(CREATE_TABLE, TEST_9) {
     CHECK_REQUEST(
         "create table a(MyColumn int, q text); create table a(f int);",
-        exc::ExceptionType::create_table_repeat_table_name, "");
+        exc::ExceptionType::create_table_repeat_table_name,
+        "~~Exception 1003 in create table a:\n this table name is repeated!\n"
+        "~~Exception in command:\" create table a(f int);\"\n");
     clearDB();
 }
 
