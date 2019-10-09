@@ -11,7 +11,7 @@ std::string Engine::getPathToTableMeta(const std::string& name) {
 
 void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
     if (exists(table.getName())) {
-//        e.reset(new exc::cr_table::TableName(table.getName()));
+        e.reset(new exc::cr_table::TableName(table.getName()));
         return;
     }
 
@@ -44,8 +44,8 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
 
         std::ofstream(getPathToTable(table.getName()));
     }
-    catch (std::bad_alloc& e) {
-//        e.reset(new exc::cr_table::TableName());
+    catch (std::bad_alloc& bad_alloc) {
+        e.reset(new exc::OutOfMemory());
         std::remove(getPathToTable(table.getName()).c_str());
         std::remove(getPathToTableMeta(table.getName()).c_str());
     }
@@ -117,10 +117,10 @@ std::string Engine::showCreate(const std::string& name, std::unique_ptr<exc::Exc
 void Engine::drop(const std::string& name, std::unique_ptr<exc::Exception>& e) {
     if (!exists(name)) {
         e.reset(new exc::acc::TableNonexistent(name));
+        return;
     }
     std::remove(getPathToTable(name).c_str());
     std::remove(getPathToTableMeta(name).c_str());
-    return false;
 }
 
 bool Engine::exists(const std::string& name) {
