@@ -36,8 +36,11 @@ public:
 
     static void free(const std::string& name, std::unique_ptr<exc::Exception>& e);
 
+    static rapidjson::Document select(const std::string& table, const std::set<std::string>& columns,
+            const ConditionChecker& condition, std::unique_ptr<exc::Exception>& e);
+
 private:
-    static std::unordered_map<std::string, rapidjson::Value::Array> loaded_tables_;
+    static std::unordered_map<std::string, rapidjson::Document> loaded_tables_;
 };
 
 #endif

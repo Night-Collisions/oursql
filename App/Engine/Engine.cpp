@@ -141,7 +141,7 @@ void Engine::load(const std::string& name, std::unique_ptr<exc::Exception>& e) {
 
     rapidjson::Document d;
     d.Parse(sstream.str());
-    loaded_tables_[name] = d["values"].GetArray();
+    loaded_tables_[name] = std::move(d);
 }
 
 void Engine::commit(const std::string& name, std::unique_ptr<exc::Exception>& e) {
@@ -170,4 +170,46 @@ void Engine::free(const std::string& name, std::unique_ptr<exc::Exception>& e) {
         return;
     }
     loaded_tables_.erase(name);
+}
+
+rapidjson::Document Engine::select(const std::string& table, const std::set<std::string>& columns,
+                                      const ConditionChecker& condition, std::unique_ptr<exc::Exception>& e) {
+    if (!exists(table)) {
+        e.reset(new exc::acc::TableNonexistent(table));
+        return rapidjson::Document(rapidjson::kObjectType);
+    }
+    if (loaded_tables_.find(table) == loaded_tables_.end()) {
+        std::unique_ptr<exc::Exception> e;
+        load(table, e);
+    }
+
+    std::unique_ptr<exc::Exception> err;
+    Table t = show(table, err);
+
+    std::unordered_map<std::string, int> positions;
+    for (const auto& column : columns) {
+        int position = 0;
+        while (t.getColumns()[position].getName() != column) {
+            ++position;
+        }
+        positions[column] = position;
+    }
+
+    rapidjson::Document result(rapidjson::kObjectType);
+    rapidjson::Value values(rapidjson::kArrayType);
+
+    for (const auto& row : loaded_tables_[table]["values"].GetArray()) {
+        if (condition.check(row)) {
+            rapidjson::Value v(rapidjson::kObjectType);
+            for (const auto& column : columns) {
+                rapidjson::Value key(column, result.GetAllocator());
+                rapidjson::Value value(row[positions[column]], result.GetAllocator());
+                v.AddMember(key, value, result.GetAllocator());
+            }
+            values.PushBack(v, result.GetAllocator());
+        }
+    }
+
+    result.AddMember("values", values, result.GetAllocator());
+    return result;
 }
