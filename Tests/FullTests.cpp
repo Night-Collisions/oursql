@@ -152,7 +152,7 @@ TEST(DROP_TABLE, TEST_2) {
     CHECK_REQUEST(
         "create table a(b int); create table b(c real); drop table a; create "
         "table a(c text); show create table b;",
-        0, "");
+        0, "CREATE TABLE b(\n c real\n);\n");
 }
 
 TEST(DROP_TABLE, TEST_3) {
@@ -409,3 +409,44 @@ TEST(INSERT, TEST_22) {
         "insert into a values (12, 12, ' ') where b = 3;",
         exc::ExceptionType::syntax, "");
 }
+
+TEST(DELETE, TEST_1) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a values (1, 0, '1');"
+        "insert into a values (1, 1, '0');"
+        "insert into a values (0, 1, '1');"
+        "delete a where a = 0;"
+        "select * from a;"
+        "delete a where b = 0;"
+        "select * from a;"
+        "delete a where c = '0'"
+        "select * from a;",
+        0, "");
+}
+
+TEST(DELETE, TEST_2) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "delete a where c = '0'"
+        "select * from a;",
+        0, "");
+}
+
+TEST(DELETE, TEST_3) {
+    clearDB();
+    CHECK_REQUEST(
+        "delete a where c = '0'",
+        exc::ExceptionType::access_table_nonexistent, "");
+}
+
+TEST(DELETE, TEST_4) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "delete a where f = '0'",
+        exc::ExceptionType::access_table_nonexistent, "");
+}
+
