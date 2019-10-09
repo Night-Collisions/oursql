@@ -9,6 +9,8 @@ namespace exc {
 enum class ExceptionType : unsigned int {
     syntax = 1,
     out_of_memory,
+    was_loaded,
+    was_not_loaded,
     repeat_column_in_table,
     set_data_type_mismatch = 601,
     compare_data_type_mismatch,
@@ -51,6 +53,18 @@ class SyntaxException : public Exception {
 class OutOfMemory : public Exception {
    public:
     OutOfMemory() : Exception(ExceptionType::out_of_memory, "out of memory!") {}
+};
+
+class WasLoaded : public Exception {
+   public:
+    WasLoaded(const std::string& table_name)
+    : Exception(ExceptionType::out_of_memory, table_name + "was loaded!") {}
+};
+
+class WasNotLoaded : public Exception {
+   public:
+    WasNotLoaded(const std::string& table_name)
+            : Exception(ExceptionType::out_of_memory, table_name + "was not loaded!") {}
 };
 
 class RepeatColumnName : public Exception {
