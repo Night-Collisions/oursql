@@ -40,11 +40,12 @@ digit         [0-9]
 alnum         {alpha}|{digit}
 alnum_dash    {alnum}|_
 dquote        \"
+aquote        \'
 
 ID            {alpha}+{alnum_dash}*
 ICONST        "0"|[0-9]{digit}*
 FCONST        "0"|{digit}*"."{digit}+
-SCONST        {dquote}.*{dquote}
+SCONST        {dquote}.*{dquote}|{aquote}.*{aquote}
 
 NOT_NULL      "not"[ \t\r\f]+"null"
 PRIMARY_KEY   "primary"[ \t\r\f]+"key"
