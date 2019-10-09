@@ -204,12 +204,197 @@ TEST(SELECT, TEST_5) {
 
 TEST(SELECT, TEST_6) {
     clearDB();
-    CHECK_REQUEST("crate table a(a int, b real, c text);"
-                  "drop table a;"
-                  "select * from a;",
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "drop table a;"
+        "select * from a;",
+        exc::ExceptionType::access_table_nonexistent, "");
+}
+
+// TODO where
+
+TEST(INSERT, TEST_1) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a values (3, 2.2, 'Hello');"
+        "select * from a;",
+        0, "");
+}
+
+TEST(INSERT, TEST_2) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a (c, a, b) values ('Hello', 3, 2.2);"
+        "select * from a;",
+        0, "");
+}
+
+TEST(INSERT, TEST_3) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a values (2.2, 3.3, 'Hello');",
+        0, "");  // TODO: ошибка несоответсвия типа данных
+}
+
+TEST(INSERT, TEST_4) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a values (-2, -1, '');"
+        "select * from a;",
+        0, "");
+}
+
+TEST(INSERT, TEST_5) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a values (2, 3.3.3, 'Hello');",
+        0, "");  // TODO: ошибка несоответсвия типа данных
+}
+
+TEST(INSERT, TEST_6) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a values ('Hello', 3.3, 'Hello');",
+        0, "");  // TODO: ошибка несоответсвия типа данных
+}
+
+TEST(INSERT, TEST_7) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a values (2, 3.3, 4);",
+        0, "");  // TODO: ошибка несоответсвия типа данных
+}
+
+TEST(INSERT, TEST_8) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a(b, a, c) values (2, 3.3, 'Hello');",
+        0, "");  // TODO: ошибка несоответсвия типа данных
+}
+
+TEST(INSERT, TEST_9) {
+    clearDB();
+    CHECK_REQUEST("insert into a values (2, 3.3, 'Hello');",
                   exc::ExceptionType::access_table_nonexistent, "");
 }
 
-//TODO удалили поле запрасили в селекте
+TEST(INSERT, TEST_10) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a(a, b, f) values (2, 3.3, 'Hello');",
+        exc::ExceptionType::access_column_nonexistent,
+        "");  // TODO: ошибка несоответсвия типа данных
+}
 
+TEST(INSERT, TEST_11) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a(a) values (-2);"
+        "select * from a;",
+        0, "");
+}
 
+TEST(INSERT, TEST_12) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a(a) values ('H');"
+        "select * from a;",
+        0, ""); // TODO: ошибка несоответсвия типа данных
+}
+
+TEST(INSERT, TEST_13) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int not null, b real primary key, c text unique);"
+        "insert into a values (-2, 0.1, 'Hello world!');"
+        "select * from a;",
+        0, "");
+}
+
+TEST(INSERT, TEST_14) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int not null, b real primary key, c text unique);"
+        "insert into a(b, c) values (0.1, 'H M!');",
+        0, ""); // TODO: ошибка нарушения констр
+}
+
+TEST(INSERT, TEST_15) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int not null, b real primary key, c text unique);"
+        "insert into a(a, c) values (1, 'H M!');",
+        0, ""); // TODO: ошибка нарушения констр
+}
+
+TEST(INSERT, TEST_16) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int not null, b real primary key, c text unique);"
+        "insert into a values (1, 0, 'H M!');"
+        "insert into a values (12, 0, 'H!');",
+        0, ""); // TODO: ошибка нарушения констр
+}
+
+TEST(INSERT, TEST_17) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int not null, b real primary key, c text unique);"
+        "insert into a values (1, 0, 'H!');"
+        "insert into a values (12, 1, 'H!');",
+        0, ""); // TODO: ошибка нарушения констр
+}
+
+TEST(INSERT, TEST_18) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int not null, b real primary key, c text unique);"
+        "insert into a values (1, 0, 'H!');"
+        "insert into a(a, b) values (12, 1);",
+        0, ""); // TODO: ошибка нарушения констр
+}
+
+TEST(INSERT, TEST_19) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int not null, b real primary key, c text unique);"
+        "insert into a values (1, 0, 'H!');"
+        "insert into a(a, b) values (12, 1);"
+        "select * from a;",
+        0, "");
+}
+
+TEST(INSERT, TEST_20) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a(a, a) values (12, 1);",
+        0, ""); // TODO: ошибка дублирования полей
+}
+
+TEST(INSERT, TEST_21) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a(a) values (12, 1);",
+        0, ""); // TODO: ошибка несоответствия количества полей со значениями
+}
+
+TEST(INSERT, TEST_22) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a values (12, 12, ' ') where b = 3;",
+        exc::ExceptionType::syntax, "");
+}
