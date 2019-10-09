@@ -3,14 +3,15 @@
 
 #define RAPIDJSON_HAS_STDSTRING 1
 
+#include <cstdio>
 #include <fstream>
 #include <sstream>
-#include <cstdio>
 #include <unordered_map>
+#include "../Logic/Conditions/ConditionChecker.h"
 #include "Table.h"
 #include "rapidjson/document.h"
-#include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
 
 class Engine {
 public:

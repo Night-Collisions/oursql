@@ -1,7 +1,7 @@
 
 #include "ConditionChecker.h"
 
-bool ConditionChecker::check(const rapidjson::Value& record) {
+bool ConditionChecker::check(const rapidjson::Value& record) const {
     std::string left_val;
     std::string right_val;
 

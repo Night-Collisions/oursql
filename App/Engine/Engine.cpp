@@ -1,6 +1,8 @@
 #include "Engine.h"
 #include "../Core/Exception.h"
 
+std::unordered_map<std::string, rapidjson::Document> Engine::loaded_tables_;
+
 std::string Engine::getPathToTable(const std::string& name) {
     return "DataBD/" + name;
 }
@@ -11,7 +13,7 @@ std::string Engine::getPathToTableMeta(const std::string& name) {
 
 void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
     if (exists(table.getName())) {
-        e.reset(new exc::cr_table::TableName(table.getName()));
+        e.reset(new exc::cr_table::RepeatTableName(table.getName()));
         return;
     }
 
