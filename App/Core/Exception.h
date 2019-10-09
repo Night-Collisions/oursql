@@ -7,8 +7,9 @@
 
 namespace exc {
 enum class ExceptionType : unsigned int {
-    repeat_column_in_table = 1,
-    syntax,
+    syntax = 1,
+    out_of_memory,
+    repeat_column_in_table,
     set_data_type_mismatch = 601,
     compare_data_type_mismatch,
     access_table_nonexistent = 701,
@@ -46,6 +47,11 @@ class Exception {
 class SyntaxException : public Exception {
    public:
     SyntaxException() : Exception(ExceptionType::syntax, "wrong syntax!") {}
+};
+
+class OutOfMemory : public Exception {
+   public:
+    OutOfMemory() : Exception(ExceptionType::out_of_memory, "out of memory!") {}
 };
 
 class RepeatColumnName : public Exception {
@@ -135,6 +141,7 @@ class CreateTableException : public TableException {
 };
 
 class TableName : public CreateTableException {
+   public:
     TableName(const std::string& table_name)
         : CreateTableException(table_name,
                                ExceptionType::create_table_name_table,
