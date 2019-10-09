@@ -5,6 +5,8 @@
 #ifndef OURSQL_APP_LOGIC_CONDITIONS_CONDITIONCHECKER_H_
 #define OURSQL_APP_LOGIC_CONDITIONS_CONDITIONCHECKER_H_
 
+#define RAPIDJSON_HAS_STDSTRING 1
+
 #include <rapidjson/document.h>
 #include "../Parser/Nodes/Constant.h"
 #include "../Parser/Nodes/Node.h"
