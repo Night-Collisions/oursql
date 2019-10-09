@@ -46,4 +46,4 @@ include_directories(${rapidjson_SOURCE_DIR}/include/)
 
 add_subdirectory(App)
 
-add_subdirectory(Testing)
+add_subdirectory(Tests)
