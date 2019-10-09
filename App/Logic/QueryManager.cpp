@@ -65,9 +65,7 @@ void QueryManager::createTable(const Query& query,
     Table table(name, columns, e);
     if (e != nullptr) return;
 
-    if (create(table)) {
-        e.reset(new exc::cr_table::RepeatTableName(name));
-    }
+    Engine::create(table, e);
 }
 
 void QueryManager::showCreateTable(const Query& query,
@@ -75,27 +73,21 @@ void QueryManager::showCreateTable(const Query& query,
                                    std::ostream& out) {
     // TODO: print to output stream
     auto name = static_cast<Ident*>(query.getChildren()[1])->getName();
-    auto res = showCreate(name);
-    if (res.empty()) {
-        e.reset(new exc::acc::TableNonexistent(name));
-    } else {
-        out << res << std::endl;
-    }
+    auto res = Engine::showCreate(name, e);
+    out << res << std::endl;
 }
 
 void QueryManager::dropTable(const Query& query,
                              std::unique_ptr<exc::Exception>& e,
                              std::ostream& out) {
     auto name = static_cast<Ident*>(query.getChildren()[1])->getName();
-    if (drop(name)) {
-        e.reset(new exc::acc::TableNonexistent(name));
-    }
+    Engine::drop(name, e) ;
 }
 void QueryManager::select(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     auto name = static_cast<Ident*>(query.getChildren()[1])->getName();
-    auto table = show(name);
+    auto table = Engine::show(name, e);
 
     std::vector<std::string> existing_cols;
     std::set<std::string> col_set;
@@ -158,15 +150,14 @@ void QueryManager::select(const Query& query,
     }
 
     ConditionChecker c(left_value, right_value, left->getNodeType(),
-                       right->getNodeType(), rel->getRelation(),
-                       left_type);
+                       right->getNodeType(), rel->getRelation(), left_type);
 
-/*   rapidjson::Document doc;
+    rapidjson::Document doc;
     doc.SetObject();
     auto& allocator = doc.GetAllocator();
 
     rapidjson::Value s;
     s = rapidjson::StringRef("20");
     doc.AddMember("col1", "20", allocator);
-    out << c.check(doc);*/
+    out << c.check(doc);
 }

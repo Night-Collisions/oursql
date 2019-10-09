@@ -23,7 +23,7 @@ class ConditionChecker {
           rel_type_(rel),
           data_type_(dataType) {}
 
-    bool check(const rapidjson::Value& record);
+    bool check(const rapidjson::Value& record) const;
 
    private:
     std::string left_;
