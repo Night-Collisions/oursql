@@ -216,7 +216,7 @@ rapidjson::Document Engine::select(const std::string& table, const std::set<std:
     return result;
 }
 
-void Engine::insert(const std::string& table,const std::unordered_map<std::string,
+void Engine::insert(const std::string& table, const std::unordered_map<std::string,
         std::string>& values, std::unique_ptr<exc::Exception>& e) {
     if (!exists(table)) {
         e.reset(new exc::acc::TableNonexistent(table));
@@ -263,4 +263,40 @@ void Engine::insert(const std::string& table,const std::unordered_map<std::strin
     }
 
     d["values"].GetArray().PushBack(new_row, d.GetAllocator());
+}
+
+void Engine::update(const std::string& table, const std::unordered_map<std::string,std::string>& values,
+                   const ConditionChecker& conditionChecker, std::unique_ptr<exc::Exception>& e) {
+//    if (!exists(table)) {
+//        e.reset(new exc::acc::TableNonexistent(table));
+//        return;
+//    }
+//    if (loaded_tables_.find(table) == loaded_tables_.end()) {
+//        std::unique_ptr<exc::Exception> e;
+//        load(table, e);
+//    }
+//
+//    std::unique_ptr<exc::Exception> err;
+//    Table t = show(table, err);
+//
+//    rapidjson::Document &d = loaded_tables_[table];
+}
+
+void Engine::remove(const std::string& table, const ConditionChecker& conditionChecker,
+                   std::unique_ptr<exc::Exception>& e) {
+    if (!exists(table)) {
+        e.reset(new exc::acc::TableNonexistent(table));
+        return;
+    }
+    if (loaded_tables_.find(table) == loaded_tables_.end()) {
+        std::unique_ptr<exc::Exception> e;
+        load(table, e);
+    }
+    rapidjson::Value &values = loaded_tables_[table]["values"];
+
+    for (int i = values.GetArray().Size() - 1; i >= 0; --i) {
+        if (conditionChecker.check(values.GetArray()[i])) {
+            values.GetArray().Erase(values.GetArray().begin() + i);
+        }
+    }
 }
