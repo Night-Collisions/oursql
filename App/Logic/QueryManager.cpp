@@ -12,6 +12,8 @@
 #include "../../App/Core/Exception.h"
 #include "Conditions/ConditionChecker.h"
 #include "Parser/Nodes/Constant.h"
+#include "Parser/Nodes/ConstantList.h"
+#include "Parser/Nodes/IdentList.h"
 #include "Parser/Nodes/Relation.h"
 #include "Parser/Nodes/SelectList.h"
 
@@ -24,7 +26,12 @@ void QueryManager::execute(const Query& query,
         std::ostream& out) = {
         [](const Query&, std::unique_ptr<exc::Exception>& e,
            std::ostream& out) {},
-        createTable, showCreateTable, dropTable, select};
+        createTable,
+        showCreateTable,
+        dropTable,
+        select,
+        insert,
+        update};
     CommandType command =
         static_cast<Command*>(query.getChildren()[0])->getCommandType();
     if (command != CommandType::Count) {
@@ -81,7 +88,7 @@ void QueryManager::dropTable(const Query& query,
                              std::unique_ptr<exc::Exception>& e,
                              std::ostream& out) {
     auto name = static_cast<Ident*>(query.getChildren()[1])->getName();
-    Engine::drop(name, e) ;
+    Engine::drop(name, e);
 }
 void QueryManager::select(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
@@ -102,13 +109,15 @@ void QueryManager::select(const Query& query,
     std::vector<std::string> ready_cols;
     for (auto& c : cols_from_parser) {
         if (c.getName() == "*") {
+            ready_cols.resize(cols_from_parser.size());
             std::copy(existing_cols.begin(), existing_cols.end(),
                       ready_cols.begin());
         } else if (col_set.find((c.getName())) == col_set.end()) {
             e.reset(new exc::acc::ColumnNonexistent(c.getName(), name));
             return;
+        } else {
+            ready_cols.push_back(c.getName());
         }
-        ready_cols.push_back(c.getName());
     }
 
     auto rel = static_cast<Relation*>(query.getChildren()[3]);
@@ -152,12 +161,59 @@ void QueryManager::select(const Query& query,
     ConditionChecker c(left_value, right_value, left->getNodeType(),
                        right->getNodeType(), rel->getRelation(), left_type);
 
-    rapidjson::Document doc;
-    doc.SetObject();
-    auto& allocator = doc.GetAllocator();
+    std::set<std::string> cols_to_engine;
 
-    rapidjson::Value s;
-    s = rapidjson::StringRef("20");
-    doc.AddMember("col1", "20", allocator);
-    out << c.check(doc);
+    for (auto& c : ready_cols) {
+        cols_to_engine.insert(c);
+    }
+
+    auto doc = Engine::select(name, cols_to_engine, c, e);
+
+    // todo
 }
+void QueryManager::insert(const Query& query,
+                          std::unique_ptr<exc::Exception>& e,
+                          std::ostream& out) {
+    e.reset(nullptr);
+
+    std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
+    auto idents = static_cast<IdentList*>(query.getChildren()[2])->getIdents();
+    auto constants =
+        static_cast<ConstantList*>(query.getChildren()[3])->getConstants();
+    auto table = Engine::show(name, e);
+
+    int min_vec = std::min(idents.size(), constants.size());
+
+    // TODO
+}
+
+bool QueryManager::compareTypes(const Table& t, Node* a, Node* b) {
+    DataType first = DataType::Count;
+    DataType second = DataType::Count;
+
+    if (a->getNodeType() == NodeType::id) {
+        for (auto& c : t.getColumns()) {
+            if (static_cast<Ident*>(a)->getName() == c.getName()) {
+                first = c.getType();
+            }
+        }
+    } else {
+        first = static_cast<Constant*>(a)->getDataType();
+    }
+
+    if (b->getNodeType() == NodeType::id) {
+        for (auto& c : t.getColumns()) {
+            if (static_cast<Ident*>(b)->getName() == c.getName()) {
+                second = c.getType();
+            }
+        }
+    } else {
+        second = static_cast<Constant*>(b)->getDataType();
+    }
+
+    return first == second;
+}
+
+void QueryManager::update(const Query& query,
+                          std::unique_ptr<exc::Exception>& e,
+                          std::ostream& out) {}

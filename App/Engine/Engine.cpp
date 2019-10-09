@@ -215,3 +215,52 @@ rapidjson::Document Engine::select(const std::string& table, const std::set<std:
     result.AddMember("values", values, result.GetAllocator());
     return result;
 }
+
+void Engine::insert(const std::string& table,const std::unordered_map<std::string,
+        std::string>& values, std::unique_ptr<exc::Exception>& e) {
+    if (!exists(table)) {
+        e.reset(new exc::acc::TableNonexistent(table));
+        return;
+    }
+    if (loaded_tables_.find(table) == loaded_tables_.end()) {
+        std::unique_ptr<exc::Exception> e;
+        load(table, e);
+    }
+
+    std::unique_ptr<exc::Exception> err;
+    Table t = show(table, err);
+
+    rapidjson::Document& d = loaded_tables_[table];
+    rapidjson::Value new_row(rapidjson::kObjectType);
+
+    for (const auto& column : t.getColumns()) {
+        rapidjson::Value key(column.getName(), d.GetAllocator());
+        rapidjson::Value value(
+                (values.find(column.getName()) == values.end()) ? ("null") : (values.find(column.getName())->second),
+                d.GetAllocator()
+        );
+        new_row.AddMember(key, value, d.GetAllocator());
+
+        if (value.GetString() == "null"
+            && column.getConstraint().find(ColumnConstraint::not_null) != column.getConstraint().end()) {
+            e.reset(new exc::constr::NullNotNull(table, column.getName()));
+            return;
+        }
+
+        if (column.getConstraint().find(ColumnConstraint::unique) != column.getConstraint().end()
+            || column.getConstraint().find(ColumnConstraint::primary_key) != column.getConstraint().end()) {
+            int position = 0;
+            while (column.getName() != t.getColumns()[position].getName()) {
+                ++position;
+            }
+            for (const auto& row : d["values"].GetArray()) {
+                if (row[position].GetString() == value.GetString()) {
+                    e.reset(new exc::constr::DuplicatedUnique(table, column.getName(), value.GetString()));
+                    return;
+                }
+            }
+        }
+    }
+
+    d["values"].GetArray().PushBack(new_row, d.GetAllocator());
+}
