@@ -105,7 +105,7 @@ TEST(CREATE_TABLE, TEST_12) {
 TEST(CREATE_TABLE, TEST_13) {
     clearDB();
     CHECK_REQUEST("create table a(b int primary key, c int primary key);",
-                  exc::ExceptionType::duplicated_primary_key,
+                  exc::ExceptionType::duplicated_primary_key_in_column,
                   "~~Exception 803 in table a:\n primary key is used in the "
                   "column b and in c.\n"
                   "~~Exception in command:\"create table a(b int primary key, "
@@ -169,7 +169,7 @@ TEST(DROP_TABLE, TEST_3) {
 TEST(SELECT, TEST_1) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "select * from a;",
         0, "");
 }
@@ -177,7 +177,7 @@ TEST(SELECT, TEST_1) {
 TEST(SELECT, TEST_2) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b int, c int);"
+        "create table a(a int, b int, c int);"
         "select *, c, a from a;",
         0, "");
 }
@@ -185,7 +185,7 @@ TEST(SELECT, TEST_2) {
 TEST(SELECT, TEST_3) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "select c, * from a;",
         exc::ExceptionType::syntax,
         "~~Exception 1:\n wrong syntax!\n"
@@ -201,7 +201,7 @@ TEST(SELECT, TEST_4) {
 TEST(SELECT, TEST_5) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "select *, c, a, f from a;",
         exc::ExceptionType::access_column_nonexistent, "");
 }
@@ -209,7 +209,7 @@ TEST(SELECT, TEST_5) {
 TEST(SELECT, TEST_6) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "drop table a;"
         "select * from a;",
         exc::ExceptionType::access_table_nonexistent, "");
@@ -218,7 +218,7 @@ TEST(SELECT, TEST_6) {
 TEST(SELECT, TEST_7) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a values (1, 0, '1');"
         "insert into a values (1, 1, '0');"
         "insert into a values (0, 1, '1');"
@@ -231,7 +231,7 @@ TEST(SELECT, TEST_7) {
 TEST(SELECT, TEST_8) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int);"
+        "create table a(a int);"
         "insert into a values (1);"
         "select * from a where a = '1';",
         exc::ExceptionType::compare_data_type_mismatch, "");
@@ -240,7 +240,7 @@ TEST(SELECT, TEST_8) {
 TEST(INSERT, TEST_1) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a values (3, 2.2, 'Hello');"
         "select * from a;",
         0, "");
@@ -249,7 +249,7 @@ TEST(INSERT, TEST_1) {
 TEST(INSERT, TEST_2) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a (c, a, b) values ('Hello', 3, 2.2);"
         "select * from a;",
         0, "");
@@ -258,15 +258,15 @@ TEST(INSERT, TEST_2) {
 TEST(INSERT, TEST_3) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a values (2.2, 3.3, 'Hello');",
-        0, "");  // TODO: ошибка несоответсвия типа данных
+        exc::ExceptionType::set_data_type_mismatch, "");
 }
 
 TEST(INSERT, TEST_4) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a values (-2, -1, '');"
         "select * from a;",
         0, "");
@@ -275,7 +275,7 @@ TEST(INSERT, TEST_4) {
 TEST(INSERT, TEST_5) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a values (2, 3.3.3, 'Hello');",
         0, "");  // TODO: ошибка несоответсвия типа данных
 }
@@ -283,7 +283,7 @@ TEST(INSERT, TEST_5) {
 TEST(INSERT, TEST_6) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a values ('Hello', 3.3, 'Hello');",
         0, "");  // TODO: ошибка несоответсвия типа данных
 }
@@ -291,7 +291,7 @@ TEST(INSERT, TEST_6) {
 TEST(INSERT, TEST_7) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a values (2, 3.3, 4);",
         0, "");  // TODO: ошибка несоответсвия типа данных
 }
@@ -299,7 +299,7 @@ TEST(INSERT, TEST_7) {
 TEST(INSERT, TEST_8) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a(b, a, c) values (2, 3.3, 'Hello');",
         0, "");  // TODO: ошибка несоответсвия типа данных
 }
@@ -313,7 +313,7 @@ TEST(INSERT, TEST_9) {
 TEST(INSERT, TEST_10) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a(a, b, f) values (2, 3.3, 'Hello');",
         exc::ExceptionType::access_column_nonexistent,
         "");  // TODO: ошибка несоответсвия типа данных
@@ -322,7 +322,7 @@ TEST(INSERT, TEST_10) {
 TEST(INSERT, TEST_11) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a(a) values (-2);"
         "select * from a;",
         0, "");
@@ -331,7 +331,7 @@ TEST(INSERT, TEST_11) {
 TEST(INSERT, TEST_12) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a(a) values ('H');"
         "select * from a;",
         0, "");  // TODO: ошибка несоответсвия типа данных
@@ -340,7 +340,7 @@ TEST(INSERT, TEST_12) {
 TEST(INSERT, TEST_13) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int not null, b real primary key, c text unique);"
+        "create table a(a int not null, b real primary key, c text unique);"
         "insert into a values (-2, 0.1, 'Hello world!');"
         "select * from a;",
         0, "");
@@ -349,7 +349,7 @@ TEST(INSERT, TEST_13) {
 TEST(INSERT, TEST_14) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int not null, b real primary key, c text unique);"
+        "create table a(a int not null, b real primary key, c text unique);"
         "insert into a(b, c) values (0.1, 'H M!');",
         0, "");  // TODO: ошибка нарушения констр
 }
@@ -357,7 +357,7 @@ TEST(INSERT, TEST_14) {
 TEST(INSERT, TEST_15) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int not null, b real primary key, c text unique);"
+        "create table a(a int not null, b real primary key, c text unique);"
         "insert into a(a, c) values (1, 'H M!');",
         0, "");  // TODO: ошибка нарушения констр
 }
@@ -365,7 +365,7 @@ TEST(INSERT, TEST_15) {
 TEST(INSERT, TEST_16) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int not null, b real primary key, c text unique);"
+        "create table a(a int not null, b real primary key, c text unique);"
         "insert into a values (1, 0, 'H M!');"
         "insert into a values (12, 0, 'H!');",
         0, "");  // TODO: ошибка нарушения констр
@@ -374,7 +374,7 @@ TEST(INSERT, TEST_16) {
 TEST(INSERT, TEST_17) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int not null, b real primary key, c text unique);"
+        "create table a(a int not null, b real primary key, c text unique);"
         "insert into a values (1, 0, 'H!');"
         "insert into a values (12, 1, 'H!');",
         0, "");  // TODO: ошибка нарушения констр
@@ -383,7 +383,7 @@ TEST(INSERT, TEST_17) {
 TEST(INSERT, TEST_18) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int not null, b real primary key, c text unique);"
+        "create table a(a int not null, b real primary key, c text unique);"
         "insert into a values (1, 0, 'H!');"
         "insert into a(a, b) values (12, 1);",
         0, "");  // TODO: ошибка нарушения констр
@@ -392,7 +392,7 @@ TEST(INSERT, TEST_18) {
 TEST(INSERT, TEST_19) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int not null, b real primary key, c text unique);"
+        "create table a(a int not null, b real primary key, c text unique);"
         "insert into a values (1, 0, 'H!');"
         "insert into a(a, b) values (12, 1);"
         "select * from a;",
@@ -402,7 +402,7 @@ TEST(INSERT, TEST_19) {
 TEST(INSERT, TEST_20) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a(a, a) values (12, 1);",
         0, "");  // TODO: ошибка дублирования полей
 }
@@ -410,7 +410,7 @@ TEST(INSERT, TEST_20) {
 TEST(INSERT, TEST_21) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a(a) values (12, 1);",
         0, "");  // TODO: ошибка несоответствия количества полей со значениями
 }
@@ -418,7 +418,7 @@ TEST(INSERT, TEST_21) {
 TEST(INSERT, TEST_22) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a values (12, 12, ' ') where b = 3;",
         exc::ExceptionType::syntax, "");
 }
@@ -426,7 +426,7 @@ TEST(INSERT, TEST_22) {
 TEST(DELETE, TEST_1) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a values (1, 0, '1');"
         "insert into a values (1, 1, '0');"
         "insert into a values (0, 1, '1');"
@@ -442,7 +442,7 @@ TEST(DELETE, TEST_1) {
 TEST(DELETE, TEST_2) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "delete a where c = '0'"
         "select * from a;",
         0, "");
@@ -457,7 +457,7 @@ TEST(DELETE, TEST_3) {
 TEST(DELETE, TEST_4) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "delete a where f = '0'",
         exc::ExceptionType::access_table_nonexistent, "");
 }
@@ -465,7 +465,7 @@ TEST(DELETE, TEST_4) {
 TEST(DELETE, TEST_5) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "delete a where b = '0'",
         exc::ExceptionType::compare_data_type_mismatch, "");
 }
@@ -473,7 +473,7 @@ TEST(DELETE, TEST_5) {
 TEST(UPDATE, TEST_1) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a values (1, 0, '1');"
         "insert into a values (1, 1, '0');"
         "insert into a values (0, 1, '1');"
@@ -487,7 +487,7 @@ TEST(UPDATE, TEST_1) {
 TEST(UPDATE, TEST_2) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int, b real, c text);"
+        "create table a(a int, b real, c text);"
         "insert into a values (1, 0, '1');"
         "insert into a values (1, 1, '0');"
         "insert into a values (0, 1, '1');"
@@ -505,7 +505,7 @@ TEST(UPDATE, TEST_3) {
 TEST(UPDATE, TEST_4) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int unique);"
+        "create table a(a int unique);"
         "insert into a values (1);"
         "insert into a values (2);"
         "update a set a = 2;",
@@ -515,7 +515,7 @@ TEST(UPDATE, TEST_4) {
 TEST(UPDATE, TEST_5) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int not null);"
+        "create table a(a int not null);"
         "insert into a values (1);"
         "insert into a values (2);"
         "update a set a = null;",
@@ -525,7 +525,7 @@ TEST(UPDATE, TEST_5) {
 TEST(UPDATE, TEST_6) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int primary key);"
+        "create table a(a int primary key);"
         "insert into a values (1);"
         "insert into a values (2);"
         "update a set a = 2;",
@@ -535,7 +535,7 @@ TEST(UPDATE, TEST_6) {
 TEST(UPDATE, TEST_7) {
     clearDB();
     CHECK_REQUEST(
-        "crate table a(a int primary key);"
+        "create table a(a int primary key);"
         "insert into a values (1);"
         "insert into a values (2);"
         "update a set a = '2';",

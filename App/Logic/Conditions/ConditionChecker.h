@@ -14,8 +14,10 @@
 
 class ConditionChecker {
    public:
+    ConditionChecker(bool alwaysTrue) : always_true_(alwaysTrue) {}
+
     ConditionChecker(std::string left, std::string right, NodeType leftNd,
-                   NodeType rightNd, RelationType rel, DataType dataType)
+                     NodeType rightNd, RelationType rel, DataType dataType)
         : left_(left),
           right_(right),
           left_nd_(leftNd),
@@ -23,7 +25,7 @@ class ConditionChecker {
           rel_type_(rel),
           data_type_(dataType) {}
 
-    bool check(const rapidjson::Value& record) const;
+    [[nodiscard]] bool check(const rapidjson::Value& record) const;
 
    private:
     std::string left_;
@@ -32,6 +34,8 @@ class ConditionChecker {
     DataType data_type_;
     NodeType left_nd_;
     NodeType right_nd_;
+
+    bool always_true_;
 };
 
 #endif  // OURSQL_APP_LOGIC_CONDITIONS_CONDITIONCHECKER_H_

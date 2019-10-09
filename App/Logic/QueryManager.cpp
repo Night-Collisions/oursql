@@ -133,7 +133,7 @@ void QueryManager::select(const Query& query,
         for (auto& c : table.getColumns()) {
             if (static_cast<Ident*>(left)->getName() == c.getName()) {
                 left_type = c.getType();
-                left_value = static_cast<Constant*>(left)->getValue();
+                left_value = static_cast<Ident*>(left)->getName();
             }
         }
     } else {
@@ -145,7 +145,7 @@ void QueryManager::select(const Query& query,
         for (auto& c : table.getColumns()) {
             if (static_cast<Ident*>(right)->getName() == c.getName()) {
                 right_type = c.getType();
-                right_value = static_cast<Constant*>(right)->getValue();
+                right_value = static_cast<Ident*>(right)->getName();
             }
         }
     } else {
@@ -153,13 +153,12 @@ void QueryManager::select(const Query& query,
         right_value = static_cast<Constant*>(right)->getValue();
     }
 
-    if (left_type != right_type) {
-        e.reset(new exc::CompareDataTypeMismatch(left_type, right_type));
+    if (!compareTypes(table, left, right, e)) {
         return;
     }
 
     ConditionChecker c(left_value, right_value, left->getNodeType(),
-                       right->getNodeType(), rel->getRelation(), left_type);
+                       right->getNodeType(), op, left_type);
 
     std::set<std::string> cols_to_engine;
 
@@ -183,8 +182,7 @@ void QueryManager::insert(const Query& query,
     auto table = Engine::show(name, e);
 
     if (constants.size() > idents.size()) {
-        // TODO: кол-во констант превышает кол-во столбцов
-        // e.reset();
+        e.reset(new exc::ins::ConstantsMoreColumns());
         return;
     }
 
@@ -227,15 +225,96 @@ bool QueryManager::compareTypes(const Table& t, Node* a, Node* b,
         second = static_cast<Constant*>(b)->getDataType();
     }
 
+    if (first == DataType::Count) {
+        e.reset(new exc::acc::ColumnNonexistent(
+            static_cast<Ident*>(a)->getName(), t.getName()));
+        return false;
+    }
+
+    if (second == DataType::Count) {
+        e.reset(new exc::acc::ColumnNonexistent(
+            static_cast<Ident*>(b)->getName(), t.getName()));
+        return false;
+    }
+
     if (first == second) {
         return true;
     } else {
         e.reset(new exc::CompareDataTypeMismatch(first, second));
         return false;
     }
-
 }
 
 void QueryManager::update(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
-                          std::ostream& out) {}
+                          std::ostream& out) {
+    std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
+    auto table = Engine::show(name, e);
+
+    auto idents = static_cast<IdentList*>(query.getChildren()[2])->getIdents();
+    auto constants =
+        static_cast<ConstantList*>(query.getChildren()[3])->getConstants();
+
+    ConditionChecker* c = nullptr;
+
+    if (static_cast<Relation*>(query.getChildren()[5]) != nullptr) {
+        auto rel = static_cast<Relation*>(query.getChildren()[5]);
+        auto left = rel->getLeft();
+        auto right = rel->getRight();
+        auto op = rel->getRelation();
+        DataType left_type;
+        DataType right_type;
+        std::string left_value;
+        std::string right_value;
+
+        if (!compareTypes(table, left, right, e)) {
+            return;
+        }
+
+        if (left->getNodeType() == NodeType::id) {
+            for (auto& c : table.getColumns()) {
+                if (static_cast<Ident*>(left)->getName() == c.getName()) {
+                    left_type = c.getType();
+                    left_value = static_cast<Ident*>(left)->getName();
+                }
+            }
+        } else {
+            left_type = static_cast<Constant*>(left)->getDataType();
+            left_value = static_cast<Constant*>(left)->getValue();
+        }
+
+        if (right->getNodeType() == NodeType::id) {
+            for (auto& c : table.getColumns()) {
+                if (static_cast<Ident*>(right)->getName() == c.getName()) {
+                    right_type = c.getType();
+                    right_value = static_cast<Ident*>(right)->getName();
+                }
+            }
+        } else {
+            right_type = static_cast<Constant*>(right)->getDataType();
+            right_value = static_cast<Constant*>(right)->getValue();
+        }
+
+        c = new ConditionChecker(left_value, right_value, left->getNodeType(),
+                                 right->getNodeType(), op, left_type);
+    }
+
+    if (c == nullptr) {
+        c = new ConditionChecker(true);
+    }
+
+    std::unordered_map<std::string, std::string> values;
+
+    for (int i = 0; i < constants.size(); ++i) {
+        if (compareTypes(table, idents[i], constants[i], e)) {
+            values[idents[i]->getName()] =
+                static_cast<Constant*>(constants[i])->getValue();
+        } else {
+            return;
+        }
+    }
+
+    //TODO
+
+    delete c;
+}
