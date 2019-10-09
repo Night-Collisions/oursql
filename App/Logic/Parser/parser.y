@@ -333,6 +333,7 @@ void end_lexical_scan(void);
 void destroy() {
     varList.clear();
     constraintList.clear();
+    parseTree = nullptr;
 }
 
 Query* parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) {
