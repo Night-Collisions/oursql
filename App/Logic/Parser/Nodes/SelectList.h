@@ -8,7 +8,7 @@
 class SelectList : public Node {
    public:
     SelectList(const std::vector<Ident>& list)
-        : Node(NodeType::selectList), list_(list) {}
+        : Node(NodeType::select_list), list_(list) {}
 
     std::vector<Ident> getList() { return list_; }
 

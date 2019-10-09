@@ -6,14 +6,17 @@ enum class NodeType {
     node,
     query,  // root
     command,
-    varList,
+    var_list,
     variable,
     id,
-    constraintList,
-    selectList,
+    constraint_list,
+    select_list,
     condition,
-    identList,
-    constant,
+    ident_list,
+    constant_list,
+    int_constant,
+    real_constant,
+    text_constant,
     relation
 };
 
