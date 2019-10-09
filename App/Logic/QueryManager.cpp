@@ -24,7 +24,7 @@ void QueryManager::execute(const Query& query,
         std::ostream& out) = {
         [](const Query&, std::unique_ptr<exc::Exception>& e,
            std::ostream& out) {},
-        createTable, showCreateTable, dropTable, select};
+        createTable, showCreateTable, dropTable, select, insert};
     CommandType command =
         static_cast<Command*>(query.getChildren()[0])->getCommandType();
     if (command != CommandType::Count) {
@@ -163,4 +163,9 @@ void QueryManager::select(const Query& query,
     auto doc = Engine::select(name, cols_to_engine, c, e);
 
     //todo
+}
+void QueryManager::insert(const Query& query,
+                          std::unique_ptr<exc::Exception>& e,
+                          std::ostream& out) {
+
 }

@@ -7,7 +7,7 @@
     if (e != nullptr) {                                                     \
         out << e->getMessage() << "\n"                                      \
             << "~~Exception in command:\"" << command << "\"" << std::endl; \
-        delete a;                                                           \
+        delete query;                                                           \
         return e->getNumber();                                              \
     };
 
@@ -31,15 +31,15 @@ unsigned int perform(std::istream& in, std::ostream& out) {
     bool is_end = false;
     do {
         is_end = !get_command(in, command);
-        if (command.empty() || command == "/n") {
+        if (command.empty() || command == "\n") {
             return 0;
         }
         ParserManager pm;
-        auto a = pm.getParseTree(command, e);
+        auto query = pm.getParseTree(command, e);
         EXCEPTION_OURSQL_CHECK(e, out, command);
-        QueryManager::execute(*a, e, out);
+        QueryManager::execute(*query, e, out);
         EXCEPTION_OURSQL_CHECK(e, out, command);
-        delete a;
+        delete query;
     } while (!is_end);
     return 0;
 }

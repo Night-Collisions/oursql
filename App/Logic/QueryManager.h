@@ -22,6 +22,9 @@ class QueryManager {
 
     static void select(const Query& query,
     std::unique_ptr<exc::Exception>& e, std::ostream& out);
+
+    static void insert(const Query& query,
+                       std::unique_ptr<exc::Exception>& e, std::ostream& out);
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_

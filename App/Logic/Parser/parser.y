@@ -242,6 +242,7 @@ insert:
     INSERT INTO id LPAREN column_list RPAREN VALUES LPAREN value_list RPAREN {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::insert));
+        children.push_back($3);
         children.push_back(new IdentList(identList));
         children.push_back(new ConstantList(constantList));
 
@@ -250,6 +251,7 @@ insert:
     INSERT INTO id VALUES LPAREN value_list RPAREN {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::insert));
+        children.push_back($3);
         children.push_back(nullptr);
         children.push_back(new ConstantList(constantList));
 
