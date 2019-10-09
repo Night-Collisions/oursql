@@ -2,6 +2,10 @@
 #include "ConditionChecker.h"
 
 bool ConditionChecker::check(const rapidjson::Value& record) const {
+    if (always_true_) {
+        return true;
+    }
+
     std::string left_val;
     std::string right_val;
 
