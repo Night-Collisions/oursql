@@ -66,7 +66,7 @@ TEST(CREATE_TABLE, TEST_8) {
     clearDB();
     CHECK_REQUEST("create table a(MyColumn int, mycolumn text);",
                   exc::ExceptionType::repeat_column_in_table,
-                  "~~Exception 3:\n repeat column MyColumn in table a.\n"
+                  "~~Exception 5:\n repeat column MyColumn in table a.\n"
                   "~~Exception in command:\"create table a(MyColumn int, "
                   "mycolumn text);\"\n");
 }
@@ -123,8 +123,7 @@ TEST(SHOW_CREATE_TABLE, TEST_2) {
     clearDB();
     CHECK_REQUEST("show create table e;",
                   exc::ExceptionType::access_table_nonexistent,
-                  "~~Exception 701:\n table e nonexistent.\n~~Exception in "
-                  "command:\"show create table e;\"\n");
+                  "\n~~Exception 701:\n table e nonexistent.\n~~Exception in command:\"show create table e;\"\n");
 }
 
 TEST(SYNTAX, TEST_1) {
@@ -227,6 +226,15 @@ TEST(SELECT, TEST_7) {
         "select * from a where b = 0;"
         "select * from a where c = '1';",
         0, "");
+}
+
+TEST(SELECT, TEST_8) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int);"
+        "insert into a values (1);"
+        "select * from a where a = '1';",
+        exc::ExceptionType::compare_data_type_mismatch, "");
 }
 
 TEST(INSERT, TEST_1) {
@@ -452,4 +460,84 @@ TEST(DELETE, TEST_4) {
         "crate table a(a int, b real, c text);"
         "delete a where f = '0'",
         exc::ExceptionType::access_table_nonexistent, "");
+}
+
+TEST(DELETE, TEST_5) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "delete a where b = '0'",
+        exc::ExceptionType::compare_data_type_mismatch, "");
+}
+
+TEST(UPDATE, TEST_1) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a values (1, 0, '1');"
+        "insert into a values (1, 1, '0');"
+        "insert into a values (0, 1, '1');"
+        "update a set a = 2;"
+        "select * from a;"
+        "update a set b = 3.45, c = 'H';"
+        "select * from a;",
+        0, "");
+}
+
+TEST(UPDATE, TEST_2) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a values (1, 0, '1');"
+        "insert into a values (1, 1, '0');"
+        "insert into a values (0, 1, '1');"
+        "update a set f = 2;",
+        exc::ExceptionType::access_column_nonexistent, "");
+}
+
+TEST(UPDATE, TEST_3) {
+    clearDB();
+    CHECK_REQUEST(
+        "update a set f = 2;",
+        exc::ExceptionType::access_table_nonexistent, "");
+}
+
+TEST(UPDATE, TEST_4) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int unique);"
+        "insert into a values (1);"
+        "insert into a values (2);"
+        "update a set a = 2;",
+        0, ""); // TODO: ошибка нарушения констрайнтов с данными
+}
+
+TEST(UPDATE, TEST_5) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int not null);"
+        "insert into a values (1);"
+        "insert into a values (2);"
+        "update a set a = null;",
+        0, ""); // TODO: ошибка нарушения констрайнтов с данными
+}
+
+TEST(UPDATE, TEST_6) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int primary key);"
+        "insert into a values (1);"
+        "insert into a values (2);"
+        "update a set a = 2;",
+        0, ""); // TODO: ошибка нарушения констрайнтов с данными
+}
+
+TEST(UPDATE, TEST_7) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int primary key);"
+        "insert into a values (1);"
+        "insert into a values (2);"
+        "update a set a = '2';",
+        exc::ExceptionType::set_data_type_mismatch, "");
 }
