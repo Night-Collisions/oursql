@@ -18,11 +18,12 @@ enum class ExceptionType : unsigned int {
     access_column_nonexistent,
     incompatible_constraints = 801,
     redundant_constraints,
-    duplicated_primary_key,
+    duplicated_primary_key_in_column,
     duplicated_unique,
     null_not_null,
     create_table_name_column = 1001,
-    create_table_repeat_table_name
+    create_table_repeat_table_name,
+    insert_constants_more_columns = 1101
 };
 
 class Exception {
@@ -114,12 +115,12 @@ class RedundantConstraints
                         " in column " + column_name + ".") {}
 };
 
-class DuplicatedPrimaryKey : public TableException {
+class DuplicatedPrimaryKeyInColumn : public TableException {
    public:
-    DuplicatedPrimaryKey(const std::string& table_name,
+    DuplicatedPrimaryKeyInColumn(const std::string& table_name,
                          const std::string& column_name1,
                          const std::string& column_name2)
-        : TableException(table_name, ExceptionType::duplicated_primary_key,
+        : TableException(table_name, ExceptionType::duplicated_primary_key_in_column,
                          "primary key is used in the column " + column_name1 +
                              " and in " + column_name2 + ".") {}
 };
@@ -130,8 +131,7 @@ public:
                      const std::string& column_name,
                      const std::string& value)
             : TableException(table_name, ExceptionType::duplicated_unique,
-                             value + " is not unique is in the column " + column_name +
-                             " in the " + table_name + ".") {}
+                             value + " is not unique is in the column " + column_name + ".") {}
 };
 
 class NullNotNull : public TableException {
@@ -139,7 +139,7 @@ public:
     NullNotNull(const std::string& table_name,
                  const std::string& column_name)
             : TableException(table_name, ExceptionType::null_not_null,
-                             column_name + " can't contain null values in the " + table_name + ".") {}
+                             column_name + " can't contain null values.") {}
 };
 }  // namespace constr
 
@@ -207,6 +207,13 @@ class ColumnName : public CreateTableExceptionInColumn {
                                        "wrong name of column!") {}
 };
 };  // namespace cr_table
+
+namespace ins {
+class ConstantsMoreColumns : public Exception {
+   public:
+    ConstantsMoreColumns() : Exception(ExceptionType::insert_constants_more_columns, "the number of constants is more than columns.") {}
+};
+}
 
 class SetDataTypeMismatch : public Exception {
    public:

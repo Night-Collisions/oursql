@@ -21,7 +21,7 @@ void Table::addColumn(const Column& column, std::unique_ptr<exc::Exception>& e) 
         for (const auto& i : columns_) {
             auto buff = i.getConstraint();
             if (buff.find(ColumnConstraint::primary_key) != buff.end()) {
-                e.reset(new exc::constr::DuplicatedPrimaryKey(
+                e.reset(new exc::constr::DuplicatedPrimaryKeyInColumn(
                                      name_, i.getName(), column.getName()));
             }
         }

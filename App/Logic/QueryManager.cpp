@@ -182,8 +182,7 @@ void QueryManager::insert(const Query& query,
     auto table = Engine::show(name, e);
 
     if (constants.size() > idents.size()) {
-        // TODO: кол-во констант превышает кол-во столбцов
-        // e.reset();
+        e.reset(new exc::ins::ConstantsMoreColumns());
         return;
     }
 
