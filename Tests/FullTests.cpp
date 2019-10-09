@@ -7,7 +7,8 @@
 
 TEST(CREATE_TABLE, TEST_1) {
     clearDB();
-    CHECK_REQUEST("create table a (b int); show create table a;", 0, "");
+    CHECK_REQUEST("create table a (b int); show create table a;", 0,
+                  "CREATE TABLE a(\n    b int\n);\n");
 }
 
 TEST(CREATE_TABLE, TEST_2) {
@@ -37,9 +38,10 @@ TEST(CREATE_TABLE, TEST_5) {
         "create table a(b int not null, c real unique, d text primary key);"
         "show create table a;",
         0,
-        "CREATE TABLE\n"
-        "a(\n    b int not null,\n    c real unique,\n    d text primary "
-        "key\n);");
+        "CREATE TABLE a(\n"
+        "    b int not null,\n"
+        "    c real unique,\n"
+        "    d text primary key\n);\n");
 }
 
 TEST(CREATE_TABLE, TEST_6) {
@@ -54,7 +56,10 @@ TEST(CREATE_TABLE, TEST_7) {
     CHECK_REQUEST(
         "create table a(i int); create table b(i int); create table c(i int); "
         "show create table a; show create table b; show create table c;",
-        0, "");
+        0,
+        "CREATE TABLE a(\n    i int\n);\n"
+        "CREATE TABLE b(\n    i int\n);\n"
+        "CREATE TABLE c(\n    i int\n);\n");
 }
 
 TEST(CREATE_TABLE, TEST_8) {
@@ -92,9 +97,9 @@ TEST(CREATE_TABLE, TEST_11) {
 TEST(CREATE_TABLE, TEST_12) {
     clearDB();
     CHECK_REQUEST(
-        "create table a(b text not null unique primary key); show create table "
-        "a;",
-        0, "");
+        "create table a(b text not null unique primary key);"
+        "show create table a;",
+        0, "CREATE TABLE a(\n    b text primary key not null unique\n);\n");
 }
 
 TEST(CREATE_TABLE, TEST_13) {
@@ -152,7 +157,7 @@ TEST(DROP_TABLE, TEST_2) {
     CHECK_REQUEST(
         "create table a(b int); create table b(c real); drop table a; create "
         "table a(c text); show create table b;",
-        0, "CREATE TABLE b(\n c real\n);\n");
+        0, "CREATE TABLE b(\n    c real\n);\n");
 }
 
 TEST(DROP_TABLE, TEST_3) {
@@ -321,7 +326,7 @@ TEST(INSERT, TEST_12) {
         "crate table a(a int, b real, c text);"
         "insert into a(a) values ('H');"
         "select * from a;",
-        0, ""); // TODO: ошибка несоответсвия типа данных
+        0, "");  // TODO: ошибка несоответсвия типа данных
 }
 
 TEST(INSERT, TEST_13) {
@@ -338,7 +343,7 @@ TEST(INSERT, TEST_14) {
     CHECK_REQUEST(
         "crate table a(a int not null, b real primary key, c text unique);"
         "insert into a(b, c) values (0.1, 'H M!');",
-        0, ""); // TODO: ошибка нарушения констр
+        0, "");  // TODO: ошибка нарушения констр
 }
 
 TEST(INSERT, TEST_15) {
@@ -346,7 +351,7 @@ TEST(INSERT, TEST_15) {
     CHECK_REQUEST(
         "crate table a(a int not null, b real primary key, c text unique);"
         "insert into a(a, c) values (1, 'H M!');",
-        0, ""); // TODO: ошибка нарушения констр
+        0, "");  // TODO: ошибка нарушения констр
 }
 
 TEST(INSERT, TEST_16) {
@@ -355,7 +360,7 @@ TEST(INSERT, TEST_16) {
         "crate table a(a int not null, b real primary key, c text unique);"
         "insert into a values (1, 0, 'H M!');"
         "insert into a values (12, 0, 'H!');",
-        0, ""); // TODO: ошибка нарушения констр
+        0, "");  // TODO: ошибка нарушения констр
 }
 
 TEST(INSERT, TEST_17) {
@@ -364,7 +369,7 @@ TEST(INSERT, TEST_17) {
         "crate table a(a int not null, b real primary key, c text unique);"
         "insert into a values (1, 0, 'H!');"
         "insert into a values (12, 1, 'H!');",
-        0, ""); // TODO: ошибка нарушения констр
+        0, "");  // TODO: ошибка нарушения констр
 }
 
 TEST(INSERT, TEST_18) {
@@ -373,7 +378,7 @@ TEST(INSERT, TEST_18) {
         "crate table a(a int not null, b real primary key, c text unique);"
         "insert into a values (1, 0, 'H!');"
         "insert into a(a, b) values (12, 1);",
-        0, ""); // TODO: ошибка нарушения констр
+        0, "");  // TODO: ошибка нарушения констр
 }
 
 TEST(INSERT, TEST_19) {
@@ -391,7 +396,7 @@ TEST(INSERT, TEST_20) {
     CHECK_REQUEST(
         "crate table a(a int, b real, c text);"
         "insert into a(a, a) values (12, 1);",
-        0, ""); // TODO: ошибка дублирования полей
+        0, "");  // TODO: ошибка дублирования полей
 }
 
 TEST(INSERT, TEST_21) {
@@ -399,7 +404,7 @@ TEST(INSERT, TEST_21) {
     CHECK_REQUEST(
         "crate table a(a int, b real, c text);"
         "insert into a(a) values (12, 1);",
-        0, ""); // TODO: ошибка несоответствия количества полей со значениями
+        0, "");  // TODO: ошибка несоответствия количества полей со значениями
 }
 
 TEST(INSERT, TEST_22) {
@@ -437,9 +442,8 @@ TEST(DELETE, TEST_2) {
 
 TEST(DELETE, TEST_3) {
     clearDB();
-    CHECK_REQUEST(
-        "delete a where c = '0'",
-        exc::ExceptionType::access_table_nonexistent, "");
+    CHECK_REQUEST("delete a where c = '0'",
+                  exc::ExceptionType::access_table_nonexistent, "");
 }
 
 TEST(DELETE, TEST_4) {
@@ -449,4 +453,3 @@ TEST(DELETE, TEST_4) {
         "delete a where f = '0'",
         exc::ExceptionType::access_table_nonexistent, "");
 }
-
