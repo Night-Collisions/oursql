@@ -48,7 +48,7 @@ class Engine {
                                       const ConditionChecker& condition,
                                       std::unique_ptr<exc::Exception>& e);
 
-    static void insert(const std::string& table,const std::unordered_map<std::string,
+    static void insert(const std::string& table, const std::unordered_map<std::string,
             std::string>& values, std::unique_ptr<exc::Exception>& e);
 
    private:

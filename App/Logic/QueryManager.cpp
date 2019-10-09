@@ -182,12 +182,28 @@ void QueryManager::insert(const Query& query,
         static_cast<ConstantList*>(query.getChildren()[3])->getConstants();
     auto table = Engine::show(name, e);
 
-    int min_vec = std::min(idents.size(), constants.size());
+    if (constants.size() > idents.size()) {
+        // TODO: кол-во констант превышает кол-во столбцов
+        // e.reset();
+        return;
+    }
 
-    // TODO
+    std::unordered_map<std::string, std::string> values;
+
+    for (int i = 0; i < constants.size(); ++i) {
+        if (compareTypes(table, idents[i], constants[i], e)) {
+            values[idents[i]->getName()] =
+                static_cast<Constant*>(constants[i])->getValue();
+        } else {
+            return;
+        }
+    }
+
+    Engine::insert(name, values, e);
 }
 
-bool QueryManager::compareTypes(const Table& t, Node* a, Node* b) {
+bool QueryManager::compareTypes(const Table& t, Node* a, Node* b,
+                                std::unique_ptr<exc::Exception>& e) {
     DataType first = DataType::Count;
     DataType second = DataType::Count;
 
@@ -211,7 +227,13 @@ bool QueryManager::compareTypes(const Table& t, Node* a, Node* b) {
         second = static_cast<Constant*>(b)->getDataType();
     }
 
-    return first == second;
+    if (first == second) {
+        return true;
+    } else {
+        e.reset(new exc::CompareDataTypeMismatch(first, second));
+        return false;
+    }
+
 }
 
 void QueryManager::update(const Query& query,
