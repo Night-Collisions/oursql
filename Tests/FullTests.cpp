@@ -100,7 +100,11 @@ TEST(CREATE_TABLE, TEST_12) {
 TEST(CREATE_TABLE, TEST_13) {
     clearDB();
     CHECK_REQUEST("create table a(b int primary key, c int primary key);",
-                  exc::ExceptionType::duplicated_primary_key, "");
+                  exc::ExceptionType::duplicated_primary_key,
+                  "~~Exception 803 in table a:\n primary key is used in the "
+                  "column b and in c.\n"
+                  "~~Exception in command:\"create table a(b int primary key, "
+                  "c int primary key);\"\n");
 }
 
 TEST(SHOW_CREATE_TABLE, TEST_1) {
