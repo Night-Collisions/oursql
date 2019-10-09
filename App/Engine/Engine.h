@@ -12,18 +12,32 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-bool create(const Table& table);
+class Engine {
+public:
+    Engine() = delete;
 
-Table show(const std::string& name);
+    static void create(const Table& table, std::unique_ptr<exc::Exception>& e);
 
-std::string showCreate(const std::string& name);
+    static Table show(const std::string& name, std::unique_ptr<exc::Exception>& e);
 
-bool drop(const std::string& name);
+    static std::string showCreate(const std::string& name, std::unique_ptr<exc::Exception>& e);
 
-bool exists(const std::string& name);
+    static void drop(const std::string& name, std::unique_ptr<exc::Exception>& e);
 
-std::string getPathToTable(const std::string& name);
+    static bool exists(const std::string& name);
 
-std::string getPathToTableMeta(const std::string& name);
+    static std::string getPathToTable(const std::string& name);
+
+    static std::string getPathToTableMeta(const std::string& name);
+
+    static void load(const std::string& name, std::unique_ptr<exc::Exception>& e);
+
+    static void commit(const std::string& name, std::unique_ptr<exc::Exception>& e);
+
+    static void free(const std::string& name, std::unique_ptr<exc::Exception>& e);
+
+private:
+    std::unordered_map<std::string, rapidjson::Value> loaded_tables_;
+};
 
 #endif
