@@ -42,10 +42,10 @@
 
 %error-verbose
 
-%token CREATE SHOW DROP SELECT INSERT
-%token TABLE TABLES VALUES INTO FROM WHERE
+%token CREATE SHOW DROP SELECT INSERT UPDATE DELETE
+%token TABLE TABLES VALUES INTO FROM WHERE SET
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA ASTERISK
-%token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ 
+%token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ
 %token ID ICONST FCONST SCONST
 %token INT REAL TEXT
 %token NOT_NULL PRIMARY_KEY UNIQUE
@@ -82,21 +82,21 @@
 
 %%
 
-expression: 
+expression:
     statements SEMI;
 
-statements: 
+statements:
     statement {
         varList.clear();
-    } | 
+    } |
     statements statement {
         varList.clear();
     };
 
-statement: 
+statement:
     create |
-    show_create | 
-    drop_table | 
+    show_create |
+    drop_table |
     select |
     insert |
     update |
@@ -104,8 +104,8 @@ statement:
 
 // ---- create table
 
-create: 
-    CREATE TABLE id LPAREN variables RPAREN {     
+create:
+    CREATE TABLE id LPAREN variables RPAREN {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::create_table));
         children.push_back($3);
@@ -114,15 +114,15 @@ create:
         parseTree = new Query(children);
     };
 
-variables: 
+variables:
     variable {
         varList.push_back($1);
-    } | 
+    } |
     variables COMMA variable {
         varList.push_back($3);
     };
 
-variable: 
+variable:
     id type {
         $$ = new Variable($1->getName(), $2);
     } | id type constraints {
@@ -130,15 +130,15 @@ variable:
         constraintList.clear();
     };
 
-constraints: 
+constraints:
     constraint {
         constraintList.push_back($1);
-    } | 
+    } |
     constraints constraint {
         constraintList.push_back($2);
     };
 
-constraint: 
+constraint:
     NOT_NULL { $$ = ColumnConstraint::not_null;  } |
     PRIMARY_KEY { $$ = ColumnConstraint::primary_key; }|
     UNIQUE { $$ = ColumnConstraint::unique; };
@@ -179,7 +179,7 @@ asterisk:
     	selectList.push_back(Ident("*"));
     };
 
-select_list: 
+select_list:
     select_list_element {
         selectList.push_back(*$1);
     } |
@@ -190,12 +190,12 @@ select_list:
 select_list_element:
     id DOT id {
         $$ = new Ident((*$1).getTableName(), (*$3).getName());
-    } | 
+    } |
     id {
         $$ = new Ident((*$1).getName());
     };
 
-where_condition: 
+where_condition:
     where_element relation where_element {
         $$ = new Relation($1, $2, $3);
     } |
@@ -215,7 +215,7 @@ relation:
 
 // --- show create table
 
-show_create: 
+show_create:
     SHOW CREATE TABLE id {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::show_create_table));
@@ -226,7 +226,7 @@ show_create:
 
 // --- drop table
 
-drop_table: 
+drop_table:
     DROP TABLE id {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::drop_table));
@@ -237,7 +237,7 @@ drop_table:
 
 // --- insert
 
-insert: 
+insert:
     INSERT INTO id LPAREN column_list RPAREN VALUES LPAREN value_list RPAREN {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::insert));
@@ -255,7 +255,7 @@ insert:
         parseTree = new Query(children);
     };
 
-column_list: 
+column_list:
     id {
         identList.push_back(new Ident(*$1));
     } | column_list COMMA id {
@@ -330,12 +330,12 @@ text_const:
 	$$ = yylval.tConst;
     };
 
-type: 
+type:
     INT { $$ = DataType::integer; } |
     REAL { $$ = DataType::real; } |
     TEXT { $$ = DataType::text; };
 
-id: 
+id:
     ID { $$ = new Ident(*yylval.name); }
 
 %%
@@ -362,6 +362,6 @@ Query* parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) 
     end_lexical_scan();
 
     exception = std::move(ex);
-    
+
     return parseTree;
 }

@@ -140,6 +140,7 @@ class TableName : public CreateTableException {
 };
 
 class RepeatTableName : public CreateTableException {
+   public:
     RepeatTableName(const std::string& table_name)
         : CreateTableException(table_name,
                                ExceptionType::create_table_repeat_table_name,
