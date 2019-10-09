@@ -242,6 +242,7 @@ insert:
     INSERT INTO id LPAREN column_list RPAREN VALUES LPAREN value_list RPAREN {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::insert));
+        children.push_back($3);
         children.push_back(new IdentList(identList));
         children.push_back(new ConstantList(constantList));
 
@@ -250,6 +251,7 @@ insert:
     INSERT INTO id VALUES LPAREN value_list RPAREN {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::insert));
+        children.push_back($3);
         children.push_back(nullptr);
         children.push_back(new ConstantList(constantList));
 
@@ -280,9 +282,19 @@ update:
         children.push_back($2);
         children.push_back(new IdentList(identList));
         children.push_back(new ConstantList(constantList));
+        children.push_back($6);
 
         parseTree = new Query(children);
-    };
+    } |
+    UPDATE id SET assignings {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::update));
+        children.push_back($2);
+        children.push_back(new IdentList(identList));
+        children.push_back(new ConstantList(constantList));
+
+        parseTree = new Query(children);
+    }
 
 
 assignings:

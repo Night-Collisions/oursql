@@ -14,16 +14,19 @@
 #include "rapidjson/writer.h"
 
 class Engine {
-public:
+   public:
     Engine() = delete;
 
     static void create(const Table& table, std::unique_ptr<exc::Exception>& e);
 
-    static Table show(const std::string& name, std::unique_ptr<exc::Exception>& e);
+    static Table show(const std::string& name,
+                      std::unique_ptr<exc::Exception>& e);
 
-    static std::string showCreate(const std::string& name, std::unique_ptr<exc::Exception>& e);
+    static std::string showCreate(const std::string& name,
+                                  std::unique_ptr<exc::Exception>& e);
 
-    static void drop(const std::string& name, std::unique_ptr<exc::Exception>& e);
+    static void drop(const std::string& name,
+                     std::unique_ptr<exc::Exception>& e);
 
     static bool exists(const std::string& name);
 
@@ -31,19 +34,24 @@ public:
 
     static std::string getPathToTableMeta(const std::string& name);
 
-    static void load(const std::string& name, std::unique_ptr<exc::Exception>& e);
+    static void load(const std::string& name,
+                     std::unique_ptr<exc::Exception>& e);
 
-    static void commit(const std::string& name, std::unique_ptr<exc::Exception>& e);
+    static void commit(const std::string& name,
+                       std::unique_ptr<exc::Exception>& e);
 
-    static void free(const std::string& name, std::unique_ptr<exc::Exception>& e);
+    static void free(const std::string& name,
+                     std::unique_ptr<exc::Exception>& e);
 
-    static rapidjson::Document select(const std::string& table, const std::set<std::string>& columns,
-            const ConditionChecker& condition, std::unique_ptr<exc::Exception>& e);
+    static rapidjson::Document select(const std::string& table,
+                                      const std::set<std::string>& columns,
+                                      const ConditionChecker& condition,
+                                      std::unique_ptr<exc::Exception>& e);
 
     static void insert(const std::string& table,const std::unordered_map<std::string,
             std::string>& values, std::unique_ptr<exc::Exception>& e);
 
-private:
+   private:
     static std::unordered_map<std::string, rapidjson::Document> loaded_tables_;
 };
 
