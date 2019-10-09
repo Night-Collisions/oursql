@@ -6,16 +6,14 @@
 #define OURSQL_APP_LOGIC_PARSER_NODES_TEXTCONSTANT_H_
 
 #include <string>
+#include "../../../Core/DataType.h"
+#include "Constant.h"
 #include "Node.h"
-class TextConstant : public Node {
+class TextConstant : public Constant {
    public:
-    explicit TextConstant(const std::string& value)
-        : Node(NodeType::constant), value_(value) {}
+    explicit TextConstant(const std::string& value) : Constant(value) {}
 
-    std::string getValue() { return value_; }
-
-   private:
-    std::string value_;
+    DataType getDataType() override { return DataType::text; }
 };
 
 #endif  // OURSQL_APP_LOGIC_PARSER_NODES_TEXTCONSTANT_H_

@@ -5,14 +5,14 @@
 #ifndef OURSQL_APP_LOGIC_PARSER_NODES_REALCONSTANT_H_
 #define OURSQL_APP_LOGIC_PARSER_NODES_REALCONSTANT_H_
 
+#include "../../../Core/DataType.h"
+#include "Constant.h"
 #include "Node.h"
-class RealConstant : public Node {
+
+class RealConstant : public Constant {
    public:
-    explicit RealConstant(float value) : Node(NodeType::constant), value_(value) {}
+    explicit RealConstant(const std::string& value) : Constant(value) {}
 
-    float getValue() { return value_; }
-
-   private:
-    float value_;
+    DataType getDataType() override { return DataType::real; }
 };
 #endif  // OURSQL_APP_LOGIC_PARSER_NODES_REALCONSTANT_H_

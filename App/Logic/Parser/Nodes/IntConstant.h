@@ -5,16 +5,15 @@
 #ifndef OURSQL_APP_LOGIC_PARSER_NODES_INTCONSTANT_H_
 #define OURSQL_APP_LOGIC_PARSER_NODES_INTCONSTANT_H_
 
+#include "../../../Core/DataType.h"
+#include "Constant.h"
 #include "Node.h"
 
-class IntConstant : public Node {
+class IntConstant : public Constant {
    public:
-    explicit IntConstant(int value) : Node(NodeType::constant), value_(value) {}
+    explicit IntConstant(const std::string& value) : Constant(value) {}
 
-    int getValue() { return value_; }
-
-   private:
-    int value_;
+    DataType getDataType() override { return DataType::integer; }
 };
 
 #endif  // OURSQL_APP_LOGIC_PARSER_NODES_INTCONSTANT_H_

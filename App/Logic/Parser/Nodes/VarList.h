@@ -8,7 +8,7 @@
 class VarList : public Node {
    public:
     VarList(std::vector<Variable*>& vars)
-        : Node(NodeType::varList), vars_(vars) {}
+        : Node(NodeType::var_list), vars_(vars) {}
 
     ~VarList() override {
         for (auto& v : vars_) {
@@ -16,7 +16,7 @@ class VarList : public Node {
         }
     }
 
-    VarList() : Node(NodeType::varList) {}
+    VarList() : Node(NodeType::var_list) {}
 
     void push(Variable* var) { vars_.push_back(var); }
 

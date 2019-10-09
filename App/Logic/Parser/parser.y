@@ -6,6 +6,7 @@
     #include "../../App/Logic/Parser/Nodes/Variable.h"
     #include "../../App/Logic/Parser/Nodes/Ident.h"
     #include "../../App/Logic/Parser/Nodes/IntConstant.h"
+    #include "../../App/Logic/Parser/Nodes/Constant.h"
     #include "../../App/Logic/Parser/Nodes/RealConstant.h"
     #include "../../App/Logic/Parser/Nodes/TextConstant.h"
     #include "../../App/Logic/Parser/Nodes/ConstantList.h"
@@ -322,12 +323,12 @@ int_const:
 
 real_const:
     FCONST {
-	$$ = yylval.rConst;
+	    $$ = yylval.rConst;
     };
 
 text_const:
     SCONST {
-	$$ = yylval.tConst;
+	    $$ = yylval.tConst;
     };
 
 type:

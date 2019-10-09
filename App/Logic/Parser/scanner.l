@@ -10,6 +10,7 @@
     #include "../../App/Logic/Parser/Nodes/Command.h"
     #include "../../App/Logic/Parser/Nodes/Variable.h"
     #include "../../App/Logic/Parser/Nodes/Ident.h"
+    #include "../../App/Logic/Parser/Nodes/Constant.h"
     #include "../../App/Logic/Parser/Nodes/IntConstant.h"
     #include "../../App/Logic/Parser/Nodes/RealConstant.h"
     #include "../../App/Logic/Parser/Nodes/TextConstant.h"
@@ -102,13 +103,13 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 
 {FCONST}                   { 
                               sscanf(yytext, "%s", tmp_str);
-                              yylval.rConst = new RealConstant(std::stof(std::string(tmp_str)));
+                              yylval.rConst = new RealConstant(std::string(tmp_str));
                               return FCONST; 
                            }
 
 {ICONST}                   { 
                               sscanf(yytext, "%s", tmp_str);
-                              yylval.iConst = new IntConstant(std::stoi(std::string(tmp_str)));
+                              yylval.iConst = new IntConstant(std::string(tmp_str));
                               return ICONST; 
                            }
                            

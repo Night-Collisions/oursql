@@ -8,7 +8,7 @@
 class IdentList : public Node {
    public:
     explicit IdentList(const std::vector<Ident*>& idents)
-        : Node(NodeType::identList), idents_(idents) {}
+        : Node(NodeType::ident_list), idents_(idents) {}
 
     std::vector<Ident*> getIdents() { return idents_; }
 
