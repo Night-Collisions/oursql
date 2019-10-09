@@ -35,4 +35,4 @@ init(${PROJECT_BINARY_DIR})
 #package_add_test_with_parser(Logic Logic/LogicTests.cpp)
 #package_add_test(Engine Engine/EngineTests.cpp)
 
-package_add_test_with_parser(AutoGen AutoGenTests.cpp)
+package_add_test_with_parser(FullTests FullTests.cpp)

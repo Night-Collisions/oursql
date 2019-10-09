@@ -4,7 +4,6 @@
 
 void Table::addColumn(const Column& column, std::unique_ptr<exc::Exception>& e) {
     e.reset(nullptr);
-    e = nullptr;
     auto lowerCase = [](const std::string& s) {
         auto data = s;
         std::transform(data.begin(), data.end(), data.begin(),
@@ -24,7 +23,6 @@ void Table::addColumn(const Column& column, std::unique_ptr<exc::Exception>& e) 
             if (buff.find(ColumnConstraint::primary_key) != buff.end()) {
                 e.reset(new exc::constr::DuplicatedPrimaryKey(
                                      name_, i.getName(), column.getName()));
-                throw std::invalid_argument("Primary key already exists");
             }
         }
     }
