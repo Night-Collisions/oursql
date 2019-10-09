@@ -100,9 +100,7 @@ std::string Engine::showCreate(const std::string& name, std::unique_ptr<exc::Exc
         query.append("\n    " + column.getName() + " " + DataType2String(column.getType()));
 
         for (const auto& constraint : column.getConstraint()) {
-            std::string constraint_str = ColumnConstraint2String(constraint);
-            std::replace(constraint_str.begin(), constraint_str.end(), '_', ' ');
-            query.append(" " + constraint_str);
+            query.append(" " + ColumnConstraint2String(constraint));
         }
 
         if (i != table.getColumns().size() - 1) {
@@ -125,4 +123,13 @@ void Engine::drop(const std::string& name, std::unique_ptr<exc::Exception>& e) {
 
 bool Engine::exists(const std::string& name) {
     return static_cast<bool>(std::ifstream(getPathToTableMeta(name)));
+}
+
+void Engine::load(const std::string& name, std::unique_ptr<exc::Exception>& e) {
+}
+
+void Engine::commit(const std::string& name, std::unique_ptr<exc::Exception>& e) {
+}
+
+void Engine::free(const std::string& name, std::unique_ptr<exc::Exception>& e) {
 }
