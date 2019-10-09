@@ -34,7 +34,7 @@ class Exception {
     }
 
    protected:
-    std::string getStarMessage() const {
+    virtual std::string getStarMessage() const {
         return "~~Error " + std::to_string(getNumber());
     };
 
@@ -44,12 +44,15 @@ class Exception {
 
 class SyntaxException : public Exception {
    public:
-    SyntaxException(const std::string& command) : Exception(ExceptionType::syntax, "wrong syntax!"), command_(command) {}
+    SyntaxException(const std::string& command)
+        : Exception(ExceptionType::syntax, "wrong syntax!"),
+          command_(command) {}
+
    protected:
     std::string getStarMessage() const {
         return Exception::getStarMessage() + " in command: " + command_;
     };
-   const std::string& command_;
+    const std::string& command_;
 };
 
 class RepeatColumnName : public Exception {
@@ -83,11 +86,12 @@ class IncompatibleConstraints : public Exception {
                             const std::string& column_constraint2)
         : Exception(ExceptionType::incompatible_constraints,
                     column_constraint1 + " can't be used with " +
-                        column_constraint2 + " in column " +
-                        column_name + "."){};
+                        column_constraint2 + " in column " + column_name +
+                        "."){};
 };
 
-class RedundantConstraints : public Exception { // TODO: добавить в место где они повторяются
+class RedundantConstraints
+    : public Exception {  // TODO: добавить в место где они повторяются
    public:
     RedundantConstraints(const std::string& column_name,
                          const std::string& column_constraint)
@@ -145,6 +149,7 @@ class TableName : public CreateTableException {
 };
 
 class RepeatTableName : public CreateTableException {
+   public:
     RepeatTableName(const std::string& table_name)
         : CreateTableException(table_name,
                                ExceptionType::create_table_repeat_table_name,

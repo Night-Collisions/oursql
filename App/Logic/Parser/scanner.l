@@ -83,6 +83,7 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "values"                   { return VALUES; }
 "set"                      { return SET; }
 "update"                   { return UPDATE; }
+"delete"                   { return DELETE; }
 
 
 "int"                      { return INT; }

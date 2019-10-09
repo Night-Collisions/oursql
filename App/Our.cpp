@@ -28,7 +28,7 @@ unsigned int perform(std::istream& in, std::ostream& out) {
         ParserManager pm;
         auto a = pm.getParseTree(get_command(in), e);
         EXCEPTION_OURSQL_CHECK(e, out);
-        QueryManager::execute(*a, e);
+        QueryManager::execute(*a, e, out);
         EXCEPTION_OURSQL_CHECK(e, out);
         delete a;
     }

@@ -10,21 +10,28 @@
 #include "Parser/Nodes/VarList.h"
 
 #include "../../App/Core/Exception.h"
+#include "Parser/Nodes/SelectList.h"
 
-void QueryManager::execute(const Query& query, std::unique_ptr<exc::Exception>& e) {
-    void (*const commandsActions[static_cast<unsigned int>(
-        CommandType::Count)])(const Query& query, std::unique_ptr<exc::Exception>& e) = {
-        [](const Query&, std::unique_ptr<exc::Exception>& e) {}, createTable, showCreateTable,
-        dropTable};
+void QueryManager::execute(const Query& query,
+                           std::unique_ptr<exc::Exception>& e,
+                           std::ostream& out) {
+    void (*const
+              commandsActions[static_cast<unsigned int>(CommandType::Count)])(
+        const Query& query, std::unique_ptr<exc::Exception>& e,
+        std::ostream& out) = {
+        [](const Query&, std::unique_ptr<exc::Exception>& e,
+           std::ostream& out) {},
+        createTable, showCreateTable, dropTable, select};
     CommandType command =
         static_cast<Command*>(query.getChildren()[0])->getCommandType();
     if (command != CommandType::Count) {
-        commandsActions[static_cast<unsigned int>(command)](query, e);
+        commandsActions[static_cast<unsigned int>(command)](query, e, out);
     }
 }
 
-void QueryManager::createTable(const Query& query, std::unique_ptr<exc::Exception>& e) {
-    // TODO: накидать исключений
+void QueryManager::createTable(const Query& query,
+                               std::unique_ptr<exc::Exception>& e,
+                               std::ostream& out) {
     e.reset(nullptr);
 
     std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
@@ -42,7 +49,8 @@ void QueryManager::createTable(const Query& query, std::unique_ptr<exc::Exceptio
             if (constr_set.find(c) == constr_set.end()) {
                 constr_set.insert(c);
             } else {
-                e.reset(new exc::constr::RedundantConstraints(name, v->getName()));
+                e.reset(
+                    new exc::constr::RedundantConstraints(name, v->getName()));
                 return;
             }
         }
@@ -53,37 +61,59 @@ void QueryManager::createTable(const Query& query, std::unique_ptr<exc::Exceptio
 
     Table table(name, columns);
 
-    create(table);  // TODO: она что то возвращает, надо кинуть исключение
+    if (create(table)) {
+        e.reset(new exc::cr_table::RepeatTableName(name));
+    }
 }
 
-/*void QueryManager::checkConstraints(
-    const std::set<ColumnConstraint>& constraint) {
-    std::array<std::set<ColumnConstraint>,
-               static_cast<unsigned int>(ColumnConstraint::Count)>
-        incompatible = {std::set<ColumnConstraint>{},
-                        std::set<ColumnConstraint>{},
-                        std::set<ColumnConstraint>{}};
-    for (const auto& i : constraint) {
-        std::set<ColumnConstraint> buff;
-        std::set_intersection(
-            incompatible[static_cast<unsigned int>(i)].begin(),
-            incompatible[static_cast<unsigned int>(i)].end(),
-            constraint.begin(), constraint.end(),
-            std::inserter(buff, buff.begin()));
-        if (buff.size() > 0) {
-            throw std::invalid_argument("Incompatible constraints");
-        }
-    }
-}*/
-
-void QueryManager::showCreateTable(const Query& query, std::unique_ptr<exc::Exception>& e) {
-    if (query.getChildren().size() != 2) {
-        // TODO: исключение, неправильно составлени команда, так как запрос
-        // должен быть из двух частей
-    }
-
+void QueryManager::showCreateTable(const Query& query,
+                                   std::unique_ptr<exc::Exception>& e,
+                                   std::ostream& out) {
     // TODO: print to output stream
-    showCreate(static_cast<Ident*>(query.getChildren()[1])->getName());
+    auto name = static_cast<Ident*>(query.getChildren()[1])->getName();
+    auto res = showCreate(name);
+    if (res.empty()) {
+        e.reset(new exc::acc::TableNonexistent(name));
+    } else {
+        out << res << std::endl;
+    }
 }
 
-void QueryManager::dropTable(const Query& query, std::unique_ptr<exc::Exception>& e) {}
+void QueryManager::dropTable(const Query& query,
+                             std::unique_ptr<exc::Exception>& e,
+                             std::ostream& out) {
+    auto name = static_cast<Ident*>(query.getChildren()[1])->getName();
+    if (drop(name)) {
+        e.reset(new exc::acc::TableNonexistent(name));
+    }
+}
+void QueryManager::select(const Query& query,
+                          std::unique_ptr<exc::Exception>& e,
+                          std::ostream& out) {
+    auto name = static_cast<Ident*>(query.getChildren()[1])->getName();
+    auto table = show(name);
+
+    std::vector<std::string> existing_cols;
+    std::set<std::string> col_set;
+    for (auto& c : table.getColumns()) {
+        existing_cols.push_back(c.getName());
+        col_set.insert(c.getName());
+    }
+
+    auto cols_from_parser =
+        static_cast<SelectList*>(query.getChildren()[2])->getList();
+
+    std::vector<std::string> ready_cols;
+    for (auto& c : cols_from_parser) {
+        if (c.getName() == "*") {
+            std::copy(existing_cols.begin(), existing_cols.end(), ready_cols.begin());
+        } else if (col_set.find((c.getName())) == col_set.end()) {
+            e.reset(new exc::acc::ColumnNonexistent(c.getName(), name));
+            return;
+        }
+        ready_cols.push_back(c.getName());
+    }
+
+   //WARNING!!! THIS FUNCTION IS NOT FINISHED
+
+}

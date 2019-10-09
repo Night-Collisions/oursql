@@ -10,6 +10,8 @@ class SelectList : public Node {
     SelectList(const std::vector<Ident>& list)
         : Node(NodeType::selectList), list_(list) {}
 
+    std::vector<Ident> getList() { return list_; }
+
    private:
     std::vector<Ident> list_;
 };

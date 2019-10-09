@@ -163,6 +163,15 @@ select:
         children.push_back($8);
 
         parseTree = new Query(children);
+    } |
+    SELECT asterisk FROM id WHERE where_condition {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::select));
+        children.push_back($4);
+        children.push_back(new SelectList(selectList));
+        children.push_back($6);
+
+        parseTree = new Query(children);
     };
 
 asterisk:
@@ -189,7 +198,8 @@ select_list_element:
 where_condition: 
     where_element relation where_element {
         $$ = new Relation($1, $2, $3);
-    };
+    } | 
+    { $$ = nullptr; };
 
 where_element:
     id { $$ = new Ident(*$1); } |
@@ -288,7 +298,15 @@ assigning:
 // --- delete
 
 delete: 
-    DELETE 
+    DELETE FROM id WHERE where_condition {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::delete_));
+        children.push_back($3);
+        children.push_back(new IdentList(identList));
+        children.push_back(new ConstantList(constantList));
+
+        parseTree = new Query(children);
+    };
 
 // ---
 
@@ -323,7 +341,6 @@ id:
 %%
 
 void yyerror(const char *s) {
-    printf("%s", s);
     ex.reset(new exc::SyntaxException(std::string(s)));
 }
 
