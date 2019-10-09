@@ -2,7 +2,8 @@
 #include <gtest/gtest.h>
 
 #include "../Test.h"
-#include "parser.cpp"
+
+#include "../../App/Our.h"
 
 extern Table getTable();
 

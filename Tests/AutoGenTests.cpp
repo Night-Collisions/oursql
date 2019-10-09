@@ -1,167 +1,154 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "../App/Core/Exception.h"
+#include "../App/Our.h"
 #include "Test.h"
-#include "parser.cpp"
 
-TEST(AGT, TEST_1) {
-    buffer_on = 1;
-    parse_string("create table();");
+#define NO_EXCEPTION(exception) ASSERT_EQ(exception, 0);
+#define CHECK_EXCEPTION(exception, excpect) \
+    ASSERT_EQ(exception, static_cast<unsigned int>(excpect));
+
+#define CHECK_REQUEST(request, exception, answer)         \
+    std::stringstream in(request);                        \
+    std::stringstream out;                                \
+    CHECK_EXCEPTION(ourSQL::perform(in, out), exception); \
+    EXPECT_EQ(out.str(), answer);
+
+TEST(CREATE_TABLE, TEST_1) {
+    CHECK_REQUEST("create table a (b int); show create table a;", 0, "");
     clearDB();
-    EXPECT_EQ(buffer, "syntax error, unexpected LPAREN, expecting ID\nsyntax error, unexpected $end, expecting SEMI\n");
 }
 
-TEST(AGT, TEST_2) {
-    buffer_on = 1;
-    parse_string("create table a(b int);");
+TEST(CREATE_TABLE, TEST_2) {
+    CHECK_REQUEST("create table a (b int)", exc::ExceptionType::syntax,
+                  "~~Exception 3: wrong syntax!\n~~Exception in "
+                  "command:\"create table a (b int)\"\n");
     clearDB();
-    EXPECT_EQ(buffer, "");
 }
 
-TEST(AGT, TEST_3) {
-    buffer_on = 1;
-    parse_string("create table a(b int not null);");
+TEST(CREATE_TABLE, TEST_3) {
+    CHECK_REQUEST("create table a(b int not null);", 0, "");
     clearDB();
-    EXPECT_EQ(buffer, "");
 }
 
-TEST(AGT, TEST_4) {
-    buffer_on = 1;
-    parse_string("create table a(b int); show create table a;");
+TEST(CREATE_TABLE, TEST_4) {
+    CHECK_REQUEST("create table a(b int not null not null);",
+                  exc::ExceptionType::redundant_constraints,
+                  "~~Exception 802: duplicate of constraint b in column a.\n"
+                  "~~Exception in command:\"create table a(b int not null not "
+                  "null);\"\n");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE a(\n    b int\n);");
 }
 
-TEST(AGT, TEST_5) {
-    buffer_on = 1;
-    parse_string("create table a(b int not null not null);");
+TEST(CREATE_TABLE, TEST_5) {
+    CHECK_REQUEST(
+        "create table a(b int not null, c real unique, d text primary key);"
+        "show create table a;",
+        0,
+        "CREATE TABLE\n"
+        "a(\n    b int not null,\n    c real unique,\n    d text primary "
+        "key\n);");
     clearDB();
-    EXPECT_EQ(buffer, "Duplicate constraints\nDuplicate constraints\n");
 }
 
-TEST(AGT, TEST_6) {
-    buffer_on = 1;
-    parse_string("create table a(b int not null, c real unique, d text primary key); show create table a;");
+TEST(CREATE_TABLE, TEST_6) {
+    CHECK_REQUEST("create table sfs;", exc::ExceptionType::syntax,
+                  "~~Exception 3: wrong syntax!\n"
+                  "~~Exception in command:\"create table sfs;\"\n");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE a(\n    b int not null,\n    c real unique,\n    d text primary key\n);");
 }
 
-TEST(AGT, TEST_7) {
-    buffer_on = 1;
-    parse_string("create table sfs;");
+TEST(CREATE_TABLE, TEST_7) {
+    CHECK_REQUEST(
+        "create table a(i int); create table b(i int); create table c(i int); "
+        "show create table a; show create table b; show create table c;",
+        0, "");
     clearDB();
-    EXPECT_EQ(buffer, "syntax error, unexpected SEMI, expecting LPAREN\nsyntax error, unexpected $end, expecting SEMI\n");
 }
 
-TEST(AGT, TEST_8) {
-    buffer_on = 1;
-    parse_string("show ghgh;");
+TEST(CREATE_TABLE, TEST_8) {
+    CHECK_REQUEST("create table a(MyColumn int, mycolumn text);",
+                  exc::ExceptionType::repeat_column_in_table,
+                  "~~Exception 2: repeat column MyColumn in table a.\n"
+                  "~~Exception in command:\"create table a(MyColumn int, mycolumn text);\"\n");
     clearDB();
-    EXPECT_EQ(buffer, "syntax error, unexpected ID, expecting CREATE\nsyntax error, unexpected $end, expecting SEMI\n");
 }
 
-TEST(AGT, TEST_9) {
-    buffer_on = 1;
-    parse_string("fdgd");
+TEST(CREATE_TABLE, TEST_9) {
+    CHECK_REQUEST(
+        "create table a(MyColumn int, q text); create table a(f int);",
+        exc::ExceptionType::create_table_repeat_table_name, "");
     clearDB();
-    EXPECT_EQ(buffer, "syntax error, unexpected ID, expecting CREATE or SHOW or DROP\n");
 }
 
-TEST(AGT, TEST_10) {
-    buffer_on = 1;
-    parse_string("show create table a;");
+TEST(CREATE_TABLE, TEST_10) {
+    CHECK_REQUEST("create table 1a(f int);",
+                  exc::ExceptionType::create_table_name_table, "");
     clearDB();
-    EXPECT_EQ(buffer, "Table doesn't exist\nTable doesn't exist\n");
 }
 
-TEST(AGT, TEST_11) {
-    buffer_on = 1;
-    parse_string("drop table tr;");
+TEST(CREATE_TABLE, TEST_11) {
+    CHECK_REQUEST("create table a(_f int);",
+                  exc::ExceptionType::create_table_name_column, "");
     clearDB();
-    EXPECT_EQ(buffer, "Table doesn't exist\nTable doesn't exist\n");
 }
 
-TEST(AGT, TEST_12) {
-    buffer_on = 1;
-    parse_string("create table a(i int); create table b(i int); create table c(i int); show create table a; show create table b; show create table c;");
+TEST(CREATE_TABLE, TEST_12) {
+    CHECK_REQUEST(
+        "create table a(b text not null unique primary key); show create table "
+        "a;",
+        0, "");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE c(\n    i int\n);");
 }
 
-TEST(AGT, TEST_13) {
-    buffer_on = 1;
-    parse_string("create table a(b text); create table b(f int); drop table b; show create table a;");
+TEST(CREATE_TABLE, TEST_13) {
+    CHECK_REQUEST("create table a(b primary key, c primary key);",
+                  exc::ExceptionType::duplicated_primary_key, "");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE a(\n    b text\n);");
 }
 
-TEST(AGT, TEST_14) {
-    buffer_on = 1;
-    parse_string("create table a(b text); create table b(f int); drop table b; show create table b;");
+TEST(SHOW_CREATE_TABLE, TEST_1) {
+    CHECK_REQUEST("show ghgh;", exc::ExceptionType::syntax, "");
     clearDB();
-    EXPECT_EQ(buffer, "Table doesn't exist\nTable doesn't exist\n");
 }
 
-TEST(AGT, TEST_15) {
-    buffer_on = 1;
-    parse_string("create table a(b text); drop table a; create table a(b text); show create table a;");
+TEST(SHOW_CREATE_TABLE, TEST_2) {
+    CHECK_REQUEST("show create table e;",
+                  exc::ExceptionType::access_table_nonexistent, "");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE a(\n    b text\n);");
 }
 
-TEST(AGT, TEST_16) {
-    buffer_on = 1;
-    parse_string("CreaTe     TabLe MyTable(a int); show create table MyTable;");
+TEST(SYNTAX, TEST_1) {
+    CHECK_REQUEST("CreAte    \n  TablE   NamE \n ( A ReAl);", 0, "");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE MyTable(\n    a int\n);");
 }
 
-TEST(AGT, TEST_17) {
-    buffer_on = 1;
-    parse_string("CreaTe     TabLe MyTable(a int); show create table Mytable;");
+TEST(SYNTAX, TEST_2) {
+    CHECK_REQUEST("fdgd;", exc::ExceptionType::syntax, "");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE MyTable(\n    a int\n);");
 }
 
-TEST(AGT, TEST_18) {
-    buffer_on = 1;
-    parse_string("create table a(MyColumn int, mycolumn text);");
+TEST(SYNTAX, TEST_3) {
+    CHECK_REQUEST("CREATE TABLE TAB(F TEXT);", 0, "");
     clearDB();
-    EXPECT_EQ(buffer, "Column 'MyColumn' already exists\nColumn 'MyColumn' already exists\n");
 }
 
-TEST(AGT, TEST_19) {
-    buffer_on = 1;
-    parse_string("drop table;");
+TEST(DROP_TABLE, TEST_1) {
+    CHECK_REQUEST("drop table tr;",
+                  exc::ExceptionType::access_table_nonexistent, "");
     clearDB();
-    EXPECT_EQ(buffer, "syntax error, unexpected SEMI, expecting ID\nsyntax error, unexpected $end, expecting SEMI\n");
 }
 
-TEST(AGT, TEST_20) {
-    buffer_on = 1;
-    parse_string("create table a(b text not null unique primary key); show create table a;");
+TEST(DROP_TABLE, TEST_2) {
+    CHECK_REQUEST(
+        "create table a(b int); create table b(c real); drop table a; create "
+        "table a(c text); show create table b;",
+        0, "");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE a(\n    b text primary key not null unique\n);");
 }
 
-TEST(AGT, TEST_21) {
-    buffer_on = 1;
-    parse_string("CREATE TABLE A(C INT NOT NULL); SHOW CREATE TABLE A;");
+TEST(DROP_TABLE, TEST_3) {
+    CHECK_REQUEST("drop table;;", exc::ExceptionType::syntax, "");
     clearDB();
-    EXPECT_EQ(buffer, "CREATE TABLE A(\n    C int not null\n);");
 }
-
-TEST(AGT, TEST_22) {
-    buffer_on = 1;
-    parse_string("create table a(b text primary key, c int primary key);");
-    clearDB();
-    EXPECT_EQ(buffer, "Primary key already exists\nPrimary key already exists\n");
-}
-
-TEST(AGT, TEST_23) {
-    buffer_on = 1;
-    parse_string("create table rt(a int);");
-    clearDB();
-    EXPECT_EQ(buffer, "");
-}
-

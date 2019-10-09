@@ -60,6 +60,6 @@ init(${PROJECT_BINARY_DIR})
 
 add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Engine/Column.h Logic/Parser/Nodes/Relation.cpp Logic/Parser/Nodes/Relation.h)
 
-add_library(${PROJECT_NAME}_SURSE ${HEADERS} ${DEFINITIONS})
+add_library(${PROJECT_NAME}_SURSE ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
 
 show_compilation_warnings(${PROJECT_NAME})

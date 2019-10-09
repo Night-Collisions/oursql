@@ -59,7 +59,9 @@ void QueryManager::createTable(const Query& query,
         columns.emplace_back(f);
     }
 
-    Table table(name, columns);
+    Table table(name, columns, e);
+    if (e != nullptr)
+        return;
 
     if (create(table)) {
         e.reset(new exc::cr_table::RepeatTableName(name));

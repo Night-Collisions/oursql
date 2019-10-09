@@ -10,15 +10,15 @@
 class Table {
    public:
     Table() = default;
-    Table(const std::string& name, const std::vector<Column>& columns)
-        : name_(name), columns_(columns) {}
+    Table(const std::string& name, const std::vector<Column>& columns, std::unique_ptr<exc::Exception>& e)
+        : name_(name) { for (auto& i : columns) { addColumn(i, e); }}
 
     [[deprecated]] void setName(const std::string& name) { name_ = name; }
 
     [[nodiscard]] std::string getName() const { return name_; }
     [[nodiscard]] std::vector<Column> getColumns() const { return columns_; }
 
-    [[deprecated]] void addColumn(const Column& column, std::unique_ptr<exc::Exception>& e);
+    void addColumn(const Column& column, std::unique_ptr<exc::Exception>& e);
 
    private:
     std::string name_;

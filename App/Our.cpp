@@ -3,35 +3,44 @@
 #include "Logic/Parser/ParserManager.h"
 #include "Logic/QueryManager.h"
 
-#define EXCEPTION_OURSQL_CHECK(e, out)       \
-    if (e != nullptr) {                      \
-        out << e->getMessage() << std::endl; \
-        return e->getNumber();               \
+#define EXCEPTION_OURSQL_CHECK(e, out, command)                             \
+    if (e != nullptr) {                                                     \
+        out << e->getMessage() << "\n"                                      \
+            << "~~Exception in command:\"" << command << "\"" << std::endl; \
+        delete a;                                                           \
+        return e->getNumber();                                              \
     };
 
 namespace ourSQL {
 
-std::string get_command(std::istream& in) {
-    std::string ans;
-    while (!in.eof()) {
-        ans.push_back(in.get());
-        if (ans.back() == ';') {
-            return ans;
+bool get_command(std::istream& in, std::string& command) {
+    int c = 0;
+    command.clear();
+    while ((c = in.get()) != EOF) {
+        command.push_back(c);
+        if (command.back() == ';') {
+            return true;
         }
     }
-    return ans;
+    return false;
 }
 
 unsigned int perform(std::istream& in, std::ostream& out) {
     std::unique_ptr<exc::Exception> e = nullptr;
-    while (!in.eof()) {
+    std::string command;
+    bool is_end = false;
+    do {
+        is_end = !get_command(in, command);
+        if (command.empty() || command == "/n") {
+            return 0;
+        }
         ParserManager pm;
-        auto a = pm.getParseTree(get_command(in), e);
-        EXCEPTION_OURSQL_CHECK(e, out);
+        auto a = pm.getParseTree(command, e);
+        EXCEPTION_OURSQL_CHECK(e, out, command);
         QueryManager::execute(*a, e, out);
-        EXCEPTION_OURSQL_CHECK(e, out);
+        EXCEPTION_OURSQL_CHECK(e, out, command);
         delete a;
-    }
+    } while (!is_end);
     return 0;
 }
 

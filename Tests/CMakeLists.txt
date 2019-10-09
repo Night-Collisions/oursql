@@ -19,7 +19,7 @@ macro(package_set_test TESTNAME)
 endmacro()
 
 macro(package_add_test_with_parser TESTNAME)
-    add_executable(${TESTNAME} ${ARGN} ${FLEX_SCANNER_OUTPUTS} Test.h Test.cpp)
+    add_executable(${TESTNAME} ${ARGN} Test.h Test.cpp)
     package_set_test(${TESTNAME} ${ARGN})
 endmacro()
 
@@ -28,11 +28,11 @@ macro(package_add_test TESTNAME)
     package_set_test(${TESTNAME} ${ARGN})
 endmacro()
 
-assemble_parser(../App/Logic/Parser/)
+assemble_parser(../../App/Logic/Parser)
 
 init(${PROJECT_BINARY_DIR})
 
-package_add_test_with_parser(Logic Logic/ParserTests.cpp)
-package_add_test(Engine Engine/EngineTests.cpp)
+#package_add_test_with_parser(Logic Logic/LogicTests.cpp)
+#package_add_test(Engine Engine/EngineTests.cpp)
 
 package_add_test_with_parser(AutoGen AutoGenTests.cpp)

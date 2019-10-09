@@ -42,8 +42,8 @@
 
 %error-verbose
 
-%token CREATE SHOW DROP SELECT INSERT UPDATE DELETE
-%token TABLE TABLES VALUES INTO FROM WHERE SET
+%token CREATE SHOW DROP SELECT INSERT
+%token TABLE TABLES VALUES INTO FROM WHERE
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA ASTERISK
 %token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ 
 %token ID ICONST FCONST SCONST
@@ -198,7 +198,7 @@ select_list_element:
 where_condition: 
     where_element relation where_element {
         $$ = new Relation($1, $2, $3);
-    } | 
+    } |
     { $$ = nullptr; };
 
 where_element:
@@ -285,7 +285,7 @@ update:
 
 
 assignings:
-    assigning | 
+    assigning |
     assignings COMMA assigning;
 
 assigning:
@@ -297,7 +297,7 @@ assigning:
 
 // --- delete
 
-delete: 
+delete:
     DELETE FROM id WHERE where_condition {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::delete_));
@@ -341,7 +341,7 @@ id:
 %%
 
 void yyerror(const char *s) {
-    ex.reset(new exc::SyntaxException(std::string(s)));
+    ex.reset(new exc::SyntaxException());
 }
 
 void set_input_string(const char* in);
