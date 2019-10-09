@@ -11,6 +11,8 @@ enum class CommandType : unsigned int {
     drop_table,
     select,
     insert,
+    update,
+    delete_,
     Count
 };
 

@@ -81,6 +81,8 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "insert"                   { return INSERT; }
 "into"                     { return INTO; }
 "values"                   { return VALUES; }
+"set"                      { return SET; }
+"update"                   { return UPDATE; }
 
 
 "int"                      { return INT; }

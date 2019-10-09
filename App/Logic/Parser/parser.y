@@ -42,8 +42,8 @@
 
 %error-verbose
 
-%token CREATE SHOW DROP SELECT INSERT
-%token TABLE TABLES VALUES INTO FROM WHERE
+%token CREATE SHOW DROP SELECT INSERT UPDATE DELETE
+%token TABLE TABLES VALUES INTO FROM WHERE SET
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA ASTERISK
 %token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ 
 %token ID ICONST FCONST SCONST
@@ -98,7 +98,9 @@ statement:
     show_create | 
     drop_table | 
     select |
-    insert;
+    insert |
+    update |
+    delete ;
 
 // ---- create table
 
@@ -259,6 +261,35 @@ value_list:
     };
 
 
+// --- update
+update:
+    UPDATE id SET assignings WHERE where_condition {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::update));
+        children.push_back($2);
+        children.push_back(new IdentList(identList));
+        children.push_back(new ConstantList(constantList));
+
+        parseTree = new Query(children);
+    };
+
+
+assignings:
+    assigning | 
+    assignings COMMA assigning;
+
+assigning:
+    id EQUAL constant {
+        identList.push_back($1);
+        constantList.push_back($3);
+    };
+
+
+// --- delete
+
+delete: 
+    DELETE 
+
 // ---
 
 constant:
@@ -292,6 +323,7 @@ id:
 %%
 
 void yyerror(const char *s) {
+    printf("%s", s);
     ex.reset(new exc::SyntaxException(std::string(s)));
 }
 
