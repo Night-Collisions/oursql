@@ -211,7 +211,18 @@ TEST(SELECT, TEST_6) {
         exc::ExceptionType::access_table_nonexistent, "");
 }
 
-// TODO where
+TEST(SELECT, TEST_7) {
+    clearDB();
+    CHECK_REQUEST(
+        "crate table a(a int, b real, c text);"
+        "insert into a values (1, 0, '1');"
+        "insert into a values (1, 1, '0');"
+        "insert into a values (0, 1, '1');"
+        "select * from a where a = 1;"
+        "select * from a where b = 0;"
+        "select * from a where c = '1';",
+        0, "");
+}
 
 TEST(INSERT, TEST_1) {
     clearDB();
