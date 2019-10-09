@@ -28,7 +28,7 @@ macro(package_add_test TESTNAME)
     package_set_test(${TESTNAME} ${ARGN})
 endmacro()
 
-assemble_parser(../App/Logic/Parser/)
+assemble_parser(../../App/Logic/Parser)
 
 init(${PROJECT_BINARY_DIR})
 

@@ -3,8 +3,8 @@
 !.gitignore
 !.clang-format
 
-!Tests
-!Tests/**/
+!Testing
+!Testing/**/
 
 !App
 !App/**/
