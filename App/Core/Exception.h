@@ -17,8 +17,7 @@ enum class ExceptionType : unsigned int {
     incompatible_constraints = 801,
     redundant_constraints,
     duplicated_primary_key,
-    create_table_name_table = 1001,
-    create_table_name_column,  // вынести
+    create_table_name_column = 1001,
     create_table_repeat_table_name
 };
 
@@ -138,14 +137,6 @@ class CreateTableException : public TableException {
     std::string getStarMessage() const {
         return Exception::getStarMessage() + " in create table " + table_name_;
     }
-};
-
-class TableName : public CreateTableException {
-   public:
-    TableName(const std::string& table_name)
-        : CreateTableException(table_name,
-                               ExceptionType::create_table_name_table,
-                               "wrong name of table!") {}
 };
 
 class RepeatTableName : public CreateTableException {
