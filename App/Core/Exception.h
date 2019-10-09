@@ -19,6 +19,8 @@ enum class ExceptionType : unsigned int {
     incompatible_constraints = 801,
     redundant_constraints,
     duplicated_primary_key,
+    duplicated_unique,
+    null_not_null,
     create_table_name_column = 1001,
     create_table_repeat_table_name
 };
@@ -58,13 +60,13 @@ class OutOfMemory : public Exception {
 class WasLoaded : public Exception {
    public:
     WasLoaded(const std::string& table_name)
-    : Exception(ExceptionType::out_of_memory, table_name + "was loaded!") {}
+    : Exception(ExceptionType::was_loaded, table_name + "was loaded!") {}
 };
 
 class WasNotLoaded : public Exception {
    public:
     WasNotLoaded(const std::string& table_name)
-            : Exception(ExceptionType::out_of_memory, table_name + "was not loaded!") {}
+            : Exception(ExceptionType::was_not_loaded, table_name + "was not loaded!") {}
 };
 
 class RepeatColumnName : public Exception {
@@ -120,6 +122,24 @@ class DuplicatedPrimaryKey : public TableException {
         : TableException(table_name, ExceptionType::duplicated_primary_key,
                          "primary key is used in the column " + column_name1 +
                              " and in " + column_name2 + ".") {}
+};
+
+class DuplicatedUnique : public TableException {
+public:
+    DuplicatedUnique(const std::string& table_name,
+                     const std::string& column_name,
+                     const std::string& value)
+            : TableException(table_name, ExceptionType::duplicated_unique,
+                             value + " is not unique is in the column " + column_name +
+                             " in the " + table_name + ".") {}
+};
+
+class NullNotNull : public TableException {
+public:
+    NullNotNull(const std::string& table_name,
+                 const std::string& column_name)
+            : TableException(table_name, ExceptionType::null_not_null,
+                             column_name + " can't contain null values in the " + table_name + ".") {}
 };
 }  // namespace constr
 

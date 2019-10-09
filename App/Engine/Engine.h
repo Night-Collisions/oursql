@@ -40,6 +40,9 @@ public:
     static rapidjson::Document select(const std::string& table, const std::set<std::string>& columns,
             const ConditionChecker& condition, std::unique_ptr<exc::Exception>& e);
 
+    static void insert(const std::string& table,const std::unordered_map<std::string,
+            std::string>& values, std::unique_ptr<exc::Exception>& e);
+
 private:
     static std::unordered_map<std::string, rapidjson::Document> loaded_tables_;
 };
