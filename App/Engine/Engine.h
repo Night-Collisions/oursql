@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstdio>
+#include <unordered_map>
 #include "Table.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
@@ -36,7 +37,7 @@ public:
     static void free(const std::string& name, std::unique_ptr<exc::Exception>& e);
 
 private:
-    std::unordered_map<std::string, rapidjson::Value> loaded_tables_;
+    static std::unordered_map<std::string, rapidjson::Value::Array> loaded_tables_;
 };
 
 #endif

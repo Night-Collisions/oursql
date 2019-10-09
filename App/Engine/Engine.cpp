@@ -126,10 +126,48 @@ bool Engine::exists(const std::string& name) {
 }
 
 void Engine::load(const std::string& name, std::unique_ptr<exc::Exception>& e) {
+    if (!exists(name)) {
+        e.reset(new exc::acc::TableNonexistent(name));
+        return;
+    }
+    if (loaded_tables_.find(name) != loaded_tables_.end()) {
+        e.reset(new exc::WasLoaded(name));
+        return;
+    }
+
+    std::ifstream datafile(getPathToTable(name));
+    std::stringstream sstream;
+    sstream << datafile.rdbuf();
+
+    rapidjson::Document d;
+    d.Parse(sstream.str());
+    loaded_tables_[name] = d["values"].GetArray();
 }
 
 void Engine::commit(const std::string& name, std::unique_ptr<exc::Exception>& e) {
+    if (loaded_tables_.find(name) == loaded_tables_.end()) {
+        e.reset(new exc::WasNotLoaded(name));
+        return;
+    }
+    rapidjson::Document d;
+    d.AddMember("values", loaded_tables_[name], d.GetAllocator());
+
+    try {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        d.Accept(writer);
+        std::ofstream datafile(getPathToTable(name), std::ofstream::out | std::ofstream::trunc);
+        datafile << buffer.GetString();
+    }
+    catch (std::bad_alloc& bad_alloc) {
+        e.reset(new exc::OutOfMemory());
+    }
 }
 
 void Engine::free(const std::string& name, std::unique_ptr<exc::Exception>& e) {
+    if (loaded_tables_.find(name) == loaded_tables_.end()) {
+        e.reset(new exc::WasNotLoaded(name));
+        return;
+    }
+    loaded_tables_.erase(name);
 }
