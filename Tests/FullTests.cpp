@@ -419,7 +419,7 @@ TEST(INSERT, TEST_17) {
         "c.\n~~Exception in command:\"insert into a values (12, 1, 'H!');\"\n");
 }
 
-TEST(INSERT, TEST_18) {  // TODO
+TEST(INSERT, TEST_18) {
     clearDB();
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
@@ -471,54 +471,60 @@ TEST(INSERT, TEST_22) {
         "3;\"\n");
 }
 
-TEST(DELETE, TEST_1) {  // TODO
+TEST(DELETE, TEST_1) {
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a values (1, 0, '1');"
         "insert into a values (1, 1, '0');"
         "insert into a values (0, 1, '1');"
-        "delete a where a = 0;"
+        "delete from a where a = 0;"
         "select * from a;"
-        "delete a where b = 0;"
+        "delete from a where b = 0;"
         "select * from a;"
-        "delete a where c = '0'"
+        "delete from a where c = '0';"
+        "select * from a;",
+        0, "a: 1\nb: 0\nc: '1'\na: 1\nb: 1\nc: '0'\na: 1\nb: 1\nc: '0'\n");
+}
+
+TEST(DELETE, TEST_2) {
+    clearDB();
+    CHECK_REQUEST(
+        "create table a(a int, b real, c text);"
+        "delete from a where c = '0';"
         "select * from a;",
         0, "");
 }
 
-TEST(DELETE, TEST_2) {  // TODO
+TEST(DELETE, TEST_3) {
+    clearDB();
+    CHECK_REQUEST("delete from a where c = '0';",
+                  exc::ExceptionType::access_table_nonexistent,
+                  "~~Exception 701:\n table a nonexistent.\n~~Exception in "
+                  "command:\"delete from a where c = '0';\"\n");
+}
+
+TEST(DELETE, TEST_4) {
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
-        "delete a where c = '0'"
-        "select * from a;",
-        0, "");
+        "delete from a where f = '0';",
+        exc::ExceptionType::access_column_nonexistent,
+        "~~Exception 702:\n column f in table a nonexistent.\n~~Exception in "
+        "command:\"delete from a where f = '0';\"\n");
 }
 
-TEST(DELETE, TEST_3) {  // TODO
-    clearDB();
-    CHECK_REQUEST("delete a where c = '0'",
-                  exc::ExceptionType::access_table_nonexistent, "");
-}
-
-TEST(DELETE, TEST_4) {  // TODO
+TEST(DELETE, TEST_5) {
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
-        "delete a where f = '0'",
-        exc::ExceptionType::access_column_nonexistent, "");
+        "delete from a where b = '0';",
+        exc::ExceptionType::compare_data_type_mismatch,
+        "~~Exception 602:\n can't compare real and text.\n~~Exception in "
+        "command:\"delete from a where b = '0';\"\n");
 }
 
-TEST(DELETE, TEST_5) {  // TODO
-    clearDB();
-    CHECK_REQUEST(
-        "create table a(a int, b real, c text);"
-        "delete a where b = '0'",
-        exc::ExceptionType::compare_data_type_mismatch, "");
-}
-
-TEST(UPDATE, TEST_1) {  // TODO
+TEST(UPDATE, TEST_1) {
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -529,10 +535,12 @@ TEST(UPDATE, TEST_1) {  // TODO
         "select * from a;"
         "update a set b = 3.45, c = 'H';"
         "select * from a;",
-        0, "");
+        0,
+        "a: 2\nb: 0\nc: '1'\na: 2\nb: 1\nc: '0'\na: 2\nb: 1\nc: '1'\na: 2\nb: "
+        "3.45\nc: 'H'\na: 2\nb: 3.45\nc: 'H'\na: 2\nb: 3.45\nc: 'H'\n");
 }
 
-TEST(UPDATE, TEST_2) {  // TODO
+TEST(UPDATE, TEST_2) {
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -540,7 +548,9 @@ TEST(UPDATE, TEST_2) {  // TODO
         "insert into a values (1, 1, '0');"
         "insert into a values (0, 1, '1');"
         "update a set f = 2;",
-        exc::ExceptionType::access_column_nonexistent, "");
+        exc::ExceptionType::access_column_nonexistent,
+        "~~Exception 702:\n column f in table a nonexistent.\n~~Exception in "
+        "command:\"update a set f = 2;\"\n");
 }
 
 TEST(UPDATE, TEST_3) {
