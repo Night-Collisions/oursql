@@ -325,8 +325,8 @@ TEST(INSERT, TEST_8) {
         "create table a(a int, b real, c text);"
         "insert into a(b, a, c) values (2, 3.3, 'Hello');",
         exc::ExceptionType::set_data_type_mismatch,
-        "~~Exception 601:\n value b is not compatible with data type real.\n"
-        "~~Exception in command:\"insert into a(b, a, c) values (2, 3.3, "
+        "~~Exception 601:\n value a is not compatible with data type "
+        "int.\n~~Exception in command:\"insert into a(b, a, c) values (2, 3.3, "
         "'Hello');\"\n");
 }
 
@@ -349,7 +349,7 @@ TEST(INSERT, TEST_10) {
         "'Hello');\"\n");
 }
 
-TEST(INSERT, TEST_11) {  // TODO: исправить
+TEST(INSERT, TEST_11) {
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -367,7 +367,7 @@ TEST(INSERT, TEST_12) {
         0, "a: 8\nb: null\nc: null\n");
 }
 
-TEST(INSERT, TEST_13) {  // TODO: исправить
+TEST(INSERT, TEST_13) {
     clearDB();
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
@@ -387,14 +387,13 @@ TEST(INSERT, TEST_14) {
         "M!');\"\n");
 }
 
-TEST(INSERT, TEST_15) {  // TODO
+TEST(INSERT, TEST_15) {  // todo
     clearDB();
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
-        "insert into a(a, c) values (1, 'H M!');",
-        exc::ExceptionType::null_not_null,
-        "~~Exception 805 in table a:\n b can't contain null values.\n"
-        "~~Exception in command:\"insert into a(a, c) values (1, 'H M!');\"\n");
+        "insert into a(a, c, b) values (1, 'H M!', 1);",
+        0,
+        "");
 }
 
 TEST(INSERT, TEST_16) {
