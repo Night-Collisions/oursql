@@ -192,10 +192,18 @@ void QueryManager::insert(const Query& query,
     e.reset(nullptr);
 
     std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
-    auto idents = static_cast<IdentList*>(query.getChildren()[2])->getIdents();
+    auto table = Engine::show(name, e);
+    std::vector<Ident*> idents;
+    if (query.getChildren()[2]) {
+        idents = static_cast<IdentList*>(query.getChildren()[2])->getIdents();
+    } else {
+        for (auto& c : table.getColumns()) {
+            idents.push_back(new Ident(c.getName()));
+        }
+    }
+
     auto constants =
         static_cast<ConstantList*>(query.getChildren()[3])->getConstants();
-    auto table = Engine::show(name, e);
 
     if (constants.size() > idents.size()) {
         e.reset(new exc::ins::ConstantsMoreColumns());
