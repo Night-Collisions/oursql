@@ -334,7 +334,7 @@ void Engine::update(const std::string& table,
                     if (row == row1) {
                         continue;
                     }
-                    if (row1[positions[column.first]].GetString() ==
+                    if (row1.FindMember(column.first)->value.GetString() ==
                         new_value) {
                         e.reset(new exc::constr::DuplicatedUnique(
                             table, column.first, new_value));
