@@ -141,8 +141,11 @@ void Engine::load(const std::string& name, std::unique_ptr<exc::Exception>& e) {
     std::stringstream sstream;
     sstream << datafile.rdbuf();
 
-    rapidjson::Document d;
+    rapidjson::Document d(rapidjson::kObjectType);
     d.Parse(sstream.str());
+    if (d.FindMember("values") == d.MemberEnd()) {
+        d.AddMember("values", rapidjson::Value(rapidjson::kArrayType), d.GetAllocator());
+    }
     loaded_tables_[name] = std::move(d);
 }
 
@@ -216,8 +219,8 @@ rapidjson::Document Engine::select(const std::string& table, const std::set<std:
     return result;
 }
 
-void Engine::insert(const std::string& table, const std::unordered_map<std::string,
-        std::string>& values, std::unique_ptr<exc::Exception>& e) {
+void Engine::insert(const std::string& table, const std::unordered_map<std::string,std::string>& values,
+        std::unique_ptr<exc::Exception>& e) {
     if (!exists(table)) {
         e.reset(new exc::acc::TableNonexistent(table));
         return;
@@ -235,13 +238,12 @@ void Engine::insert(const std::string& table, const std::unordered_map<std::stri
 
     for (const auto& column : t.getColumns()) {
         rapidjson::Value key(column.getName(), d.GetAllocator());
-        rapidjson::Value value(
-                (values.find(column.getName()) == values.end()) ? ("null") : (values.find(column.getName())->second),
-                d.GetAllocator()
-        );
+        std::string s = (values.find(column.getName()) == values.end()) ?
+                ("null") : (values.find(column.getName())->second);
+        rapidjson::Value value(s,d.GetAllocator());
         new_row.AddMember(key, value, d.GetAllocator());
 
-        if (value.GetString() == "null"
+        if (strcmp(s.c_str(), "null") == 0
             && column.getConstraint().find(ColumnConstraint::not_null) != column.getConstraint().end()) {
             e.reset(new exc::constr::NullNotNull(table, column.getName()));
             return;
@@ -254,7 +256,7 @@ void Engine::insert(const std::string& table, const std::unordered_map<std::stri
                 ++position;
             }
             for (const auto& row : d["values"].GetArray()) {
-                if (row[position].GetString() == value.GetString()) {
+                if (row[position].GetString() == s.c_str()) {
                     e.reset(new exc::constr::DuplicatedUnique(table, column.getName(), value.GetString()));
                     return;
                 }
