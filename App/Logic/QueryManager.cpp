@@ -266,6 +266,9 @@ bool QueryManager::compareTypes(const Table& t, Node* a, Node* b,
         }
     } else {
         second = static_cast<Constant*>(b)->getDataType();
+        if (static_cast<Constant*>(b)->getValue() == "null") {
+            second = first;
+        }
     }
 
     if (first == DataType::Count) {
@@ -301,6 +304,10 @@ void QueryManager::update(const Query& query,
                           std::ostream& out) {
     std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
     auto table = Engine::show(name, e);
+    if (table.getName().empty()) {
+        e.reset(new exc::acc::TableNonexistent(name));
+        return;
+    }
 
     auto idents = static_cast<IdentList*>(query.getChildren()[2])->getIdents();
     auto constants =
@@ -375,7 +382,10 @@ void QueryManager::remove(const Query& query,
                           std::ostream& out) {
     std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
     auto table = Engine::show(name, e);
-
+    if (table.getName().empty()) {
+        e.reset(new exc::acc::TableNonexistent(name));
+        return;
+    }
     auto idents = static_cast<IdentList*>(query.getChildren()[2])->getIdents();
     auto constants =
         static_cast<ConstantList*>(query.getChildren()[3])->getConstants();
@@ -392,7 +402,7 @@ void QueryManager::remove(const Query& query,
         std::string left_value;
         std::string right_value;
 
-        if (!compareTypes(table, left, right, e, true)) {
+        if (!compareTypes(table, left, right, e, false)) {
             return;
         }
 

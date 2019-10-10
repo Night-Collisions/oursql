@@ -356,7 +356,7 @@ delete:
 
         parseTree = new Query(children);
     } |
-    DELETE FROM id WHERE {
+    DELETE FROM id{
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::delete_));
         children.push_back($3);
@@ -418,6 +418,7 @@ void destroy() {
     identList.clear();
     selectList.clear();
     constantList.clear();
+    ex = nullptr;
 
     parseTree = nullptr;
 }
