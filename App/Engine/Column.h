@@ -39,7 +39,7 @@ class Column {
 
     [[nodiscard]] DataType getType() const { return type_; };
     [[nodiscard]] std::string getName() const { return name_; };
-    [[nodiscard]] std::set<ColumnConstraint> getConstraint() const {
+    const std::set<ColumnConstraint>& getConstraint() const {
         return constraint_;
     };
     [[nodiscard]] std::vector<std::string> getData() const { return data_; };
