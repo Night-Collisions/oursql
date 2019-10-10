@@ -348,16 +348,18 @@ TEST(INSERT, TEST_11) {  // TODO: исправить
         "create table a(a int, b real, c text);"
         "insert into a(a) values (-2);"
         "select * from a;",
-        0, "");
+        0, "a: -2\n"
+        "b: null\n"
+        "c: null");
 }
 
-TEST(INSERT, TEST_12) {  // TODO: исправить
+TEST(INSERT, TEST_12) {
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
-        "insert into a(a) values ('H');"
+        "insert into a(a) values (8);"
         "select * from a;",
-        0, "");
+        0, "a: 8\nb: null\nc: null\n");
 }
 
 TEST(INSERT, TEST_13) {  // TODO: исправить
@@ -412,7 +414,7 @@ TEST(INSERT, TEST_18) {  // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
-        "insert into a values (1, 0, 'null');"
+        "insert into a values (1, 0, null);"
         "insert into a(a, b) values (12, 1);",
         exc::ExceptionType::duplicated_unique, "");
 }
