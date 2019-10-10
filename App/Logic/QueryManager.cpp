@@ -110,7 +110,7 @@ void QueryManager::select(const Query& query,
     std::vector<std::string> ready_cols;
     for (auto& c : cols_from_parser) {
         if (c.getName() == "*") {
-            ready_cols.resize(cols_from_parser.size());
+            ready_cols.resize(existing_cols.size());
             std::copy(existing_cols.begin(), existing_cols.end(),
                       ready_cols.begin());
         } else if (col_set.find((c.getName())) == col_set.end()) {
