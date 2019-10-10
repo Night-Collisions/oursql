@@ -43,8 +43,8 @@ dquote        \"
 aquote        \'
 
 ID            {alpha}+{alnum_dash}*
-ICONST        "0"|[0-9]{digit}*
-FCONST        "0"|{digit}*"."{digit}+
+ICONST        "0"|-?[0-9]{digit}*
+FCONST        -?{digit}*"."{digit}+
 SCONST        {dquote}.*{dquote}|{aquote}.*{aquote}
 
 NOT_NULL      "not"[ \t\r\f]+"null"
