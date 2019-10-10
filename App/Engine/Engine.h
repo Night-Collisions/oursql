@@ -51,7 +51,7 @@ class Engine {
     static void insert(const std::string& table, const std::unordered_map<std::string,std::string>& values,
             std::unique_ptr<exc::Exception>& e);
 
-    static void update(const std::string& table,  const std::unordered_map<std::string,std::string>& values,
+    static void update(const std::string& table,  const std::unordered_map<std::string,std::string>& columns,
             const ConditionChecker& conditionChecker, std::unique_ptr<exc::Exception>& e);
 
     static void remove(const std::string& table, const ConditionChecker& conditionChecker,

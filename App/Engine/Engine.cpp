@@ -267,21 +267,59 @@ void Engine::insert(const std::string& table, const std::unordered_map<std::stri
     d["values"].GetArray().PushBack(new_row, d.GetAllocator());
 }
 
-void Engine::update(const std::string& table, const std::unordered_map<std::string,std::string>& values,
+void Engine::update(const std::string& table, const std::unordered_map<std::string, std::string>& columns,
                    const ConditionChecker& conditionChecker, std::unique_ptr<exc::Exception>& e) {
-//    if (!exists(table)) {
-//        e.reset(new exc::acc::TableNonexistent(table));
-//        return;
-//    }
-//    if (loaded_tables_.find(table) == loaded_tables_.end()) {
-//        std::unique_ptr<exc::Exception> e;
-//        load(table, e);
-//    }
-//
-//    std::unique_ptr<exc::Exception> err;
-//    Table t = show(table, err);
-//
-//    rapidjson::Document &d = loaded_tables_[table];
+    if (!exists(table)) {
+        e.reset(new exc::acc::TableNonexistent(table));
+        return;
+    }
+    if (loaded_tables_.find(table) == loaded_tables_.end()) {
+        std::unique_ptr<exc::Exception> e;
+        load(table, e);
+    }
+
+    std::unique_ptr<exc::Exception> err;
+    Table t = show(table, err);
+
+    rapidjson::Document &d = loaded_tables_[table];
+
+    std::unordered_map<std::string, int> positions;
+    for (const auto& column : columns) {
+        int position = 0;
+        while (t.getColumns()[position].getName() != column.first) {
+            ++position;
+        }
+        positions[column.first] = position;
+    }
+
+    for (auto& row : d["values"].GetArray()) {
+        if (!conditionChecker.check(row)) {
+            continue;
+        }
+        for (const auto& column : columns) {
+            std::string new_value = column.second;
+            const auto& constraints = t.getColumns()[positions[column.first]].getConstraint();
+            if (new_value == "null" &&
+                constraints.find(ColumnConstraint::not_null) != constraints.end()) {
+                e.reset(new exc::constr::NullNotNull(table, column.first));
+                return;
+            }
+            if (constraints.find(ColumnConstraint::primary_key) != constraints.end()
+                || constraints.find(ColumnConstraint::unique) != constraints.end()) {
+                for (const auto& row1 : d["values"].GetArray()) {
+                    if (row == row1) {
+                        continue;
+                    }
+                    if (row1[positions[column.first]].GetString() == new_value) {
+                        e.reset(new exc::constr::DuplicatedUnique(table, column.first, new_value));
+                        return;
+                    }
+                }
+            }
+            rapidjson::Value::MemberIterator iterator = row.FindMember(column.first);
+            iterator->value.SetString(new_value, d.GetAllocator());
+        }
+    }
 }
 
 void Engine::remove(const std::string& table, const ConditionChecker& conditionChecker,
