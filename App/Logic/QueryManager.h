@@ -30,6 +30,9 @@ class QueryManager {
     static void update(const Query& query,
                        std::unique_ptr<exc::Exception>& e, std::ostream& out);
 
+    static void remove(const Query& query,
+                       std::unique_ptr<exc::Exception>& e, std::ostream& out);
+
     static bool compareTypes(const Table& t, Node* a, Node* b, std::unique_ptr<exc::Exception>& e);
 };
 

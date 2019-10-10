@@ -30,6 +30,7 @@
     extern int lineno;
     extern int yylex();
     void yyerror(const char *s);
+    void destroy();
 
     Query *parseTree;
     std::vector<Variable *> varList;
@@ -84,7 +85,13 @@
 %%
 
 expression:
-    statements SEMI;
+    statements SEMI {
+        varList.clear();
+        constraintList.clear();
+        identList.clear();
+        selectList.clear();
+        constantList.clear();
+    };
 
 statements:
     statement {
@@ -345,9 +352,20 @@ delete:
         children.push_back($3);
         children.push_back(new IdentList(identList));
         children.push_back(new ConstantList(constantList));
+        children.push_back($5);
 
         parseTree = new Query(children);
-    };
+    } |
+    DELETE FROM id WHERE {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::delete_));
+        children.push_back($3);
+        children.push_back(new IdentList(identList));
+        children.push_back(new ConstantList(constantList));
+        children.push_back(nullptr);
+
+        parseTree = new Query(children);
+    } ;
 
 // ---
 
@@ -391,6 +409,10 @@ void end_lexical_scan(void);
 void destroy() {
     varList.clear();
     constraintList.clear();
+    identList.clear();
+    selectList.clear();
+    constantList.clear();
+
     parseTree = nullptr;
 }
 
