@@ -176,6 +176,9 @@ void QueryManager::select(const Query& query,
     }
 
     auto doc = Engine::select(name, cols_to_engine, *c, e);
+    if (e != nullptr) {
+        return;
+    }
     auto vals = doc["values"].GetArray();
 
     for (auto& i : vals) {
