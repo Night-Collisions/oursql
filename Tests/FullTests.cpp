@@ -1,14 +1,18 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <vector>
+
 #include "../App/Core/Exception.h"
 #include "../App/Our.h"
 #include "Test.h"
 
 TEST(CREATE_TABLE, TEST_1) {
     clearDB();
-    CHECK_REQUEST("create table a (b int); show create table a;", 0,
-                  "CREATE TABLE a(\n    b int\n);\n");
+    std::vector<std::string> commands = {"create table a (b int);", "show create table a;"};
+	std::vector<unsigned int> exceptions = {0, 0};
+	std::vector<std::string> result = {"", "CREATE TABLE a(\n    b int\n);\n"};
+    CHECK_REQUESTS(commands, exceptions, result);
 }
 
 TEST(CREATE_TABLE, TEST_2) {

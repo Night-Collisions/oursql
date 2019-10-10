@@ -2,6 +2,8 @@
 #define OURSQL_TEST_H
 
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "../App/Engine/Column.h"
 #include "../App/Engine/Table.h"
@@ -15,6 +17,13 @@
     std::stringstream out;                                \
     CHECK_EXCEPTION(ourSQL::perform(in, out), exception); \
     EXPECT_EQ(out.str(), answer);
+
+#define CHECK_REQUESTS(requests, exceptions, answers) \
+    ASSERT_EQ(requests.size(), exceptions.size()); \
+    ASSERT_EQ(requests.size(), answers.size()); \
+    for (unsigned int i = 1; i < requests.size(); i++) { \
+        CHECK_REQUEST(requests[i], exceptions[i], answers[i]); \
+    }
 
 bool operator==(const Column& a, const Column& b);
 
