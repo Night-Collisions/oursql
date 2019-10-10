@@ -174,9 +174,14 @@ void QueryManager::select(const Query& query,
         cols_to_engine.insert(c);
     }
 
-    auto doc = Engine::select(name, cols_to_engine, c, e);
+    auto doc = Engine::select(name, cols_to_engine, *c, e);
+    auto vals = doc["values"].GetArray();
 
-    // todo
+    for (auto& i : vals) {
+        for (auto& c : ready_cols) {
+            out << c + ": " + i[c].GetString() << std::endl;
+        }
+    }
 
     delete c;
 }
@@ -324,7 +329,7 @@ void QueryManager::update(const Query& query,
         }
     }
 
-    //TODO
+    Engine::update(name, values, *c, e);
 
     delete c;
 }
