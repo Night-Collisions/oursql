@@ -157,7 +157,7 @@ void QueryManager::select(const Query& query,
             right_value = static_cast<Constant*>(right)->getValue();
         }
 
-        if (!compareTypes(table, left, right, e)) {
+        if (!compareTypes(table, left, right, e, false)) {
             return;
         }
 
@@ -208,7 +208,7 @@ void QueryManager::insert(const Query& query,
     std::unordered_map<std::string, std::string> values;
 
     for (int i = 0; i < constants.size(); ++i) {
-        if (compareTypes(table, idents[i], constants[i], e)) {
+        if (compareTypes(table, idents[i], constants[i], e, true)) {
             values[idents[i]->getName()] =
                 static_cast<Constant*>(constants[i])->getValue();
         } else {
@@ -220,7 +220,7 @@ void QueryManager::insert(const Query& query,
 }
 
 bool QueryManager::compareTypes(const Table& t, Node* a, Node* b,
-                                std::unique_ptr<exc::Exception>& e) {
+                                std::unique_ptr<exc::Exception>& e, bool is_set) {
     DataType first = DataType::Count;
     DataType second = DataType::Count;
 
@@ -259,7 +259,11 @@ bool QueryManager::compareTypes(const Table& t, Node* a, Node* b,
     if (first == second) {
         return true;
     } else {
-        e.reset(new exc::CompareDataTypeMismatch(first, second));
+        if (!is_set) {
+            e.reset(new exc::CompareDataTypeMismatch(first, second));
+        } else {
+            e.reset(new exc::SetDataTypeMismatch(first, static_cast<Ident*>(a)->getName()));
+        }
         return false;
     }
 }
@@ -286,7 +290,7 @@ void QueryManager::update(const Query& query,
         std::string left_value;
         std::string right_value;
 
-        if (!compareTypes(table, left, right, e)) {
+        if (!compareTypes(table, left, right, e, true)) {
             return;
         }
 
@@ -325,7 +329,7 @@ void QueryManager::update(const Query& query,
     std::unordered_map<std::string, std::string> values;
 
     for (int i = 0; i < constants.size(); ++i) {
-        if (compareTypes(table, idents[i], constants[i], e)) {
+        if (compareTypes(table, idents[i], constants[i], e, true)) {
             values[idents[i]->getName()] =
                 static_cast<Constant*>(constants[i])->getValue();
         } else {
@@ -360,7 +364,7 @@ void QueryManager::remove(const Query& query,
         std::string left_value;
         std::string right_value;
 
-        if (!compareTypes(table, left, right, e)) {
+        if (!compareTypes(table, left, right, e, true)) {
             return;
         }
 

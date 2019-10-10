@@ -308,7 +308,10 @@ TEST(INSERT, TEST_8) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a(b, a, c) values (2, 3.3, 'Hello');",
-        exc::ExceptionType::set_data_type_mismatch, "");
+        exc::ExceptionType::set_data_type_mismatch,
+        "~~Exception 601:\n value b is not compatible with data type real.\n"
+        "~~Exception in command:\"insert into a(b, a, c) values (2, 3.3, "
+        "'Hello');\"\n");
 }
 
 TEST(INSERT, TEST_9) {

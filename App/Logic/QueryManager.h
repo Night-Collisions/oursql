@@ -33,7 +33,7 @@ class QueryManager {
     static void remove(const Query& query,
                        std::unique_ptr<exc::Exception>& e, std::ostream& out);
 
-    static bool compareTypes(const Table& t, Node* a, Node* b, std::unique_ptr<exc::Exception>& e);
+    static bool compareTypes(const Table& t, Node* a, Node* b, std::unique_ptr<exc::Exception>& e, bool);
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_
