@@ -120,7 +120,7 @@ void QueryManager::select(const Query& query,
         }
     }
 
-    ConditionChecker* c;
+    ConditionChecker* c = nullptr;
 
     if (query.getChildren()[3] != nullptr) {
         auto rel = static_cast<Relation*>(query.getChildren()[3]);
