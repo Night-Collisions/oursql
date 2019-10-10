@@ -264,7 +264,7 @@ bool QueryManager::compareTypes(const Table& t, Node* a, Node* b,
         return false;
     }
 
-    if (first == DataType::real && second == DataType::real) {
+    if (first == DataType::real && second == DataType::integer) {
         return true;
     }
 
