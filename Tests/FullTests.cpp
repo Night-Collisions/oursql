@@ -392,7 +392,7 @@ TEST(INSERT, TEST_15) {
         "~~Exception in command:\"insert into a(a, c) values (1, 'H M!');\"\n");
 }
 
-TEST(INSERT, TEST_16) {
+TEST(INSERT, TEST_16) {  // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
@@ -401,7 +401,7 @@ TEST(INSERT, TEST_16) {
         exc::ExceptionType::duplicated_unique, "");
 }
 
-TEST(INSERT, TEST_17) {
+TEST(INSERT, TEST_17) {  // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
@@ -410,7 +410,7 @@ TEST(INSERT, TEST_17) {
         exc::ExceptionType::duplicated_unique, "");
 }
 
-TEST(INSERT, TEST_18) {
+TEST(INSERT, TEST_18) {  // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
@@ -426,10 +426,10 @@ TEST(INSERT, TEST_19) {
         "insert into a values (1, 0, 'H!');"
         "insert into a(a, b) values (12, 1);"
         "select * from a;",
-        0, "");
+        0, "a: 1\nb: 0\nc: 'H!'\na: 12\nb: 1\nc: null\n");
 }
 
-TEST(INSERT, TEST_20) {
+TEST(INSERT, TEST_20) {  // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -442,7 +442,9 @@ TEST(INSERT, TEST_21) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a(a) values (12, 1);",
-        exc::ExceptionType::insert_constants_more_columns, "");
+        exc::ExceptionType::insert_constants_more_columns,
+        "~~Exception 1101:\n the number of constants is more than columns.\n"
+        "~~Exception in command:\"insert into a(a) values (12, 1);\"\n");
 }
 
 TEST(INSERT, TEST_22) {
@@ -450,10 +452,13 @@ TEST(INSERT, TEST_22) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a values (12, 12, ' ') where b = 3;",
-        exc::ExceptionType::syntax, "");
+        exc::ExceptionType::syntax,
+        "~~Exception 1:\n wrong syntax!\n"
+        "~~Exception in command:\"insert into a values (12, 12, ' ') where b = "
+        "3;\"\n");
 }
 
-TEST(DELETE, TEST_1) {
+TEST(DELETE, TEST_1) { // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -469,7 +474,7 @@ TEST(DELETE, TEST_1) {
         0, "");
 }
 
-TEST(DELETE, TEST_2) {
+TEST(DELETE, TEST_2) { // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -478,21 +483,21 @@ TEST(DELETE, TEST_2) {
         0, "");
 }
 
-TEST(DELETE, TEST_3) {
+TEST(DELETE, TEST_3) { // TODO
     clearDB();
     CHECK_REQUEST("delete a where c = '0'",
                   exc::ExceptionType::access_table_nonexistent, "");
 }
 
-TEST(DELETE, TEST_4) {
+TEST(DELETE, TEST_4) { // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "delete a where f = '0'",
-        exc::ExceptionType::access_table_nonexistent, "");
+        exc::ExceptionType::access_column_nonexistent, "");
 }
 
-TEST(DELETE, TEST_5) {
+TEST(DELETE, TEST_5) { // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -500,7 +505,7 @@ TEST(DELETE, TEST_5) {
         exc::ExceptionType::compare_data_type_mismatch, "");
 }
 
-TEST(UPDATE, TEST_1) {
+TEST(UPDATE, TEST_1) { // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -514,7 +519,7 @@ TEST(UPDATE, TEST_1) {
         0, "");
 }
 
-TEST(UPDATE, TEST_2) {
+TEST(UPDATE, TEST_2) { // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
