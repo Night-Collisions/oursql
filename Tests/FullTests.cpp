@@ -229,10 +229,8 @@ TEST(SELECT, TEST_7) {
         "insert into a values (1, 0, '1');"
         "insert into a values (1, 1, '0');"
         "insert into a values (0, 1, '1');"
-        "select * from a where a = 1;"
-        "select * from a where b = 0;"
-        "select * from a where c = '1';",
-        0, "");
+        "select * from a where a = 0;",
+        0, "a: 0\nb: 1\nc: '1'\n");
 }
 
 TEST(SELECT, TEST_8) {
@@ -281,7 +279,7 @@ TEST(INSERT, TEST_4) {
         "create table a(a int, b real, c text);"
         "insert into a values (-2, -1, '');"
         "select * from a;",
-        0, "");
+        0, "a: -2\nb: -1\nc: ''\n");
 }
 
 TEST(INSERT, TEST_5) {
@@ -458,7 +456,7 @@ TEST(INSERT, TEST_22) {
         "3;\"\n");
 }
 
-TEST(DELETE, TEST_1) { // TODO
+TEST(DELETE, TEST_1) {  // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -474,7 +472,7 @@ TEST(DELETE, TEST_1) { // TODO
         0, "");
 }
 
-TEST(DELETE, TEST_2) { // TODO
+TEST(DELETE, TEST_2) {  // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -483,13 +481,13 @@ TEST(DELETE, TEST_2) { // TODO
         0, "");
 }
 
-TEST(DELETE, TEST_3) { // TODO
+TEST(DELETE, TEST_3) {  // TODO
     clearDB();
     CHECK_REQUEST("delete a where c = '0'",
                   exc::ExceptionType::access_table_nonexistent, "");
 }
 
-TEST(DELETE, TEST_4) { // TODO
+TEST(DELETE, TEST_4) {  // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -497,7 +495,7 @@ TEST(DELETE, TEST_4) { // TODO
         exc::ExceptionType::access_column_nonexistent, "");
 }
 
-TEST(DELETE, TEST_5) { // TODO
+TEST(DELETE, TEST_5) {  // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -505,7 +503,7 @@ TEST(DELETE, TEST_5) { // TODO
         exc::ExceptionType::compare_data_type_mismatch, "");
 }
 
-TEST(UPDATE, TEST_1) { // TODO
+TEST(UPDATE, TEST_1) {  // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -519,7 +517,7 @@ TEST(UPDATE, TEST_1) { // TODO
         0, "");
 }
 
-TEST(UPDATE, TEST_2) { // TODO
+TEST(UPDATE, TEST_2) {  // TODO
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -530,7 +528,7 @@ TEST(UPDATE, TEST_2) { // TODO
         exc::ExceptionType::access_column_nonexistent, "");
 }
 
-TEST(UPDATE, TEST_3) {
+TEST(UPDATE, TEST_3) {  // TODO
     clearDB();
     CHECK_REQUEST("update a set f = 2;",
                   exc::ExceptionType::access_table_nonexistent, "");
@@ -543,7 +541,9 @@ TEST(UPDATE, TEST_4) {
         "insert into a values (1);"
         "insert into a values (2);"
         "update a set a = 2;",
-        exc::ExceptionType::duplicated_unique, "");
+        exc::ExceptionType::duplicated_unique,
+        "~~Exception 804 in table a:\n 2 is not unique is in the column "
+        "a.\n~~Exception in command:\"update a set a = 2;\"\n");
 }
 
 TEST(UPDATE, TEST_5) {
