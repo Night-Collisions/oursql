@@ -12,6 +12,7 @@ enum class ExceptionType : unsigned int {
     was_loaded,
     was_not_loaded,
     repeat_column_in_table,
+    repeat_column,
     set_data_type_mismatch = 601,
     compare_data_type_mismatch,
     access_table_nonexistent = 701,
@@ -61,22 +62,30 @@ class OutOfMemory : public Exception {
 class WasLoaded : public Exception {
    public:
     WasLoaded(const std::string& table_name)
-    : Exception(ExceptionType::was_loaded, table_name + "was loaded!") {}
+        : Exception(ExceptionType::was_loaded, table_name + "was loaded!") {}
 };
 
 class WasNotLoaded : public Exception {
    public:
     WasNotLoaded(const std::string& table_name)
-            : Exception(ExceptionType::was_not_loaded, table_name + "was not loaded!") {}
+        : Exception(ExceptionType::was_not_loaded,
+                    table_name + "was not loaded!") {}
 };
 
-class RepeatColumnName : public Exception {
+class RepeatColumnNameInTable : public Exception {
    public:
-    RepeatColumnName(const std::string& table_name,
+    RepeatColumnNameInTable(const std::string& table_name,
                      const std::string& column_name)
         : Exception(ExceptionType::repeat_column_in_table,
                     "repeat column " + column_name + " in table " + table_name +
                         ".") {}
+};
+
+class RepeatColumn : public Exception {
+   public:
+    RepeatColumn(const std::string& column_name)
+        : Exception(ExceptionType::repeat_column,
+                    "repeat column " + column_name + ".") {}
 };
 
 class TableException : public Exception {
@@ -118,28 +127,28 @@ class RedundantConstraints
 class DuplicatedPrimaryKeyInColumn : public TableException {
    public:
     DuplicatedPrimaryKeyInColumn(const std::string& table_name,
-                         const std::string& column_name1,
-                         const std::string& column_name2)
-        : TableException(table_name, ExceptionType::duplicated_primary_key_in_column,
+                                 const std::string& column_name1,
+                                 const std::string& column_name2)
+        : TableException(table_name,
+                         ExceptionType::duplicated_primary_key_in_column,
                          "primary key is used in the column " + column_name1 +
                              " and in " + column_name2 + ".") {}
 };
 
 class DuplicatedUnique : public TableException {
-public:
+   public:
     DuplicatedUnique(const std::string& table_name,
-                     const std::string& column_name,
-                     const std::string& value)
-            : TableException(table_name, ExceptionType::duplicated_unique,
-                             value + " is not unique is in the column " + column_name + ".") {}
+                     const std::string& column_name, const std::string& value)
+        : TableException(
+              table_name, ExceptionType::duplicated_unique,
+              value + " is not unique is in the column " + column_name + ".") {}
 };
 
 class NullNotNull : public TableException {
-public:
-    NullNotNull(const std::string& table_name,
-                 const std::string& column_name)
-            : TableException(table_name, ExceptionType::null_not_null,
-                             column_name + " can't contain null values.") {}
+   public:
+    NullNotNull(const std::string& table_name, const std::string& column_name)
+        : TableException(table_name, ExceptionType::null_not_null,
+                         column_name + " can't contain null values.") {}
 };
 }  // namespace constr
 
@@ -156,7 +165,7 @@ class ColumnNonexistent : public Exception {
     ColumnNonexistent(const std::string& column_name,
                       const std::string& table_name)
         : Exception(ExceptionType::access_column_nonexistent,
-                    "column " + column_name + "in table " + table_name +
+                    "column " + column_name + " in table " + table_name +
                         " nonexistent.") {}
 };
 };  // namespace acc
@@ -211,9 +220,11 @@ class ColumnName : public CreateTableExceptionInColumn {
 namespace ins {
 class ConstantsMoreColumns : public Exception {
    public:
-    ConstantsMoreColumns() : Exception(ExceptionType::insert_constants_more_columns, "the number of constants is more than columns.") {}
+    ConstantsMoreColumns()
+        : Exception(ExceptionType::insert_constants_more_columns,
+                    "the number of constants is more than columns.") {}
 };
-}
+}  // namespace ins
 
 class SetDataTypeMismatch : public Exception {
    public:
