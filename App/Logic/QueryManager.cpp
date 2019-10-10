@@ -272,8 +272,8 @@ void QueryManager::update(const Query& query,
 
     ConditionChecker* c = nullptr;
 
-    if (query.getChildren()[5] != nullptr) {
-        auto rel = static_cast<Relation*>(query.getChildren()[5]);
+    if (query.getChildren()[4] != nullptr) {
+        auto rel = static_cast<Relation*>(query.getChildren()[4]);
         auto left = rel->getLeft();
         auto right = rel->getRight();
         auto op = rel->getRelation();

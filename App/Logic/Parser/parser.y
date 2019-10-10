@@ -319,6 +319,7 @@ update:
         children.push_back($2);
         children.push_back(new IdentList(identList));
         children.push_back(new ConstantList(constantList));
+        children.push_back(nullptr);
 
         parseTree = new Query(children);
     }
