@@ -204,6 +204,15 @@ void QueryManager::insert(const Query& query,
     std::vector<Ident*> idents;
     if (query.getChildren()[2]) {
         idents = static_cast<IdentList*>(query.getChildren()[2])->getIdents();
+        std::set<std::string> col_set;
+        for (auto& c : idents) {
+            if (col_set.find(c->getName()) == col_set.end()) {
+                col_set.insert(c->getName());
+            } else {
+                e.reset(new exc::RepeatColumn(c->getName()));
+                return;
+            }
+        }
     } else {
         for (auto& c : table.getColumns()) {
             idents.push_back(new Ident(c.getName()));
