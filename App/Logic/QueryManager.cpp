@@ -196,6 +196,11 @@ void QueryManager::insert(const Query& query,
 
     std::string name = static_cast<Ident*>(query.getChildren()[1])->getName();
     auto table = Engine::show(name, e);
+    if (table.getName().empty()) {
+        e.reset(new exc::acc::TableNonexistent(name));
+        return;
+    }
+
     std::vector<Ident*> idents;
     if (query.getChildren()[2]) {
         idents = static_cast<IdentList*>(query.getChildren()[2])->getIdents();
@@ -236,6 +241,7 @@ bool QueryManager::compareTypes(const Table& t, Node* a, Node* b,
         for (auto& c : t.getColumns()) {
             if (static_cast<Ident*>(a)->getName() == c.getName()) {
                 first = c.getType();
+                break;
             }
         }
     } else {
@@ -246,6 +252,7 @@ bool QueryManager::compareTypes(const Table& t, Node* a, Node* b,
         for (auto& c : t.getColumns()) {
             if (static_cast<Ident*>(b)->getName() == c.getName()) {
                 second = c.getType();
+                break;
             }
         }
     } else {

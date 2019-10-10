@@ -10,7 +10,7 @@
 class Constant : public Node {
    public:
     explicit Constant(const std::string& value)
-        : Node(NodeType::int_constant), value_(value) {}
+        : Node(NodeType::constant), value_(value) {}
 
     virtual DataType getDataType() = 0;
 

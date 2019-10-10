@@ -14,6 +14,7 @@ enum class NodeType {
     condition,
     ident_list,
     constant_list,
+    constant,
     int_constant,
     real_constant,
     text_constant,
