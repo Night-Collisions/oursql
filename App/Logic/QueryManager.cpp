@@ -120,45 +120,53 @@ void QueryManager::select(const Query& query,
         }
     }
 
-    auto rel = static_cast<Relation*>(query.getChildren()[3]);
-    auto left = rel->getLeft();
-    auto right = rel->getRight();
-    auto op = rel->getRelation();
-    DataType left_type;
-    DataType right_type;
-    std::string left_value;
-    std::string right_value;
+    ConditionChecker* c;
 
-    if (left->getNodeType() == NodeType::id) {
-        for (auto& c : table.getColumns()) {
-            if (static_cast<Ident*>(left)->getName() == c.getName()) {
-                left_type = c.getType();
-                left_value = static_cast<Ident*>(left)->getName();
+    if (query.getChildren()[3] != nullptr) {
+        auto rel = static_cast<Relation*>(query.getChildren()[3]);
+        auto left = rel->getLeft();
+        auto right = rel->getRight();
+        auto op = rel->getRelation();
+        DataType left_type;
+        DataType right_type;
+        std::string left_value;
+        std::string right_value;
+
+        if (left->getNodeType() == NodeType::id) {
+            for (auto& c : table.getColumns()) {
+                if (static_cast<Ident*>(left)->getName() == c.getName()) {
+                    left_type = c.getType();
+                    left_value = static_cast<Ident*>(left)->getName();
+                }
             }
+        } else {
+            left_type = static_cast<Constant*>(left)->getDataType();
+            left_value = static_cast<Constant*>(left)->getValue();
         }
-    } else {
-        left_type = static_cast<Constant*>(left)->getDataType();
-        left_value = static_cast<Constant*>(left)->getValue();
-    }
 
-    if (right->getNodeType() == NodeType::id) {
-        for (auto& c : table.getColumns()) {
-            if (static_cast<Ident*>(right)->getName() == c.getName()) {
-                right_type = c.getType();
-                right_value = static_cast<Ident*>(right)->getName();
+        if (right->getNodeType() == NodeType::id) {
+            for (auto& c : table.getColumns()) {
+                if (static_cast<Ident*>(right)->getName() == c.getName()) {
+                    right_type = c.getType();
+                    right_value = static_cast<Ident*>(right)->getName();
+                }
             }
+        } else {
+            right_type = static_cast<Constant*>(right)->getDataType();
+            right_value = static_cast<Constant*>(right)->getValue();
         }
-    } else {
-        right_type = static_cast<Constant*>(right)->getDataType();
-        right_value = static_cast<Constant*>(right)->getValue();
+
+        if (!compareTypes(table, left, right, e)) {
+            return;
+        }
+
+        c = new ConditionChecker(left_value, right_value, left->getNodeType(),
+                                 right->getNodeType(), op, left_type);
     }
 
-    if (!compareTypes(table, left, right, e)) {
-        return;
+    if (c == nullptr) {
+        c = new ConditionChecker(true);
     }
-
-    ConditionChecker c(left_value, right_value, left->getNodeType(),
-                       right->getNodeType(), op, left_type);
 
     std::set<std::string> cols_to_engine;
 
@@ -169,6 +177,8 @@ void QueryManager::select(const Query& query,
     auto doc = Engine::select(name, cols_to_engine, c, e);
 
     // todo
+
+    delete c;
 }
 void QueryManager::insert(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
@@ -258,7 +268,7 @@ void QueryManager::update(const Query& query,
 
     ConditionChecker* c = nullptr;
 
-    if (static_cast<Relation*>(query.getChildren()[5]) != nullptr) {
+    if (query.getChildren()[5] != nullptr) {
         auto rel = static_cast<Relation*>(query.getChildren()[5]);
         auto left = rel->getLeft();
         auto right = rel->getRight();
