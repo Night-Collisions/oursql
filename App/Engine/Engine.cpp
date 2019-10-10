@@ -275,7 +275,7 @@ void Engine::insert(const std::string& table,
             for (const auto& row : d["values"].GetArray()) {
                 if (row.FindMember(column.getName())->value.GetString() == s) {
                     e.reset(new exc::constr::DuplicatedUnique(
-                        table, column.getName(), value.GetString()));
+                        table, column.getName(), s));
                     return;
                 }
             }

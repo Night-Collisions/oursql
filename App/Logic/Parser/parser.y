@@ -50,7 +50,7 @@
 %token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ
 %token ID ICONST FCONST SCONST
 %token INT REAL TEXT
-%token NOT_NULL PRIMARY_KEY UNIQUE
+%token NOT_NULL PRIMARY_KEY UNIQUE NULL_
 
 %type<query> create show_create drop_table select insert
 %type<ident> id select_list_element
@@ -59,7 +59,7 @@
 %type<constraint> constraint
 %type<iConst> int_const
 %type<rConst> real_const
-%type<tConst> text_const
+%type<tConst> text_const null_
 %type<anyConstant> constant where_element
 %type<relation> where_condition
 %type<relType> relation
@@ -372,7 +372,8 @@ delete:
 constant:
     int_const { $$ = $1; } |
     real_const { $$ = $1; } |
-    text_const { $$ = $1; };
+    text_const { $$ = $1; } |
+    null_ { $$ = $1; };
 
 int_const:
     ICONST {
@@ -387,6 +388,11 @@ real_const:
 text_const:
     SCONST {
 	    $$ = yylval.tConst;
+    };
+
+null_:
+    NULL_ {
+        $$ = new TextConstant("null");
     };
 
 type:

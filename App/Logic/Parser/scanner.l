@@ -93,6 +93,7 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "real"                     { return REAL; }
 
 {NOT_NULL}                 { return NOT_NULL; }
+"null"                     { return NULL_; }
 {PRIMARY_KEY}              { return PRIMARY_KEY; }
 "unique"                   { return UNIQUE; }
 
