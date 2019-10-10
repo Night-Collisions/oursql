@@ -43,6 +43,8 @@ class Engine {
     static void free(const std::string& name,
                      std::unique_ptr<exc::Exception>& e);
 
+    static void freeAll();
+
     static rapidjson::Document select(const std::string& table,
                                       const std::set<std::string>& columns,
                                       const ConditionChecker& condition,

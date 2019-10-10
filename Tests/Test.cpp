@@ -1,4 +1,5 @@
 #include "Test.h"
+#include "../App/Engine/Engine.h"
 
 bool operator==(const Column& a, const Column& b) {
     return a.getName() == b.getName() && a.getType() == b.getType() &&
@@ -43,4 +44,6 @@ void clearDB() {
 
     command = create_dir_command + name;
     std::system(command.c_str());
+
+    Engine::freeAll();
 }

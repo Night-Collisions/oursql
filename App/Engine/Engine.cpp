@@ -185,6 +185,10 @@ void Engine::free(const std::string& name, std::unique_ptr<exc::Exception>& e) {
     loaded_tables_.erase(name);
 }
 
+void Engine::freeAll() {
+    loaded_tables_.clear();
+}
+
 rapidjson::Document Engine::select(const std::string& table,
                                    const std::set<std::string>& columns,
                                    const ConditionChecker& condition,
