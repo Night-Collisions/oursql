@@ -123,7 +123,8 @@ TEST(SHOW_CREATE_TABLE, TEST_2) {
     clearDB();
     CHECK_REQUEST("show create table e;",
                   exc::ExceptionType::access_table_nonexistent,
-                  "\n~~Exception 701:\n table e nonexistent.\n~~Exception in command:\"show create table e;\"\n");
+                  "\n~~Exception 701:\n table e nonexistent.\n~~Exception in "
+                  "command:\"show create table e;\"\n");
 }
 
 TEST(SYNTAX, TEST_1) {
@@ -195,7 +196,9 @@ TEST(SELECT, TEST_3) {
 TEST(SELECT, TEST_4) {
     clearDB();
     CHECK_REQUEST("select * from a;",
-                  exc::ExceptionType::access_table_nonexistent, "");
+                  exc::ExceptionType::access_table_nonexistent,
+                  "~~Exception 701:\n table a nonexistent.\n"
+                  "~~Exception in command:\"select * from a;\"\n");
 }
 
 TEST(SELECT, TEST_5) {
@@ -203,7 +206,9 @@ TEST(SELECT, TEST_5) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "select *, c, a, f from a;",
-        exc::ExceptionType::access_column_nonexistent, "");
+        exc::ExceptionType::access_column_nonexistent,
+        "~~Exception 702:\n column f in table a nonexistent.\n"
+        "~~Exception in command:\"select *, c, a, f from a;\"\n");
 }
 
 TEST(SELECT, TEST_6) {
@@ -212,7 +217,9 @@ TEST(SELECT, TEST_6) {
         "create table a(a int, b real, c text);"
         "drop table a;"
         "select * from a;",
-        exc::ExceptionType::access_table_nonexistent, "");
+        exc::ExceptionType::access_table_nonexistent,
+        "~~Exception 701:\n table a nonexistent.\n"
+        "~~Exception in command:\"select * from a;\"\n");
 }
 
 TEST(SELECT, TEST_7) {
@@ -252,7 +259,7 @@ TEST(INSERT, TEST_2) {
         "create table a(a int, b real, c text);"
         "insert into a (c, a, b) values ('Hello', 3, 2.2);"
         "select * from a;",
-        0, "");
+        0, "a: 3\nb: 2.2\nc: 'Hello'\n");
 }
 
 TEST(INSERT, TEST_3) {
@@ -315,8 +322,7 @@ TEST(INSERT, TEST_10) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a(a, b, f) values (2, 3.3, 'Hello');",
-        exc::ExceptionType::access_column_nonexistent,
-        "");
+        exc::ExceptionType::access_column_nonexistent, "");
 }
 
 TEST(INSERT, TEST_11) {
@@ -384,7 +390,7 @@ TEST(INSERT, TEST_18) {
     clearDB();
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
-        "insert into a values (1, 0, null);"
+        "insert into a values (1, 0, 'null');"
         "insert into a(a, b) values (12, 1);",
         exc::ExceptionType::duplicated_unique, "");
 }
@@ -497,9 +503,8 @@ TEST(UPDATE, TEST_2) {
 
 TEST(UPDATE, TEST_3) {
     clearDB();
-    CHECK_REQUEST(
-        "update a set f = 2;",
-        exc::ExceptionType::access_table_nonexistent, "");
+    CHECK_REQUEST("update a set f = 2;",
+                  exc::ExceptionType::access_table_nonexistent, "");
 }
 
 TEST(UPDATE, TEST_4) {
