@@ -2,6 +2,8 @@
 #define OURSQL_TEST_H
 
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "../App/Engine/Column.h"
 #include "../App/Engine/Table.h"
