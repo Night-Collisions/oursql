@@ -156,7 +156,7 @@ class ColumnNonexistent : public Exception {
     ColumnNonexistent(const std::string& column_name,
                       const std::string& table_name)
         : Exception(ExceptionType::access_column_nonexistent,
-                    "column " + column_name + "in table " + table_name +
+                    "column " + column_name + " in table " + table_name +
                         " nonexistent.") {}
 };
 };  // namespace acc

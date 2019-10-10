@@ -182,7 +182,25 @@ select:
         children.push_back(nullptr);
 
         parseTree = new Query(children);
-    };
+    } |
+    SELECT asterisk COMMA select_list FROM id {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::select));
+        children.push_back($6);
+        children.push_back(new SelectList(selectList));
+        children.push_back(nullptr);
+
+        parseTree = new Query(children);
+    } |
+        SELECT select_list FROM id {
+        std::vector<Node*> children;
+        children.push_back(new Command(CommandType::select));
+        children.push_back($4);
+        children.push_back(new SelectList(selectList));
+        children.push_back(nullptr);
+
+        parseTree = new Query(children);
+    }
 
 asterisk:
     ASTERISK {
