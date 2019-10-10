@@ -241,7 +241,9 @@ TEST(SELECT, TEST_8) {
         "create table a(a int);"
         "insert into a values (1);"
         "select * from a where a = '1';",
-        exc::ExceptionType::compare_data_type_mismatch, "");
+        exc::ExceptionType::compare_data_type_mismatch,
+        "~~Exception 602:\n can't compare int and text.\n"
+        "~~Exception in command:\"select * from a where a = '1';\"\n");
 }
 
 TEST(INSERT, TEST_1) {
@@ -250,7 +252,7 @@ TEST(INSERT, TEST_1) {
         "create table a(a int, b real, c text);"
         "insert into a values (3, 2.2, 'Hello');"
         "select * from a;",
-        0, "");
+        0, "a: 3\nb: 2.2\nc: 'Hello'\n");
 }
 
 TEST(INSERT, TEST_2) {
@@ -267,7 +269,10 @@ TEST(INSERT, TEST_3) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a values (2.2, 3.3, 'Hello');",
-        exc::ExceptionType::set_data_type_mismatch, "");
+        exc::ExceptionType::set_data_type_mismatch,
+        "~~Exception 601:\n value a is not compatible with data type int.\n"
+        "~~Exception in command:\"insert into a values (2.2, 3.3, "
+        "'Hello');\"\n");
 }
 
 TEST(INSERT, TEST_4) {
@@ -284,7 +289,10 @@ TEST(INSERT, TEST_5) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a values (2, 3.3.3, 'Hello');",
-        exc::ExceptionType::set_data_type_mismatch, "");
+        exc::ExceptionType::syntax,
+        "~~Exception 1:\n wrong syntax!\n"
+        "~~Exception in command:\"insert into a values (2, 3.3.3, "
+        "'Hello');\"\n");
 }
 
 TEST(INSERT, TEST_6) {
@@ -292,7 +300,10 @@ TEST(INSERT, TEST_6) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a values ('Hello', 3.3, 'Hello');",
-        exc::ExceptionType::set_data_type_mismatch, "");
+        exc::ExceptionType::set_data_type_mismatch,
+        "~~Exception 601:\n value a is not compatible with data type int.\n"
+        "~~Exception in command:\"insert into a values ('Hello', 3.3, "
+        "'Hello');\"\n");
 }
 
 TEST(INSERT, TEST_7) {
@@ -300,7 +311,9 @@ TEST(INSERT, TEST_7) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a values (2, 3.3, 4);",
-        exc::ExceptionType::set_data_type_mismatch, "");
+        exc::ExceptionType::set_data_type_mismatch,
+        "~~Exception 601:\n value c is not compatible with data type text.\n"
+        "~~Exception in command:\"insert into a values (2, 3.3, 4);\"\n");
 }
 
 TEST(INSERT, TEST_8) {
@@ -325,10 +338,13 @@ TEST(INSERT, TEST_10) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a(a, b, f) values (2, 3.3, 'Hello');",
-        exc::ExceptionType::access_column_nonexistent, "");
+        exc::ExceptionType::access_column_nonexistent,
+        "~~Exception 702:\n column f in table a nonexistent.\n"
+        "~~Exception in command:\"insert into a(a, b, f) values (2, 3.3, "
+        "'Hello');\"\n");
 }
 
-TEST(INSERT, TEST_11) {
+TEST(INSERT, TEST_11) {  // TODO: исправить
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -337,7 +353,7 @@ TEST(INSERT, TEST_11) {
         0, "");
 }
 
-TEST(INSERT, TEST_12) {
+TEST(INSERT, TEST_12) {  // TODO: исправить
     clearDB();
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
@@ -346,13 +362,13 @@ TEST(INSERT, TEST_12) {
         0, "");
 }
 
-TEST(INSERT, TEST_13) {
+TEST(INSERT, TEST_13) {  // TODO: исправить
     clearDB();
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
         "insert into a values (-2, 0.1, 'Hello world!');"
         "select * from a;",
-        0, "");
+        0, "a: -2\nb: 0.1\nc: 'Hello\n");
 }
 
 TEST(INSERT, TEST_14) {
@@ -360,7 +376,10 @@ TEST(INSERT, TEST_14) {
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
         "insert into a(b, c) values (0.1, 'H M!');",
-        exc::ExceptionType::null_not_null, "");
+        exc::ExceptionType::null_not_null,
+        "~~Exception 805 in table a:\n a can't contain null values.\n"
+        "~~Exception in command:\"insert into a(b, c) values (0.1, 'H "
+        "M!');\"\n");
 }
 
 TEST(INSERT, TEST_15) {
@@ -368,7 +387,9 @@ TEST(INSERT, TEST_15) {
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
         "insert into a(a, c) values (1, 'H M!');",
-        exc::ExceptionType::null_not_null, "");
+        exc::ExceptionType::null_not_null,
+        "~~Exception 805 in table a:\n b can't contain null values.\n"
+        "~~Exception in command:\"insert into a(a, c) values (1, 'H M!');\"\n");
 }
 
 TEST(INSERT, TEST_16) {
