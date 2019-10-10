@@ -277,7 +277,7 @@ TEST(INSERT, TEST_5) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a values (2, 3.3.3, 'Hello');",
-        0, "");  // TODO: ошибка несоответсвия типа данных
+        exc::ExceptionType::set_data_type_mismatch, "");
 }
 
 TEST(INSERT, TEST_6) {
@@ -285,7 +285,7 @@ TEST(INSERT, TEST_6) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a values ('Hello', 3.3, 'Hello');",
-        0, "");  // TODO: ошибка несоответсвия типа данных
+        exc::ExceptionType::set_data_type_mismatch, "");
 }
 
 TEST(INSERT, TEST_7) {
@@ -293,7 +293,7 @@ TEST(INSERT, TEST_7) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a values (2, 3.3, 4);",
-        0, "");  // TODO: ошибка несоответсвия типа данных
+        exc::ExceptionType::set_data_type_mismatch, "");
 }
 
 TEST(INSERT, TEST_8) {
@@ -301,7 +301,7 @@ TEST(INSERT, TEST_8) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a(b, a, c) values (2, 3.3, 'Hello');",
-        0, "");  // TODO: ошибка несоответсвия типа данных
+        exc::ExceptionType::set_data_type_mismatch, "");
 }
 
 TEST(INSERT, TEST_9) {
@@ -316,7 +316,7 @@ TEST(INSERT, TEST_10) {
         "create table a(a int, b real, c text);"
         "insert into a(a, b, f) values (2, 3.3, 'Hello');",
         exc::ExceptionType::access_column_nonexistent,
-        "");  // TODO: ошибка несоответсвия типа данных
+        "");
 }
 
 TEST(INSERT, TEST_11) {
@@ -334,7 +334,7 @@ TEST(INSERT, TEST_12) {
         "create table a(a int, b real, c text);"
         "insert into a(a) values ('H');"
         "select * from a;",
-        0, "");  // TODO: ошибка несоответсвия типа данных
+        0, "");
 }
 
 TEST(INSERT, TEST_13) {
@@ -351,7 +351,7 @@ TEST(INSERT, TEST_14) {
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
         "insert into a(b, c) values (0.1, 'H M!');",
-        0, "");  // TODO: ошибка нарушения констр
+        exc::ExceptionType::null_not_null, "");
 }
 
 TEST(INSERT, TEST_15) {
@@ -359,7 +359,7 @@ TEST(INSERT, TEST_15) {
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
         "insert into a(a, c) values (1, 'H M!');",
-        0, "");  // TODO: ошибка нарушения констр
+        exc::ExceptionType::null_not_null, "");
 }
 
 TEST(INSERT, TEST_16) {
@@ -368,7 +368,7 @@ TEST(INSERT, TEST_16) {
         "create table a(a int not null, b real primary key, c text unique);"
         "insert into a values (1, 0, 'H M!');"
         "insert into a values (12, 0, 'H!');",
-        0, "");  // TODO: ошибка нарушения констр
+        exc::ExceptionType::duplicated_unique, "");
 }
 
 TEST(INSERT, TEST_17) {
@@ -377,16 +377,16 @@ TEST(INSERT, TEST_17) {
         "create table a(a int not null, b real primary key, c text unique);"
         "insert into a values (1, 0, 'H!');"
         "insert into a values (12, 1, 'H!');",
-        0, "");  // TODO: ошибка нарушения констр
+        exc::ExceptionType::duplicated_unique, "");
 }
 
 TEST(INSERT, TEST_18) {
     clearDB();
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"
-        "insert into a values (1, 0, 'H!');"
+        "insert into a values (1, 0, null);"
         "insert into a(a, b) values (12, 1);",
-        0, "");  // TODO: ошибка нарушения констр
+        exc::ExceptionType::duplicated_unique, "");
 }
 
 TEST(INSERT, TEST_19) {
@@ -404,7 +404,7 @@ TEST(INSERT, TEST_20) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a(a, a) values (12, 1);",
-        0, "");  // TODO: ошибка дублирования полей
+        exc::ExceptionType::repeat_column, "");
 }
 
 TEST(INSERT, TEST_21) {
@@ -412,7 +412,7 @@ TEST(INSERT, TEST_21) {
     CHECK_REQUEST(
         "create table a(a int, b real, c text);"
         "insert into a(a) values (12, 1);",
-        0, "");  // TODO: ошибка несоответствия количества полей со значениями
+        exc::ExceptionType::insert_constants_more_columns, "");
 }
 
 TEST(INSERT, TEST_22) {
@@ -509,7 +509,7 @@ TEST(UPDATE, TEST_4) {
         "insert into a values (1);"
         "insert into a values (2);"
         "update a set a = 2;",
-        0, ""); // TODO: ошибка нарушения констрайнтов с данными
+        exc::ExceptionType::duplicated_unique, "");
 }
 
 TEST(UPDATE, TEST_5) {
@@ -519,7 +519,7 @@ TEST(UPDATE, TEST_5) {
         "insert into a values (1);"
         "insert into a values (2);"
         "update a set a = null;",
-        0, ""); // TODO: ошибка нарушения констрайнтов с данными
+        exc::ExceptionType::null_not_null, "");
 }
 
 TEST(UPDATE, TEST_6) {
@@ -529,7 +529,7 @@ TEST(UPDATE, TEST_6) {
         "insert into a values (1);"
         "insert into a values (2);"
         "update a set a = 2;",
-        0, ""); // TODO: ошибка нарушения констрайнтов с данными
+        exc::ExceptionType::duplicated_unique, "");
 }
 
 TEST(UPDATE, TEST_7) {

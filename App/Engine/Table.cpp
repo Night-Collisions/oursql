@@ -12,7 +12,7 @@ void Table::addColumn(const Column& column, std::unique_ptr<exc::Exception>& e) 
     };
     for (const auto& i : columns_) {
         if (lowerCase(i.getName()) == lowerCase(column.getName())) {
-            e.reset(new exc::RepeatColumnName(name_, i.getName()));
+            e.reset(new exc::RepeatColumnNameInTable(name_, i.getName()));
             return;
         }
     }
