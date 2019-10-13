@@ -3,27 +3,64 @@
 
 #define RAPIDJSON_HAS_STDSTRING 1
 
-#include <algorithm>
+#include <cstdio>
 #include <fstream>
 #include <sstream>
-#include <cstdio>
+#include <unordered_map>
+#include "../Logic/Conditions/ConditionChecker.h"
 #include "Table.h"
 #include "rapidjson/document.h"
-#include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
 
-bool create(const Table& table);
+class Engine {
+   public:
+    Engine() = delete;
 
-Table show(const std::string& name);
+    static void create(const Table& table, std::unique_ptr<exc::Exception>& e);
 
-std::string showCreate(const std::string& name);
+    static Table show(const std::string& name,
+                      std::unique_ptr<exc::Exception>& e);
 
-bool drop(const std::string& name);
+    static std::string showCreate(const std::string& name,
+                                  std::unique_ptr<exc::Exception>& e);
 
-bool exists(const std::string& name);
+    static void drop(const std::string& name,
+                     std::unique_ptr<exc::Exception>& e);
 
-std::string getPathToTable(const std::string& name);
+    static bool exists(const std::string& name);
 
-std::string getPathToTableMeta(const std::string& name);
+    static std::string getPathToTable(const std::string& name);
+
+    static std::string getPathToTableMeta(const std::string& name);
+
+    static void load(const std::string& name,
+                     std::unique_ptr<exc::Exception>& e);
+
+    static void commit(const std::string& name,
+                       std::unique_ptr<exc::Exception>& e);
+
+    static void free(const std::string& name,
+                     std::unique_ptr<exc::Exception>& e);
+
+    static void freeAll();
+
+    static rapidjson::Document select(const std::string& table,
+                                      const std::set<std::string>& columns,
+                                      const ConditionChecker& condition,
+                                      std::unique_ptr<exc::Exception>& e);
+
+    static void insert(const std::string& table, const std::unordered_map<std::string,std::string>& values,
+            std::unique_ptr<exc::Exception>& e);
+
+    static void update(const std::string& table,  const std::unordered_map<std::string,std::string>& columns,
+            const ConditionChecker& conditionChecker, std::unique_ptr<exc::Exception>& e);
+
+    static void remove(const std::string& table, const ConditionChecker& conditionChecker,
+            std::unique_ptr<exc::Exception>& e);
+
+   private:
+    static std::unordered_map<std::string, rapidjson::Document> loaded_tables_;
+};
 
 #endif

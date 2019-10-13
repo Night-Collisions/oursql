@@ -3,27 +3,26 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
-#include "Field.h"
+#include "Column.h"
 
 class Table {
    public:
     Table() = default;
-    Table(const std::string& name, const std::vector<Field>& fields)
-        : name_(name), fields_(fields) {}
+    Table(const std::string& name, const std::vector<Column>& columns, std::unique_ptr<exc::Exception>& e)
+        : name_(name) { for (auto& i : columns) { addColumn(i, e); }}
 
-    void setName(const std::string& name) { name_ = name; }
+    [[deprecated]] void setName(const std::string& name) { name_ = name; }
 
-    std::string getName() const { return name_; }
-    std::vector<Field> getFields() const { return fields_; }
+    [[nodiscard]] std::string getName() const { return name_; }
+    [[nodiscard]] std::vector<Column> getColumns() const { return columns_; }
 
-    void addField(const Field& field);
-
-    bool fieldExists(const std::string& name);
+    void addColumn(const Column& column, std::unique_ptr<exc::Exception>& e);
 
    private:
     std::string name_;
-    std::vector<Field> fields_;
+    std::vector<Column> columns_;
 };
 
 #endif

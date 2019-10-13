@@ -2,27 +2,29 @@
 
 #include <algorithm>
 
-void Table::addField(const Field& field) {
+void Table::addColumn(const Column& column, std::unique_ptr<exc::Exception>& e) {
+    e.reset(nullptr);
     auto lowerCase = [](const std::string& s) {
         auto data = s;
         std::transform(data.begin(), data.end(), data.begin(),
                        [](unsigned char c) { return std::tolower(c); });
         return data;
     };
-    for (const auto& i : fields_) {
-        if (lowerCase(i.getName()) == lowerCase(field.getName())) {
-            throw std::invalid_argument("Field '" + i.getName() +
-                                        "' already exists");
+    for (const auto& i : columns_) {
+        if (lowerCase(i.getName()) == lowerCase(column.getName())) {
+            e.reset(new exc::RepeatColumnNameInTable(name_, i.getName()));
+            return;
         }
     }
-    auto constraint = field.getConstraint();
-    if (constraint.find(FieldConstraint::primary_key) != constraint.end()) {
-        for (const auto& i : fields_) {
+    auto constraint = column.getConstraint();
+    if (constraint.find(ColumnConstraint::primary_key) != constraint.end()) {
+        for (const auto& i : columns_) {
             auto buff = i.getConstraint();
-            if (buff.find(FieldConstraint::primary_key) != buff.end()) {
-                throw std::invalid_argument("Primary key already exists");
+            if (buff.find(ColumnConstraint::primary_key) != buff.end()) {
+                e.reset(new exc::constr::DuplicatedPrimaryKeyInColumn(
+                                     name_, i.getName(), column.getName()));
             }
         }
     }
-    fields_.emplace_back(field);
+    columns_.emplace_back(column);
 }

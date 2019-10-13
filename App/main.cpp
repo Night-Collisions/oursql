@@ -1,13 +1,8 @@
 #include <iostream>
 
-// TODO: вынести все их мэйн в отдельную функцию int run()
-
-#include "parser.cpp"
+#include "Our.h"
 
 int main() {
-    yydebug = 0;
-    yyin = stdin;
-    yyout = stdout;
-    yyparse();
+    ourSQL::nonstop_perform();
     return 0;
 }

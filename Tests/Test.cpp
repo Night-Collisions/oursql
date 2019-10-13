@@ -1,19 +1,20 @@
 #include "Test.h"
+#include "../App/Engine/Engine.h"
 
-bool operator==(const Field& a, const Field& b) {
+bool operator==(const Column& a, const Column& b) {
     return a.getName() == b.getName() && a.getType() == b.getType() &&
         a.getConstraint() == b.getConstraint();
 }
 
 bool operator==(const Table& a, const Table& b) {
-    auto a_fields = a.getFields();
-    auto b_fields = b.getFields();
-    if (a.getName() != b.getName() || a_fields.size() != b_fields.size()) {
+    auto a_columns = a.getColumns();
+    auto b_columns = b.getColumns();
+    if (a.getName() != b.getName() || a_columns.size() != b_columns.size()) {
         return false;
     }
-    for (const auto& i : a_fields) {
+    for (const auto& i : a_columns) {
         bool eq = false;
-        for (const auto& j : b_fields) {
+        for (const auto& j : b_columns) {
             if (i == j) {
                 eq = true;
                 break;
@@ -32,6 +33,8 @@ void clearDB() {
     const char *delete_command = "rmdir /Q /S ";
     const char *create_dir_command = "md ";
 #else
+    const char *delete_command = "rm -rf ";
+    const char *create_dir_command = "mkdir ";
 #endif
     
     std::string name = "DataBD";
@@ -41,4 +44,6 @@ void clearDB() {
 
     command = create_dir_command + name;
     std::system(command.c_str());
+
+    Engine::freeAll();
 }

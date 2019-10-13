@@ -45,19 +45,19 @@ TEST(Engine_Drop, DoubleDrop) {
 
 TEST(Engine_Create, SimpleTest) {
     std::string name = "Engine_Create_SimpleTest";
-    std::vector<Field> fields = {
+    std::vector<Column> columns = {
             {"column1", DataType::integer},
             {"column2", DataType::real, {
-                FieldConstraint::not_null, FieldConstraint::unique, FieldConstraint::primary_key}
+                ColumnConstraint::not_null, ColumnConstraint::unique, ColumnConstraint::primary_key}
             },
-            {"column3", DataType::text, {FieldConstraint::unique}}
+            {"column3", DataType::text, {ColumnConstraint::unique}}
     };
-    create(Table(name, fields));
+    create(Table(name, columns));
 
     std::ifstream metafile(getPathToTableMeta(name));
     std::stringstream sstream;
     sstream << metafile.rdbuf();
-    const char* expected = "{\"name\":\"Engine_Create_SimpleTest\",\"fields\":["
+    const char* expected = "{\"name\":\"Engine_Create_SimpleTest\",\"columns\":["
                            "{\"name\":\"column1\",\"type\":0,\"constraints\":[]},"
                            "{\"name\":\"column2\",\"type\":1,\"constraints\":[0,1,2]},"
                            "{\"name\":\"column3\",\"type\":2,\"constraints\":[2]}]}";
@@ -68,28 +68,28 @@ TEST(Engine_Create, SimpleTest) {
 
 TEST(Engine_Create, DoubleCreate) {
     std::string name = "Engine_Create_DoubleCreate";
-    std::vector<Field> fields = {
+    std::vector<Column> columns = {
             {"column1", DataType::integer},
             {"column2", DataType::real, {
-                FieldConstraint::not_null, FieldConstraint::unique, FieldConstraint::primary_key}
+                ColumnConstraint::not_null, ColumnConstraint::unique, ColumnConstraint::primary_key}
             },
-            {"column3", DataType::text, {FieldConstraint::unique}}
+            {"column3", DataType::text, {ColumnConstraint::unique}}
     };
-    EXPECT_EQ(create(Table(name, fields)), false);
-    EXPECT_EQ(create(Table(name, fields)), true);
+    EXPECT_EQ(create(Table(name, columns)), false);
+    EXPECT_EQ(create(Table(name, columns)), true);
     drop(name);
 }
 
 TEST(Engine_Show, SimpleTest) {
     std::string name = "Engine_Show_SimpleTest";
-    std::vector<Field> fields = {
+    std::vector<Column> columns = {
             {"column1", DataType::integer},
             {"column2", DataType::real, {
-                FieldConstraint::not_null, FieldConstraint::unique, FieldConstraint::primary_key}
+                ColumnConstraint::not_null, ColumnConstraint::unique, ColumnConstraint::primary_key}
             },
-            {"column3", DataType::text, {FieldConstraint::unique}}
+            {"column3", DataType::text, {ColumnConstraint::unique}}
     };
-    Table expected(name, fields);
+    Table expected(name, columns);
     create(expected);
     EXPECT_EQ(expected, show(name));
     drop(name);
@@ -102,14 +102,14 @@ TEST(Engine_Show, NotExists) {
 
 TEST(Engine_ShowCreate, SimpleTest) {
     std::string name = "Engine_ShowCreate_SimpleTest";
-    std::vector<Field> fields = {
+    std::vector<Column> columns = {
             {"column1", DataType::integer},
             {"column2", DataType::real, {
-                FieldConstraint::not_null, FieldConstraint::unique, FieldConstraint::primary_key}
+                ColumnConstraint::not_null, ColumnConstraint::unique, ColumnConstraint::primary_key}
             },
-            {"column3", DataType::text, {FieldConstraint::unique}}
+            {"column3", DataType::text, {ColumnConstraint::unique}}
     };
-    create(Table(name, fields));
+    create(Table(name, columns));
 
     const char* expected = "CREATE TABLE Engine_ShowCreate_SimpleTest(\n"
                            "    column1 int,\n"

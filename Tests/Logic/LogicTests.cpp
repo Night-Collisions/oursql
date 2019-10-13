@@ -2,7 +2,8 @@
 #include <gtest/gtest.h>
 
 #include "../Test.h"
-#include "parser.cpp"
+
+#include "../../App/Our.h"
 
 extern Table getTable();
 
@@ -119,7 +120,7 @@ TEST(Parser_CreateTable, WithOutPoints) {
     ASSERT_TRUE(parse_string("create table MyTable(Name text)\n"));
 }
 
-TEST(Parser_CreateTable, IntNameOfField) {
+TEST(Parser_CreateTable, IntNameOfColumn) {
     ASSERT_TRUE(parse_string("create table a(int int, h int);\n"));
 }
 
@@ -133,9 +134,9 @@ TEST(Parser_CreateTable, Constraint) {
         "create table a(b int not null, h int primary key, d text unique);\n"));
     auto table = getTable();
     Table expect_table(
-        "a", {{"b", DataType::integer, {FieldConstraint::not_null}},
-              {"h", DataType::integer, {FieldConstraint::primary_key}},
-              {"d", DataType::text, {FieldConstraint::unique}}});
+        "a", {{"b", DataType::integer, {ColumnConstraint::not_null}},
+              {"h", DataType::integer, {ColumnConstraint::primary_key}},
+              {"d", DataType::text, {ColumnConstraint::unique}}});
     clearDB();
     EXPECT_EQ(table, expect_table);
 }
@@ -147,8 +148,8 @@ TEST(Parser_CreateTable, MultyConstraint) {
     Table expect_table(
         "a", {{"b",
                DataType::integer,
-               {FieldConstraint::not_null, FieldConstraint::primary_key,
-                FieldConstraint::unique}}});
+               {ColumnConstraint::not_null, ColumnConstraint::primary_key,
+                ColumnConstraint::unique}}});
     clearDB();
     EXPECT_EQ(table, expect_table);
 }
@@ -170,7 +171,7 @@ TEST(Parser_CreateTable, MixedConstraint) {
         "a", {{"b", DataType::integer},
               {"h",
                DataType::integer,
-               {FieldConstraint::primary_key, FieldConstraint::unique}},
+               {ColumnConstraint::primary_key, ColumnConstraint::unique}},
               {"d", DataType::text}});
     clearDB();
     EXPECT_EQ(table, expect_table);
