@@ -3,14 +3,16 @@
     #include <stdio.h>
     #include <iostream>
     #include <sstream>
+    #include <map>
+
     
     #include "../../App/Logic/Parser/Nodes/Node.h"
     #include "../../App/Logic/Parser/Nodes/Query.h"
     #include "../../App/Logic/Parser/Nodes/VarList.h"
-    #include "../../App/Logic/Parser/Nodes/Command.h"
     #include "../../App/Logic/Parser/Nodes/Variable.h"
     #include "../../App/Logic/Parser/Nodes/Ident.h"
     #include "../../App/Logic/Parser/Nodes/Constant.h"
+    #include "../../App/Logic/Parser/Nodes/NullConstant.h"
     #include "../../App/Logic/Parser/Nodes/IntConstant.h"
     #include "../../App/Logic/Parser/Nodes/RealConstant.h"
     #include "../../App/Logic/Parser/Nodes/TextConstant.h"
@@ -55,6 +57,9 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "//".*\n                   ; // ingore comments
 
 "*"                        { return ASTERISK; }
+"+"                        { return PLUS; }
+"-"                        { return MINUS; }
+"/"                        { return DIVIDE; }
 "("                        { return LPAREN; }
 ")"                        { return RPAREN; }
 "]"                        { return LBRACK; }

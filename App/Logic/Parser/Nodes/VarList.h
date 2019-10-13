@@ -22,6 +22,8 @@ class VarList : public Node {
 
     std::vector<Variable*> getVars() { return vars_; }
 
+    std::string getName() override { return std::string(); }
+
    private:
     std::vector<Variable*> vars_;
 };

@@ -11,6 +11,7 @@ class IdentList : public Node {
         : Node(NodeType::ident_list), idents_(idents) {}
 
     std::vector<Ident*> getIdents() { return idents_; }
+    std::string getName() override { return std::string(); }
 
    private:
     std::vector<Ident*> idents_;

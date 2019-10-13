@@ -26,7 +26,8 @@ class Relation : public Node {
 
     Node* getLeft() { return left_; }
     Node* getRight() { return right_; }
-    RelationType getRelation() { return relation_; }
+    RelationType getOperator() { return relation_; }
+    std::string getName() override { return std::string(); }
 
    private:
     Node* left_;

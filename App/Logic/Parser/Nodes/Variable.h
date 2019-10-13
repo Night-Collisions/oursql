@@ -16,11 +16,9 @@ class Variable : public Node {
         : Node(NodeType::variable),
           name_(name),
           dataType_(type),
-          constraints_(constraints) {
+          constraints_(constraints) {}
 
-    }
-
-    std::string getName() { return name_; }
+    std::string getName() override { return name_; }
     DataType getType() { return dataType_; }
     std::vector<ColumnConstraint> getConstraints() { return constraints_; }
 

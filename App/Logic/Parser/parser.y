@@ -2,7 +2,6 @@
     #include "../../App/Logic/Parser/Nodes/Node.h"
     #include "../../App/Logic/Parser/Nodes/Query.h"
     #include "../../App/Logic/Parser/Nodes/VarList.h"
-    #include "../../App/Logic/Parser/Nodes/Command.h"
     #include "../../App/Logic/Parser/Nodes/Variable.h"
     #include "../../App/Logic/Parser/Nodes/Ident.h"
     #include "../../App/Logic/Parser/Nodes/IntConstant.h"
@@ -12,6 +11,7 @@
     #include "../../App/Logic/Parser/Nodes/ConstantList.h"
     #include "../../App/Logic/Parser/Nodes/IdentList.h"
     #include "../../App/Logic/Parser/Nodes/Relation.h"
+    #include "../../App/Logic/Parser/Nodes/NullConstant.h"
     #include "../../App/Logic/Parser/Nodes/SelectList.h"
     #include "../../App/Core/Exception.h"
 
@@ -22,6 +22,7 @@
     #include <string>
     #include <cstring>
     #include <iostream>
+    #include <map>
     #include <sstream>
 
     extern FILE *yyin;
@@ -51,6 +52,7 @@
 %token ID ICONST FCONST SCONST
 %token INT REAL TEXT
 %token NOT_NULL PRIMARY_KEY UNIQUE NULL_
+%token DIVIDE MINUS PLUS
 
 %type<query> create show_create drop_table select insert
 %type<ident> id select_list_element
@@ -59,7 +61,8 @@
 %type<constraint> constraint
 %type<iConst> int_const
 %type<rConst> real_const
-%type<tConst> text_const null_
+%type<tConst> text_const
+%type<nullConst> null_
 %type<anyConstant> constant where_element
 %type<relation> where_condition
 %type<relType> relation
@@ -69,7 +72,6 @@
 %union {
     ColumnConstraint constraint;
     Ident *ident;
-    Command *command;
     Query *query;
     Variable *var;
     DataType dataType;
@@ -77,10 +79,10 @@
     IntConstant *iConst;
     RealConstant *rConst;
     TextConstant *tConst;
+    NullConstant *nullConst;
     Node *anyConstant;
     Relation *relation;
     RelationType relType;
-    std::vector<Ident*> identList;
 }
 
 %%
@@ -115,12 +117,11 @@ statement:
 
 create:
     CREATE TABLE id LPAREN variables RPAREN {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::create_table));
-        children.push_back($3);
-        children.push_back(new VarList(varList));
+        std::map<NodeType, Node*> children;
+        children[NodeType::ident] = $3;
+        children[NodeType::var_list] = new VarList(varList);
 
-        parseTree = new Query(children);
+        parseTree = new Query(children, CommandType::create_table);
     };
 
 variables:
@@ -155,18 +156,21 @@ constraint:
 // --- select
 
 select:
-     SELECT select_list FROM id where_condition {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::select));
-        children.push_back($4);
-        children.push_back(new SelectList(selectList));
-        children.push_back($5);
+     SELECT select_decl FROM id where_condition {
+        std::map<NodeType, Node*> children;
+        children[NodeType::ident] = $4;
+        children[NodeType::select_list] = new SelectList(selectList);
+        children[NodeType::relation] = $5;
 
-        parseTree = new Query(children);
+        parseTree = new Query(children, CommandType::select);
      } ;
 
+select_decl:
+    asterisk | 
+    asterisk COMMA select_list | 
+    select_list;
+
 select_list:
-    asterisk |
     select_list_element {
         selectList.push_back(*$1);
     } |
@@ -181,7 +185,7 @@ asterisk:
 
 select_list_element:
     id DOT id {
-        $$ = new Ident((*$1).getTableName(), (*$3).getName());
+        $$ = new Ident((*$1).getName(), (*$3).getName());
     } |
     id {
         $$ = new Ident((*$1).getName());
@@ -190,11 +194,15 @@ select_list_element:
 where_condition:
     WHERE where_element relation where_element {
         $$ = new Relation($2, $3, $4);
-    } | { $$ = nullptr; };
+    } | 
+    /*empty*/{ $$ = nullptr; };
 
 where_element:
     id { $$ = new Ident(*$1); } |
     constant { $$ = $1; };
+
+logic_operator:
+
 
 relation:
     EQUAL { $$ = RelationType::equal; } |
@@ -208,51 +216,37 @@ relation:
 
 show_create:
     SHOW CREATE TABLE id {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::show_create_table));
-        children.push_back($4);
+        std::map<NodeType, Node*> children;
+        children[NodeType::ident] = $4;
 
-        parseTree = new Query(children);
+        parseTree = new Query(children, CommandType::show_create_table);
     };
 
 // --- drop table
 
 drop_table:
     DROP TABLE id {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::drop_table));
-        children.push_back($3);
+        std::map<NodeType, Node*> children;
+        children[NodeType::ident] = $3;
 
-        parseTree = new Query(children);
+        parseTree = new Query(children, CommandType::drop_table);
     };
 
 // --- insert
 
 insert:
-    INSERT INTO id LPAREN column_list RPAREN VALUES LPAREN value_list RPAREN {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::insert));
-        children.push_back($3);
-        children.push_back(new IdentList(identList));
-        children.push_back(new ConstantList(constantList));
+    INSERT INTO id column_decl VALUES LPAREN value_list RPAREN {
+        std::map<NodeType, Node*> children;
+        children[NodeType::ident] = $3;
+        children[NodeType::ident_list] = new IdentList(identList);
+        children[NodeType::constant_list] = new ConstantList(constantList);
 
-        parseTree = new Query(children);
-    } |
-    INSERT INTO id VALUES LPAREN value_list RPAREN {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::insert));
-        children.push_back($3);
-        children.push_back(nullptr);
-        children.push_back(new ConstantList(constantList));
-
-        parseTree = new Query(children);
+        parseTree = new Query(children, CommandType::insert);
     };
 
 column_decl:
     LPAREN column_list RPAREN | 
-    /*empty*/ {
-        
-    }
+    /*empty*/ { };
 
 column_list:
     id {
@@ -273,14 +267,13 @@ value_list:
 // --- update
 update:
     UPDATE id SET assignings where_condition {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::update));
-        children.push_back($2);
-        children.push_back(new IdentList(identList));
-        children.push_back(new ConstantList(constantList));
-        children.push_back($5);
+        std::map<NodeType, Node*> children;
+        children[NodeType::ident] = $2;
+        children[NodeType::ident_list] = new IdentList(identList);
+        children[NodeType::constant_list] = new ConstantList(constantList);
+        children[NodeType::relation] = $5;
 
-        parseTree = new Query(children);
+        parseTree = new Query(children, CommandType::update);
     };
 
 
@@ -299,14 +292,13 @@ assigning:
 
 delete:
     DELETE FROM id where_condition {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::delete_));
-        children.push_back($3);
-        children.push_back(new IdentList(identList));
-        children.push_back(new ConstantList(constantList));
-        children.push_back($4);
+        std::map<NodeType, Node*> children;
+        children[NodeType::ident] = $3;
+        children[NodeType::ident_list] = new IdentList(identList);
+        children[NodeType::constant_list] = new ConstantList(constantList);
+        children[NodeType::relation] = $4;
 
-        parseTree = new Query(children);
+        parseTree = new Query(children, CommandType::remove);
     };
 
 // ---
@@ -334,7 +326,7 @@ text_const:
 
 null_:
     NULL_ {
-        $$ = new TextConstant("null");
+        $$ = new NullConstant();
     };
 
 type:

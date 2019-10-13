@@ -6,12 +6,13 @@
 
 class Ident : public Node {
    public:
-    explicit Ident(const std::string& name) : Node(NodeType::id), name_(name) {}
+    explicit Ident(const std::string& name)
+        : Node(NodeType::ident), name_(name) {}
     explicit Ident(const std::string& table_name, const std::string& name)
-        : Node(NodeType::id), table_name_(table_name), name_(name) {}
+        : Node(NodeType::ident), table_name_(table_name), name_(name) {}
 
-    std::string getName() { return name_; }
-    std::string getTableName() {return table_name_; }
+    [[nodiscard]] std::string getName() override { return name_; }
+    std::string getTableName() { return table_name_; }
 
    private:
     std::string name_;

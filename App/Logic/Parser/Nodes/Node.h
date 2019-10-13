@@ -2,13 +2,15 @@
 #ifndef OURSQL_APP_LOGIC_PARSER_NODES_NODE_H_
 #define OURSQL_APP_LOGIC_PARSER_NODES_NODE_H_
 
+#include <string>
+
 enum class NodeType {
     node,
     query,  // root
     command,
     var_list,
     variable,
-    id,
+    ident,
     constraint_list,
     select_list,
     condition,
@@ -27,6 +29,8 @@ class Node {
     virtual ~Node() = default;
 
     virtual NodeType getNodeType() const { return nodeType_; }
+
+    virtual std::string getName() = 0;
 
    private:
     NodeType nodeType_;

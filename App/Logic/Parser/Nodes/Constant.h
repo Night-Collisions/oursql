@@ -15,6 +15,7 @@ class Constant : public Node {
     virtual DataType getDataType() = 0;
 
     std::string getValue() { return value_; }
+    std::string getName() override { return std::string(); }
 
    protected:
     std::string value_;

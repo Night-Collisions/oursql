@@ -11,6 +11,7 @@ class SelectList : public Node {
         : Node(NodeType::select_list), list_(list) {}
 
     std::vector<Ident> getList() { return list_; }
+    std::string getName() override { return std::string(); }
 
    private:
     std::vector<Ident> list_;

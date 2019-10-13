@@ -9,7 +9,7 @@ bool ConditionChecker::check(const rapidjson::Value& record) const {
     std::string left_val;
     std::string right_val;
 
-    if (left_nd_ == NodeType::id) {
+    if (left_nd_ == NodeType::ident) {
         left_val = record[left_].GetString();
         if (left_val == "null") {
             return false;
@@ -18,7 +18,7 @@ bool ConditionChecker::check(const rapidjson::Value& record) const {
         left_val = left_;
     }
 
-    if (right_nd_ == NodeType::id) {
+    if (right_nd_ == NodeType::ident) {
         right_val = record[right_].GetString();
         if (right_val == "null") {
             return false;

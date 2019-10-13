@@ -9,7 +9,6 @@ set(HEADERS
         Core/Exception.h
         Logic/Parser/Nodes/Node.h
         Logic/Parser/Nodes/Query.h
-        Logic/Parser/Nodes/Command.h
         Logic/Parser/Nodes/VarList.h
         Logic/Parser/Nodes/Variable.h
         Logic/Parser/Nodes/Ident.h
@@ -36,7 +35,6 @@ set(DEFINITIONS
         Engine/Engine.cpp
         Logic/Parser/Nodes/Node.cpp
         Logic/Parser/Nodes/Query.cpp
-        Logic/Parser/Nodes/Command.cpp
         Logic/Parser/Nodes/VarList.cpp
         Logic/Parser/Nodes/ConstantList.cpp
         Logic/Parser/Nodes/Variable.cpp
@@ -58,7 +56,7 @@ assemble_parser(Logic/Parser/)
 
 init(${PROJECT_BINARY_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
+add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Logic/Parser/Nodes/NullConstant.cpp Logic/Parser/Nodes/NullConstant.h)
 
 add_library(${PROJECT_NAME}_SURSE ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
 

@@ -11,6 +11,7 @@ class ConstantList : public Node {
         : Node(NodeType::constant_list), constants_(constants) {}
 
     std::vector<Node*> getConstants() { return constants_; }
+    std::string getName() override { return std::string(); }
 
    private:
     std::vector<Node*> constants_;

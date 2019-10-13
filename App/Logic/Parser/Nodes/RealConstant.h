@@ -12,6 +12,7 @@
 class RealConstant : public Constant {
    public:
     explicit RealConstant(const std::string& value) : Constant(value) {}
+    std::string getName() override { return std::string(); }
 
     DataType getDataType() override { return DataType::real; }
 };

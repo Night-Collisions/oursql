@@ -14,6 +14,8 @@ class IntConstant : public Constant {
     explicit IntConstant(const std::string& value) : Constant(value) {}
 
     DataType getDataType() override { return DataType::integer; }
+
+    std::string getName() override { return std::string(); }
 };
 
 #endif  // OURSQL_APP_LOGIC_PARSER_NODES_INTCONSTANT_H_

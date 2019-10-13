@@ -1,7 +1,6 @@
 #ifndef OURSQL_APP_LOGIC_FIELD_H_
 #define OURSQL_APP_LOGIC_FIELD_H_
 
-#include <map>
 #include <memory>
 #include <set>
 #include <string>
@@ -23,6 +22,7 @@ ColumnConstraint String2ColumnConstraint(const std::string&);
 
 class Column {
    public:
+    Column() = default;
     Column(std::string name, const DataType type,
            std::unique_ptr<exc::Exception>& e,
            const std::set<ColumnConstraint>& constraints = {})
