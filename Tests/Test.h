@@ -9,8 +9,8 @@
 #include "../App/Engine/Table.h"
 
 #define NO_EXCEPTION(exception) ASSERT_EQ(exception, 0);
-#define CHECK_EXCEPTION(exception, excpect) \
-    ASSERT_EQ(exception, static_cast<unsigned int>(excpect));
+#define CHECK_EXCEPTION(exception, expect) \
+    ASSERT_EQ(exception, static_cast<unsigned int>(expect));
 
 #define CHECK_REQUEST(request, exception, answer)         \
     std::stringstream in(request);                        \

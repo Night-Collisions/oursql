@@ -35,7 +35,7 @@ class ConditionChecker {
     NodeType left_nd_;
     NodeType right_nd_;
 
-    bool always_true_;
+    bool always_true_ = false;
 };
 
 #endif  // OURSQL_APP_LOGIC_CONDITIONS_CONDITIONCHECKER_H_

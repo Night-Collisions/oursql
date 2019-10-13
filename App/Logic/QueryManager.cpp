@@ -25,7 +25,7 @@ void QueryManager::execute(const Query& query,
         const Query& query, std::unique_ptr<exc::Exception>& e,
         std::ostream& out) = {
         [](const Query&, std::unique_ptr<exc::Exception>& e,
-           std::ostream& out) {},
+           std::ostream& out) { assert(false); },
         createTable,
         showCreateTable,
         dropTable,

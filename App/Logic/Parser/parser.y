@@ -80,6 +80,7 @@
     Node *anyConstant;
     Relation *relation;
     RelationType relType;
+    std::vector<Ident*> identList;
 }
 
 %%
@@ -154,72 +155,28 @@ constraint:
 // --- select
 
 select:
-     SELECT select_list FROM id WHERE where_condition {
+     SELECT select_list FROM id where_condition {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::select));
         children.push_back($4);
         children.push_back(new SelectList(selectList));
-        children.push_back($6);
+        children.push_back($5);
 
         parseTree = new Query(children);
-     } |
-    SELECT asterisk COMMA select_list FROM id WHERE where_condition {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::select));
-        children.push_back($6);
-        children.push_back(new SelectList(selectList));
-        children.push_back($8);
-
-        parseTree = new Query(children);
-    } |
-    SELECT asterisk FROM id WHERE where_condition {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::select));
-        children.push_back($4);
-        children.push_back(new SelectList(selectList));
-        children.push_back($6);
-
-        parseTree = new Query(children);
-    } |
-    SELECT asterisk FROM id {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::select));
-        children.push_back($4);
-        children.push_back(new SelectList(selectList));
-        children.push_back(nullptr);
-
-        parseTree = new Query(children);
-    } |
-    SELECT asterisk COMMA select_list FROM id {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::select));
-        children.push_back($6);
-        children.push_back(new SelectList(selectList));
-        children.push_back(nullptr);
-
-        parseTree = new Query(children);
-    } |
-        SELECT select_list FROM id {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::select));
-        children.push_back($4);
-        children.push_back(new SelectList(selectList));
-        children.push_back(nullptr);
-
-        parseTree = new Query(children);
-    }
-
-asterisk:
-    ASTERISK {
-    	selectList.push_back(Ident("*"));
-    };
+     } ;
 
 select_list:
+    asterisk |
     select_list_element {
         selectList.push_back(*$1);
     } |
     select_list COMMA select_list_element {
         selectList.push_back(*$3);
+    };
+
+asterisk:
+    ASTERISK {
+    	selectList.push_back(Ident("*"));
     };
 
 select_list_element:
@@ -231,10 +188,9 @@ select_list_element:
     };
 
 where_condition:
-    where_element relation where_element {
-        $$ = new Relation($1, $2, $3);
-    } |
-    { $$ = nullptr; };
+    WHERE where_element relation where_element {
+        $$ = new Relation($2, $3, $4);
+    } | { $$ = nullptr; };
 
 where_element:
     id { $$ = new Ident(*$1); } |
@@ -292,6 +248,12 @@ insert:
         parseTree = new Query(children);
     };
 
+column_decl:
+    LPAREN column_list RPAREN | 
+    /*empty*/ {
+        
+    }
+
 column_list:
     id {
         identList.push_back(new Ident(*$1));
@@ -310,26 +272,16 @@ value_list:
 
 // --- update
 update:
-    UPDATE id SET assignings WHERE where_condition {
+    UPDATE id SET assignings where_condition {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::update));
         children.push_back($2);
         children.push_back(new IdentList(identList));
         children.push_back(new ConstantList(constantList));
-        children.push_back($6);
+        children.push_back($5);
 
         parseTree = new Query(children);
-    } |
-    UPDATE id SET assignings {
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::update));
-        children.push_back($2);
-        children.push_back(new IdentList(identList));
-        children.push_back(new ConstantList(constantList));
-        children.push_back(nullptr);
-
-        parseTree = new Query(children);
-    }
+    };
 
 
 assignings:
@@ -346,26 +298,16 @@ assigning:
 // --- delete
 
 delete:
-    DELETE FROM id WHERE where_condition {
+    DELETE FROM id where_condition {
         std::vector<Node*> children;
         children.push_back(new Command(CommandType::delete_));
         children.push_back($3);
         children.push_back(new IdentList(identList));
         children.push_back(new ConstantList(constantList));
-        children.push_back($5);
+        children.push_back($4);
 
         parseTree = new Query(children);
-    } |
-    DELETE FROM id{
-        std::vector<Node*> children;
-        children.push_back(new Command(CommandType::delete_));
-        children.push_back($3);
-        children.push_back(new IdentList(identList));
-        children.push_back(new ConstantList(constantList));
-        children.push_back(nullptr);
-
-        parseTree = new Query(children);
-    } ;
+    };
 
 // ---
 
