@@ -20,6 +20,7 @@ enum class NodeType {
     int_constant,
     real_constant,
     text_constant,
+    expression_unit,
     relation
 };
 

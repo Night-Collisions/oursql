@@ -20,9 +20,11 @@ set(HEADERS
         Logic/Parser/Nodes/TextConstant.h
         Logic/Parser/Nodes/Constant.h
         Logic/Conditions/ConditionChecker.h
+        Logic/Parser/Nodes/NullConstant.h
         Logic/Parser/ParserManager.h
         Core/DataType.h
         Logic/Parser/Nodes/Relation.h
+        Logic/Parser/Nodes/Expression.h
         Logic/QueryManager.h
         )
 
@@ -48,6 +50,8 @@ set(DEFINITIONS
         Logic/Parser/ParserManager.cpp
         Logic/Parser/Nodes/Relation.cpp
         Logic/Parser/Nodes/Constant.cpp
+        Logic/Parser/Nodes/Expression.cpp
+        Logic/Parser/Nodes/NullConstant.cpp
         Core/DataType.cpp
         Logic/QueryManager.cpp
         )
@@ -56,7 +60,7 @@ assemble_parser(Logic/Parser/)
 
 init(${PROJECT_BINARY_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Logic/Parser/Nodes/NullConstant.cpp Logic/Parser/Nodes/NullConstant.h)
+add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
 
 add_library(${PROJECT_NAME}_SURSE ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
 

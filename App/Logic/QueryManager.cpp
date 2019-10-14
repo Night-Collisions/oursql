@@ -107,15 +107,15 @@ void QueryManager::select(const Query& query,
 
     std::vector<std::string> total_cols;
     for (auto& c : cols_from_parser) {
-        if (c.getName() == "*") {
+        if (c->getName() == "*") {
             for (auto& m : all_columns) {
                 total_cols.emplace_back(m.first);
             }
-        } else if (all_columns.find((c.getName())) == all_columns.end()) {
-            e.reset(new exc::acc::ColumnNonexistent(c.getName(), name));
+        } else if (all_columns.find((c->getName())) == all_columns.end()) {
+            e.reset(new exc::acc::ColumnNonexistent(c->getName(), name));
             return;
         } else {
-            total_cols.push_back(c.getName());
+            total_cols.push_back(c->getName());
         }
     }
 

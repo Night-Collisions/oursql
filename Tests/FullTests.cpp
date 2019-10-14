@@ -387,7 +387,7 @@ TEST(INSERT, TEST_14) {
         "M!');\"\n");
 }
 
-TEST(INSERT, TEST_15) {  // todo
+TEST(INSERT, TEST_15) { 
     clearDB();
     CHECK_REQUEST(
         "create table a(a int not null, b real primary key, c text unique);"

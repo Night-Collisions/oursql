@@ -13,6 +13,7 @@
     #include "../../App/Logic/Parser/Nodes/Relation.h"
     #include "../../App/Logic/Parser/Nodes/NullConstant.h"
     #include "../../App/Logic/Parser/Nodes/SelectList.h"
+    #include "../../App/Logic/Parser/Nodes/Expression.h"
     #include "../../App/Core/Exception.h"
 
     #include "../../App/Engine/Engine.h"
@@ -38,7 +39,7 @@
     std::vector<ColumnConstraint> constraintList;
     std::vector<Ident*> identList;
     std::vector<Node*> constantList;
-    std::vector<Ident> selectList;
+    std::vector<Node*> selectList;
 
     std::unique_ptr<exc::Exception> ex;
 %}
@@ -55,7 +56,7 @@
 %token DIVIDE MINUS PLUS
 
 %type<query> create show_create drop_table select insert
-%type<ident> id select_list_element
+%type<ident> id 
 %type<var> variable
 %type<dataType> type
 %type<constraint> constraint
@@ -63,11 +64,13 @@
 %type<rConst> real_const
 %type<tConst> text_const
 %type<nullConst> null_
-%type<anyConstant> constant where_element
+%type<anyConstant> constant where_element select_list_element val_or_var
 %type<relation> where_condition
 %type<relType> relation
+%type<exprUnit> expr_unit
+%type<expr> single_expr
 
-%start expression
+%start start_expression
 
 %union {
     ColumnConstraint constraint;
@@ -83,11 +86,13 @@
     Node *anyConstant;
     Relation *relation;
     RelationType relType;
+    ExprUnit exprUnit;
+    Expression *expr;
 }
 
 %%
 
-expression:
+start_expression:
     statements SEMI {
         varList.clear();
         constraintList.clear();
@@ -172,15 +177,15 @@ select_decl:
 
 select_list:
     select_list_element {
-        selectList.push_back(*$1);
+        selectList.push_back($1);
     } |
     select_list COMMA select_list_element {
-        selectList.push_back(*$3);
+        selectList.push_back($3);
     };
 
 asterisk:
     ASTERISK {
-    	selectList.push_back(Ident("*"));
+    	selectList.push_back(new Ident("*"));
     };
 
 select_list_element:
@@ -188,7 +193,13 @@ select_list_element:
         $$ = new Ident((*$1).getName(), (*$3).getName());
     } |
     id {
-        $$ = new Ident((*$1).getName());
+        $$ = $1;
+    } |
+    constant {
+        $$ = $1;
+    } |
+    single_expr {
+        $$ = $1;
     };
 
 where_condition:
@@ -200,8 +211,6 @@ where_condition:
 where_element:
     id { $$ = new Ident(*$1); } |
     constant { $$ = $1; };
-
-logic_operator:
 
 
 relation:
@@ -302,6 +311,27 @@ delete:
     };
 
 // ---
+
+single_expr: 
+    val_or_var expr_unit val_or_var {
+        $$ = new Expression(
+            static_cast<Expression*>($1), 
+            $2, 
+            static_cast<Expression*>($3));
+    };
+
+val_or_var:
+    constant { $$ = $1; } |
+    id { $$ = $1; } |
+    id DOT id { $$ = new Ident($1->getName(), $3->getName()); };
+
+expr_unit:
+    DIVIDE { $$ = ExprUnit::div; } |
+    MINUS { $$ = ExprUnit::sub; } |
+    PLUS { $$ = ExprUnit::add; } |
+    ASTERISK { $$ = ExprUnit::mul; }|
+    EQUAL { $$ = ExprUnit::equal; } |
+    NOT_EQ { $$ = ExprUnit::not_equal; };
 
 constant:
     int_const { $$ = $1; } |

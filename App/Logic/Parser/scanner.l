@@ -20,6 +20,8 @@
     #include "../../App/Logic/Parser/Nodes/ConstantList.h"
     #include "../../App/Logic/Parser/Nodes/IdentList.h"
     #include "../../App/Logic/Parser/Nodes/SelectList.h"
+        #include "../../App/Logic/Parser/Nodes/Expression.h"
+
 
     #include "../../App/Engine/Engine.h"
     #include "parser.hpp"
