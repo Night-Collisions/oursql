@@ -373,7 +373,7 @@ TEST(INSERT, TEST_13) {
         "create table a(a int not null, b real primary key, c text unique);"
         "insert into a values (-2, 0.1, 'Hello world!');"
         "select * from a;",
-        0, "a: -2\nb: 0.1\nc: 'Hello\n");
+        0, "a: -2\nb: 0.1\nc: 'Hello world!'\n");
 }
 
 TEST(INSERT, TEST_14) {
