@@ -31,6 +31,7 @@
     long long int symbols = 0;
     //todo: free?
     char *tmp_str = (char *) malloc(100);
+    std::string in;
 
 %}
 
@@ -121,8 +122,7 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
                            }
                            
 {SCONST}                   {
-                              sscanf(yytext, "%s", tmp_str);
-                              yylval.tConst = new TextConstant(std::string(tmp_str));
+                              yylval.tConst = new TextConstant(std::string(yytext));
                               return SCONST; 
                            }        
 

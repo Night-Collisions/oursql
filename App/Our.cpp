@@ -35,7 +35,6 @@ unsigned int perform(std::istream& in, std::ostream& out) {
             return 0;
         }
         ParserManager pm;
-        pm.setDebug(1);
         auto query = pm.getParseTree(command, e);
         EXCEPTION_OURSQL_CHECK(e, out, command);
         QueryManager::execute(*query, e, out);

@@ -373,13 +373,6 @@ void QueryManager::remove(const Query& query,
         return;
     }
 
-    auto idents =
-        static_cast<IdentList*>(query.getChildren()[NodeType::ident_list])
-            ->getIdents();
-    auto constants =
-        static_cast<ConstantList*>(query.getChildren()[NodeType::constant_list])
-            ->getConstants();
-
     ConditionChecker* checker = nullptr;
 
     std::map<std::string, Column> all_columns;
