@@ -36,11 +36,6 @@ class QueryManager {
     static void remove(const Query& query, std::unique_ptr<exc::Exception>& e,
                        std::ostream& out);
 
-    static bool compareTypes(const std::string& table_name,
-                             std::map<std::string, Column>& all_columns,
-                             Node* left, Node* right,
-                             std::unique_ptr<exc::Exception>& e, bool);
-
     static void setValue(Node* nod, std::string& value);
 
 };

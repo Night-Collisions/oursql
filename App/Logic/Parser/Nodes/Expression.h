@@ -2,19 +2,24 @@
 #define OURSQL_APP_LOGIC_PARSER_NODES_EXPRESSION_H_
 
 #include <vector>
+#include "Constant.h"
 #include "Node.h"
 
 enum class ExprUnit {
-    equal = 0,
-    not_equal = 0,
-    greater = 0,
-    greater_eq = 0,
-    less = 0,
-    less_eq = 0,
-    mul = 1,
-    div = 1,
-    add = 2,
-    sub = 2,
+    equal,
+    not_equal,
+    greater,
+    greater_eq,
+    less,
+    less_eq,
+    and_,
+    or_,
+    mul,
+    div,
+    add,
+    sub,
+    not_,
+    value
 };
 
 class Expression : public Node {
@@ -24,6 +29,11 @@ class Expression : public Node {
         childs_.push_back(left);
         childs_.push_back(right);
     }
+
+    explicit Expression(Node* val)
+        : Node(NodeType::expression_unit),
+          expr_unit_(ExprUnit::value),
+          value_(val) {}
 
     ~Expression() override {
         for (auto& c : childs_) {
@@ -38,9 +48,16 @@ class Expression : public Node {
     ExprUnit exprType() { return expr_unit_; }
     void setExprType(ExprUnit expr) { expr_unit_ = expr; }
 
+    Node* getVal() { return value_; }
+    void setVal(Node* val) {
+        delete value_;
+        value_ = val;
+    }
+
    private:
     std::vector<Expression*> childs_;
     ExprUnit expr_unit_;
+    Node* value_{nullptr};
 };
 
 #endif  // OURSQL_APP_LOGIC_PARSER_NODES_EXPRESSION_H_

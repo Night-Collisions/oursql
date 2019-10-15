@@ -20,7 +20,7 @@
     #include "../../App/Logic/Parser/Nodes/ConstantList.h"
     #include "../../App/Logic/Parser/Nodes/IdentList.h"
     #include "../../App/Logic/Parser/Nodes/SelectList.h"
-        #include "../../App/Logic/Parser/Nodes/Expression.h"
+    #include "../../App/Logic/Parser/Nodes/Expression.h"
 
 
     #include "../../App/Engine/Engine.h"
@@ -48,8 +48,8 @@ dquote        \"
 aquote        \'
 
 ID            {alpha}+{alnum_dash}*
-ICONST        "0"|-?[0-9]{digit}*
-FCONST        -?{digit}*"."{digit}+
+ICONST        "0"|[0-9]{digit}*
+FCONST        {digit}*"."{digit}+
 SCONST        {dquote}.*{dquote}|{aquote}.*{aquote}
 
 NOT_NULL      "not"[ \t\r\f]+"null"
@@ -94,6 +94,10 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "set"                      { return SET; }
 "update"                   { return UPDATE; }
 "delete"                   { return DELETE; }
+
+"and"|"&&"                 { return AND; }
+"or"|"||"                  { return OR; } 
+"not"                      { return NOT; }
 
 
 "int"                      { return INT; }
