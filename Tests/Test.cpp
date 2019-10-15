@@ -1,5 +1,5 @@
 #include "Test.h"
-#include "../App/Engine/Engine.h"
+#include "../Server/Engine/Engine.h"
 
 bool operator==(const Column& a, const Column& b) {
     return a.getName() == b.getName() && a.getType() == b.getType() &&

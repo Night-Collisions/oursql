@@ -2,6 +2,7 @@ project(OurSql_APP)
 
 set(HEADERS
         Our.h
+        Server.h
         Engine/Column.h
         Engine/Engine.h
         Engine/Table.h
@@ -28,6 +29,7 @@ set(HEADERS
 
 set(DEFINITIONS
         Our.cpp
+        Server.cpp
         Engine/Column.cpp
         Engine/Engine.cpp
         Engine/Table.cpp
@@ -53,6 +55,8 @@ set(DEFINITIONS
         )
 
 assemble_parser(Logic/Parser/)
+
+init(${PROJECT_BINARY_DIR})
 
 init(${PROJECT_BINARY_DIR})
 

@@ -44,6 +44,20 @@ FetchContent_Declare(
 FetchContent_Populate(rapidjson)
 include_directories(${rapidjson_SOURCE_DIR}/include/)
 
-add_subdirectory(App)
+FetchContent_Declare(
+        asio
+        GIT_REPOSITORY https://github.com/chriskohlhoff/asio
+        GIT_TAG asio-1-14-0
+        UPDATE_DISCONNECTED 1
+)
+
+FetchContent_Populate(asio)
+include_directories(${asio_SOURCE_DIR}/asio/include/)
+
+link_libraries(ws2_32 wsock32)
+
+add_subdirectory(Server)
+
+add_subdirectory(Client)
 
 add_subdirectory(Tests)

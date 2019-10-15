@@ -1,8 +1,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "../App/Core/Exception.h"
-#include "../App/Our.h"
+#include "../Server/Core/Exception.h"
+#include "../Server/Our.h"
 #include "Test.h"
 
 TEST(CREATE_TABLE, TEST_1) {

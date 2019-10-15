@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "../App/Engine/Column.h"
-#include "../App/Engine/Table.h"
+#include "../Server/Engine/Column.h"
+#include "../Server/Engine/Table.h"
 
 #define NO_EXCEPTION(exception) ASSERT_EQ(exception, 0);
 #define CHECK_EXCEPTION(exception, expect) \
