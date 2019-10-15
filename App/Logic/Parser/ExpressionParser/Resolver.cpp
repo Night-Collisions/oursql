@@ -1,15 +1,50 @@
 #include "Resolver.h"
 #include "../Nodes/Ident.h"
 
-void Resolver::resolve(Expression* root, const rapidjson::Value& record) {
+void Resolver::resolve(Expression* root, const rapidjson::Value& record,
+                       std::unique_ptr<exc::Exception>& e) {
+    void (*const operations[static_cast<unsigned int>(ExprUnit::Count)])(
+        Expression * root, std::unique_ptr<exc::Exception> & e) = {
+        [](Expression* root, std::unique_ptr<exc::Exception>& e) {
+            assert(false);
+        },
+        equal,
+        notEqual,
+        greater,
+        greaterEqual,
+        less,
+        lessEqual,
+        logicAnd,
+        logicOr,
+        logicNot,
+        mul,
+        div,
+        add,
+        sub,
+        deductVal
+    };
 
+    operations_ = operations; // ДАНИЛА, НЕ РАБОТАЕТ
+}
+
+void Resolver::calculate(Expression* root, const rapidjson::Value& record,
+                         std::unique_ptr<exc::Exception>& e) {
+    if (root && root->childs()[0] && root->childs()[1]) {
+        auto child1 = root->childs()[0];
+        auto child2 = root->childs()[1];
+        calculate(child1, record, e);
+        calculate(child2, record, e);
+
+        if (root->exprType() >= ExprUnit::equal &&
+            root->exprType() <= ExprUnit::less_eq) {
+        }
+    }
 }
 
 bool Resolver::compareTypes(const std::string& table_name,
-                                std::map<std::string, Column>& all_columns,
-                                Node* left, Node* right,
-                                std::unique_ptr<exc::Exception>& e,
-                                bool is_set) {
+                            std::map<std::string, Column>& all_columns,
+                            Node* left, Node* right,
+                            std::unique_ptr<exc::Exception>& e, bool is_set) {
     DataType left_type = DataType::Count;
     DataType right_type = DataType::Count;
 

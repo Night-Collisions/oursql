@@ -5,7 +5,7 @@
 #include "Constant.h"
 #include "Node.h"
 
-enum class ExprUnit {
+enum class ExprUnit : unsigned int {
     equal,
     not_equal,
     greater,
@@ -14,12 +14,13 @@ enum class ExprUnit {
     less_eq,
     and_,
     or_,
+    not_,
     mul,
     div,
     add,
     sub,
-    not_,
-    value
+    value,
+    Count
 };
 
 class Expression : public Node {

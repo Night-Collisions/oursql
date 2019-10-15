@@ -209,7 +209,7 @@ where_expr:
     WHERE root_expr {
         $$ = $2;
     } | 
-    /*empty*/ {};
+    /*empty*/ { $$ = nullptr; };
     
 where_element:
     id { $$ = new Ident(*$1); } |
