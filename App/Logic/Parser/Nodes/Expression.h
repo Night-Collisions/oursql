@@ -49,7 +49,7 @@ class Expression : public Node {
     ExprUnit exprType() { return expr_unit_; }
     void setExprType(ExprUnit expr) { expr_unit_ = expr; }
 
-    Node* getVal() { return value_; }
+    Node* getConstant() { return value_; }
     void setVal(Node* val) {
         delete value_;
         value_ = val;

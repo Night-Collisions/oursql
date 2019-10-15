@@ -1,13 +1,16 @@
 #include "Resolver.h"
 #include "../Nodes/Ident.h"
+#include "../Nodes/IntConstant.h"
 
-void Resolver::resolve(Expression* root, const rapidjson::Value& record,
+void Resolver::resolve(std::string table,
+                       std::map<std::string, Column> all_columns,
+                       Expression* root, const rapidjson::Value& record,
                        std::unique_ptr<exc::Exception>& e) {
     void (*const operations[static_cast<unsigned int>(ExprUnit::Count)])(
-        Expression * root, std::unique_ptr<exc::Exception> & e) = {
-        [](Expression* root, std::unique_ptr<exc::Exception>& e) {
-            assert(false);
-        },
+        Expression * root, const rapidjson::Value& record,
+        std::unique_ptr<exc::Exception>& e) = {
+        [](Expression* root, const rapidjson::Value& record,
+           std::unique_ptr<exc::Exception>& e) { assert(false); },
         equal,
         notEqual,
         greater,
@@ -21,22 +24,36 @@ void Resolver::resolve(Expression* root, const rapidjson::Value& record,
         div,
         add,
         sub,
-        deductVal
-    };
+        deductVal};
 
-    operations_ = operations; // ДАНИЛА, НЕ РАБОТАЕТ
+    operations_ = operations;  // ДАНИЛА, НЕ РАБОТАЕТ
+
+    table_ = table;
+    all_columns_ = all_columns;
 }
 
 void Resolver::calculate(Expression* root, const rapidjson::Value& record,
                          std::unique_ptr<exc::Exception>& e) {
+    if (e) {
+        return;
+    }
+
     if (root && root->childs()[0] && root->childs()[1]) {
         auto child1 = root->childs()[0];
         auto child2 = root->childs()[1];
-        calculate(child1, record, e);
-        calculate(child2, record, e);
 
-        if (root->exprType() >= ExprUnit::equal &&
-            root->exprType() <= ExprUnit::less_eq) {
+        calculate(child1, record, e);
+        if (e) {
+            return;
+        }
+        calculate(child2, record, e);
+        if (e) {
+            return;
+        }
+
+        operations_[static_cast<unsigned int>(root->exprType())](root, e);
+        if (e) {
+            return;
         }
     }
 }
@@ -103,4 +120,39 @@ bool Resolver::compareTypes(const std::string& table_name,
         }
         return false;
     }
+}
+
+void Resolver::equal(Expression* root, const rapidjson::Value& record,
+                     std::unique_ptr<exc::Exception>& e) {
+    auto child1 = root->childs()[0];
+    auto child2 = root->childs()[1];
+
+    if (child1->exprType() != ExprUnit::value ||
+        child2->exprType() != ExprUnit::value) {
+        e.reset();  // TODO
+        return;
+    }
+
+    if (!compareTypes(table_, all_columns_, child1, child2, e, false)) {
+        return;
+    }
+
+    std::string value1;
+    std::string value2;
+
+    if (child1->getNodeType() == NodeType::ident) {
+        value1 = record[child1->getName()].GetString();
+    } else {
+        value1 = static_cast<Constant*>(child1->getConstant())->getValue();
+    }
+
+    if (child2->getNodeType() == NodeType::ident) {
+        value2 = record[child2->getName()].GetString();
+    } else {
+        value2 = static_cast<Constant*>(child2->getConstant())->getValue();
+    }
+
+    std::string res = std::to_string(value1 == value2);
+    root->setVal(new IntConstant(res));
+    // root->setExprType(ExprUnit::value);
 }
