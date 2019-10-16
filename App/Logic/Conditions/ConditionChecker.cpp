@@ -29,7 +29,7 @@ bool ConditionChecker::check(const rapidjson::Value& record) const {
 
     // TODO: переделат не через свитч
 
-    switch (data_type_) {
+/*    switch (data_type_) {
         case DataType::integer:
             switch (rel_type_) {
                 case RelationType::equal:
@@ -75,7 +75,7 @@ bool ConditionChecker::check(const rapidjson::Value& record) const {
                 case RelationType::less_eq:
                     return left_val <= right_val;
             }
-    }
+    }*/
 
     return false;
 }

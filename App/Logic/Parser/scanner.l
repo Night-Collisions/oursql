@@ -16,22 +16,25 @@
     #include "../../App/Logic/Parser/Nodes/IntConstant.h"
     #include "../../App/Logic/Parser/Nodes/RealConstant.h"
     #include "../../App/Logic/Parser/Nodes/TextConstant.h"
-    #include "../../App/Logic/Parser/Nodes/Relation.h"
     #include "../../App/Logic/Parser/Nodes/ConstantList.h"
     #include "../../App/Logic/Parser/Nodes/IdentList.h"
     #include "../../App/Logic/Parser/Nodes/SelectList.h"
+    #include "../../App/Logic/Parser/Nodes/Expression.h"
+
 
     #include "../../App/Engine/Engine.h"
     #include "parser.hpp"
     
     extern FILE *yyin;
     extern FILE *yyout;
+    void yyerror(const char *s);
 
     int lineno = 1;
     long long int symbols = 0;
     //todo: free?
     char *tmp_str = (char *) malloc(100);
-
+    std::string in;
+    std::string local_str;
 %}
 
 %option noyywrap
@@ -45,9 +48,11 @@ dquote        \"
 aquote        \'
 
 ID            {alpha}+{alnum_dash}*
-ICONST        "0"|-?[0-9]{digit}*
-FCONST        -?{digit}*"."{digit}+
+ICONST        "0"|[0-9]{digit}*
+FCONST        {digit}*"."{digit}+
 SCONST        {dquote}.*{dquote}|{aquote}.*{aquote}
+
+VARCHAR       "varchar"[ \t\r\f]*"("[ \t\r\f]*{ICONST}{1}[ \t\r\f]*")"
 
 NOT_NULL      "not"[ \t\r\f]+"null"
 PRIMARY_KEY   "primary"[ \t\r\f]+"key"
@@ -92,10 +97,31 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "update"                   { return UPDATE; }
 "delete"                   { return DELETE; }
 
+"and"|"&&"                 { return AND; }
+"or"|"||"                  { return OR; } 
+"not"                      { return NOT; }
+
 
 "int"                      { return INT; }
-"text"                     { return TEXT; }
 "real"                     { return REAL; }
+{VARCHAR}                  { 
+                              int i = 0;
+                              while (yytext[i] != '\0') {
+                                if (isdigit(yytext[i])) {
+                                    local_str += yytext[i];
+                                }
+                                ++i;
+                               }
+
+                               try {
+                                  yylval.varcharLen = std::stoi(local_str);
+                               } catch(std::invalid_argument& tmp) {
+                                 yyerror("varchar oversize");
+                                 return 1;
+                               }
+
+                              return VARCHAR; 
+                           }
 
 {NOT_NULL}                 { return NOT_NULL; }
 "null"                     { return NULL_; }
@@ -121,8 +147,7 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
                            }
                            
 {SCONST}                   {
-                              sscanf(yytext, "%s", tmp_str);
-                              yylval.tConst = new TextConstant(std::string(tmp_str));
+                              yylval.tConst = new TextConstant(std::string(yytext));
                               return SCONST; 
                            }        
 

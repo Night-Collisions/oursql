@@ -7,6 +7,7 @@
 #include "Parser/Nodes/Ident.h"
 #include "Parser/Nodes/VarList.h"
 
+#include "Parser/ExpressionParser/Resolver.h"
 #include "Parser/Nodes/ConstantList.h"
 #include "Parser/Nodes/IdentList.h"
 #include "Parser/Nodes/SelectList.h"
@@ -47,6 +48,10 @@ void QueryManager::createTable(const Query& query,
     for (auto& v : vars) {
         std::string col_name = v->getName();
         DataType type = v->getType();
+        int len = 0;
+        if (type == DataType::varchar) {
+            len = v->getVarcharLen();
+        }
 
         std::set<ColumnConstraint> constr_set;
 
@@ -86,6 +91,7 @@ void QueryManager::dropTable(const Query& query,
     auto name = query.getChildren()[NodeType::ident]->getName();
     Engine::drop(name, e);
 }
+
 void QueryManager::select(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
@@ -105,71 +111,67 @@ void QueryManager::select(const Query& query,
         static_cast<SelectList*>(query.getChildren()[NodeType::select_list])
             ->getList();
 
-    std::vector<std::string> total_cols;
+    std::set<std::string> asterisk;
+    for (auto& m : all_columns) {
+        asterisk.insert(m.first);
+    }
+    ConditionChecker* checker = new ConditionChecker(true);
+    auto doc = Engine::select(name, asterisk, *checker, e);
+    auto vals = doc["values"].GetArray();
+
+    std::vector<Expression*> col_expr;
+
     for (auto& c : cols_from_parser) {
-        if (c.getName() == "*") {
-            for (auto& m : all_columns) {
-                total_cols.emplace_back(m.first);
-            }
-        } else if (all_columns.find((c.getName())) == all_columns.end()) {
-            e.reset(new exc::acc::ColumnNonexistent(c.getName(), name));
-            return;
-        } else {
-            total_cols.push_back(c.getName());
+        if (c->getNodeType() == NodeType::expression_unit) {
+            col_expr.push_back(static_cast<Expression*>(
+                query.getChildren()[NodeType::expression]));
         }
     }
 
-    ConditionChecker* checker = nullptr;
-    auto rel = static_cast<Relation*>(query.getChildren()[NodeType::relation]);
-    if (rel) {
-        auto left = rel->getLeft();
-        auto right = rel->getRight();
-        auto op = rel->getOperator();
-        DataType comp_type;
-        std::string left_value;
-        std::string right_value;
-
-        if (compareTypes(name, all_columns, left, right, e, false)) {
-            setValue(left, left_value);
-            setValue(right, right_value);
-            if (left->getNodeType() == NodeType::ident) {
-                comp_type = all_columns[left->getName()].getType();
-            } else {
-                comp_type = static_cast<Constant*>(left)->getDataType();
-            }
-        } else {
-            return;
-        }
-
-        // TODO: create a con. checker getter for each type
-        checker =
-            new ConditionChecker(left_value, right_value, left->getNodeType(),
-                                 right->getNodeType(), op, comp_type);
-    }
-
-    if (checker == nullptr) {
-        checker = new ConditionChecker(true);
-    }
-
-    std::set<std::string> cols_to_engine;
-    for (auto& c : total_cols) {
-        cols_to_engine.insert(c);
-    }
-
-    auto doc = Engine::select(name, cols_to_engine, *checker, e);
     if (e != nullptr) {
         return;
     }
-    auto vals = doc["values"].GetArray();
 
     for (auto& i : vals) {
-        for (auto& c : total_cols) {
-            out << c + ": " + i[c].GetString() << std::endl;
+        auto root =
+            static_cast<Expression*>(query.getChildren()[NodeType::expression]);
+        Resolver::resolve(name, all_columns, root, i, e);
+        if (e) {
+            return;
+        }
+
+        int expr_cnt = 1;
+        std::string calc =
+            (root) ? (static_cast<Constant*>(root->getConstant())->getValue())
+                   : ("1");
+        if (calc != "0") {
+            for (auto& c : cols_from_parser) {
+                if (c->getNodeType() == NodeType::expression_unit) {
+                    auto expr = static_cast<Expression*>(c);
+                    Resolver::resolve(name, all_columns, expr, i, e);
+                    if (e) {
+                        return;
+                    }
+                    out << "expression " + std::to_string(expr_cnt++) + ": " +
+                               static_cast<Constant*>(expr->getConstant())
+                                   ->getValue()
+                        << std::endl;
+                } else if (c->getName() == "*") {
+                    for (auto& k : table.getColumns()) {
+                        out << k.getName() + ": " + i[k.getName()].GetString()
+                            << std::endl;
+                    }
+                } else {
+                    out << c->getName() + ": " + i[c->getName()].GetString()
+                        << std::endl;
+                }
+            }
         }
     }
 
     delete checker;
 }
+
 void QueryManager::insert(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
@@ -218,7 +220,8 @@ void QueryManager::insert(const Query& query,
     std::unordered_map<std::string, std::string> values;
 
     for (size_t i = 0; i < constants.size(); ++i) {
-        if (compareTypes(name, all_columns, idents[i], constants[i], e, true)) {
+        if (Resolver::compareTypes(name, all_columns, idents[i], constants[i],
+                                   e, true)) {
             values[idents[i]->getName()] =
                 static_cast<Constant*>(constants[i])->getValue();
         } else {
@@ -227,71 +230,6 @@ void QueryManager::insert(const Query& query,
     }
 
     Engine::insert(name, values, e);
-}
-
-bool QueryManager::compareTypes(const std::string& table_name,
-                                std::map<std::string, Column>& all_columns,
-                                Node* left, Node* right,
-                                std::unique_ptr<exc::Exception>& e,
-                                bool is_set) {
-    DataType left_type = DataType::Count;
-    DataType right_type = DataType::Count;
-
-    if (left->getNodeType() == NodeType::ident) {
-        auto col_name = static_cast<Ident*>(left)->getName();
-        if (all_columns.find(col_name) != all_columns.end()) {
-            left_type = all_columns[col_name].getType();
-        } else {
-            e.reset(new exc::acc::ColumnNonexistent(col_name, table_name));
-            return false;
-        };
-    } else {
-        left_type = static_cast<Constant*>(left)->getDataType();
-    }
-
-    if (right->getNodeType() == NodeType::ident) {
-        auto col_name = static_cast<Ident*>(right)->getName();
-        if (all_columns.find(col_name) != all_columns.end()) {
-            right_type = all_columns[col_name].getType();
-        } else {
-            e.reset(new exc::acc::ColumnNonexistent(col_name, table_name));
-            return false;
-        };
-    } else {
-        right_type = static_cast<Constant*>(right)->getDataType();
-    }
-
-    if (left_type == DataType::Count) {
-        e.reset(new exc::acc::ColumnNonexistent(
-            static_cast<Ident*>(left)->getName(), table_name));
-        return false;
-    }
-
-    if (right_type == DataType::Count) {
-        e.reset(new exc::acc::ColumnNonexistent(
-            static_cast<Ident*>(right)->getName(), table_name));
-        return false;
-    }
-
-    if (left_type == DataType::real && right_type == DataType::integer) {
-        return true;
-    }
-
-    if (right_type == DataType::null_) {
-        return true;
-    }
-
-    if (left_type == right_type) {
-        return true;
-    } else {
-        if (!is_set) {
-            e.reset(new exc::CompareDataTypeMismatch(left_type, right_type));
-        } else {
-            e.reset(new exc::SetDataTypeMismatch(
-                left_type, static_cast<Ident*>(left)->getName()));
-        }
-        return false;
-    }
 }
 
 void QueryManager::update(const Query& query,
@@ -316,41 +254,13 @@ void QueryManager::update(const Query& query,
         static_cast<ConstantList*>(query.getChildren()[NodeType::constant_list])
             ->getConstants();
 
-    ConditionChecker* c = nullptr;
-    auto rel = static_cast<Relation*>(query.getChildren()[NodeType::relation]);
-
-    if (rel) {
-        auto left = rel->getLeft();
-        auto right = rel->getRight();
-        auto op = rel->getOperator();
-        DataType comp_type;
-        std::string left_value;
-        std::string right_value;
-
-        if (compareTypes(name, all_columns, left, right, e, false)) {
-            setValue(left, left_value);
-            setValue(right, right_value);
-            if (left->getNodeType() == NodeType::ident) {
-                comp_type = all_columns[left->getName()].getType();
-            } else {
-                comp_type = static_cast<Constant*>(left)->getDataType();
-            }
-        } else {
-            return;
-        }
-
-        c = new ConditionChecker(left_value, right_value, left->getNodeType(),
-                                 right->getNodeType(), op, comp_type);
-    }
-
-    if (c == nullptr) {
-        c = new ConditionChecker(true);
-    }
+    ConditionChecker* c = new ConditionChecker(true);
 
     std::unordered_map<std::string, std::string> values;
 
     for (size_t i = 0; i < constants.size(); ++i) {
-        if (compareTypes(name, all_columns, idents[i], constants[i], e, true)) {
+        if (Resolver::compareTypes(name, all_columns, idents[i], constants[i],
+                                   e, true)) {
             values[idents[i]->getName()] =
                 static_cast<Constant*>(constants[i])->getValue();
         } else {
@@ -373,50 +283,13 @@ void QueryManager::remove(const Query& query,
         return;
     }
 
-    auto idents =
-        static_cast<IdentList*>(query.getChildren()[NodeType::ident_list])
-            ->getIdents();
-    auto constants =
-        static_cast<ConstantList*>(query.getChildren()[NodeType::constant_list])
-            ->getConstants();
-
-    ConditionChecker* checker = nullptr;
+    ConditionChecker* checker = new ConditionChecker(true);
 
     std::map<std::string, Column> all_columns;
     for (auto& c : table.getColumns()) {
         all_columns[c.getName()] = c;
     }
 
-    auto rel = static_cast<Relation*>(query.getChildren()[NodeType::relation]);
-    if (rel) {
-        auto left = rel->getLeft();
-        auto right = rel->getRight();
-        auto op = rel->getOperator();
-        DataType comp_type;
-        std::string left_value;
-        std::string right_value;
-
-        if (compareTypes(name, all_columns, left, right, e, false)) {
-            setValue(left, left_value);
-            setValue(right, right_value);
-            if (left->getNodeType() == NodeType::ident) {
-                comp_type = all_columns[left->getName()].getType();
-            } else {
-                comp_type = static_cast<Constant*>(left)->getDataType();
-            }
-        } else {
-            return;
-        }
-
-        // TODO: create a con. checker getter for each type
-        checker =
-            new ConditionChecker(left_value, right_value, left->getNodeType(),
-                                 right->getNodeType(), op, comp_type);
-    }
-
-    if (checker == nullptr) {
-        checker = new ConditionChecker(true);
-    }
 
     Engine::remove(name, *checker, e);
 

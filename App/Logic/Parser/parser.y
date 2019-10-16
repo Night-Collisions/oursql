@@ -10,9 +10,9 @@
     #include "../../App/Logic/Parser/Nodes/TextConstant.h"
     #include "../../App/Logic/Parser/Nodes/ConstantList.h"
     #include "../../App/Logic/Parser/Nodes/IdentList.h"
-    #include "../../App/Logic/Parser/Nodes/Relation.h"
     #include "../../App/Logic/Parser/Nodes/NullConstant.h"
     #include "../../App/Logic/Parser/Nodes/SelectList.h"
+    #include "../../App/Logic/Parser/Nodes/Expression.h"
     #include "../../App/Core/Exception.h"
 
     #include "../../App/Engine/Engine.h"
@@ -24,6 +24,8 @@
     #include <iostream>
     #include <map>
     #include <sstream>
+
+    #define VARCHAR_MAX_LEN (1024)
 
     extern FILE *yyin;
     extern FILE *yyout;
@@ -38,7 +40,7 @@
     std::vector<ColumnConstraint> constraintList;
     std::vector<Ident*> identList;
     std::vector<Node*> constantList;
-    std::vector<Ident> selectList;
+    std::vector<Node*> selectList;
 
     std::unique_ptr<exc::Exception> ex;
 %}
@@ -50,12 +52,12 @@
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA ASTERISK
 %token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ
 %token ID ICONST FCONST SCONST
-%token INT REAL TEXT
+%token INT REAL VARCHAR
 %token NOT_NULL PRIMARY_KEY UNIQUE NULL_
-%token DIVIDE MINUS PLUS
+%token AND OR DIVIDE PLUS MINUS NOT
 
 %type<query> create show_create drop_table select insert
-%type<ident> id select_list_element
+%type<ident> id 
 %type<var> variable
 %type<dataType> type
 %type<constraint> constraint
@@ -63,11 +65,11 @@
 %type<rConst> real_const
 %type<tConst> text_const
 %type<nullConst> null_
-%type<anyConstant> constant where_element
-%type<relation> where_condition
-%type<relType> relation
+%type<anyConstant> constant where_element select_list_element val_or_var
+%type<exprUnit> logic_oper plus_minus mul_div relations
+%type<expr> where_expr root_expr relation_expr exprssn term factor 
 
-%start expression
+%start start_expression
 
 %union {
     ColumnConstraint constraint;
@@ -81,13 +83,15 @@
     TextConstant *tConst;
     NullConstant *nullConst;
     Node *anyConstant;
-    Relation *relation;
-    RelationType relType;
+    ExprUnit exprUnit;
+    Expression *expr;
+
+    int varcharLen;
 }
 
 %%
 
-expression:
+start_expression:
     statements SEMI {
         varList.clear();
         constraintList.clear();
@@ -135,8 +139,14 @@ variables:
 variable:
     id type {
         $$ = new Variable($1->getName(), $2);
+        if ($2 == DataType::varchar) {
+            $$->addVarcharLen(yylval.varcharLen);
+        }
     } | id type constraints {
         $$ = new Variable($1->getName(), $2, constraintList);
+        if ($2 == DataType::varchar) {
+            $$->addVarcharLen(yylval.varcharLen);
+        }
         constraintList.clear();
     };
 
@@ -156,11 +166,11 @@ constraint:
 // --- select
 
 select:
-     SELECT select_decl FROM id where_condition {
+     SELECT select_decl FROM id where_expr {
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $4;
         children[NodeType::select_list] = new SelectList(selectList);
-        children[NodeType::relation] = $5;
+        children[NodeType::expression] = $5;
 
         parseTree = new Query(children, CommandType::select);
      } ;
@@ -172,15 +182,15 @@ select_decl:
 
 select_list:
     select_list_element {
-        selectList.push_back(*$1);
+        selectList.push_back($1);
     } |
     select_list COMMA select_list_element {
-        selectList.push_back(*$3);
+        selectList.push_back($3);
     };
 
 asterisk:
     ASTERISK {
-    	selectList.push_back(Ident("*"));
+    	selectList.push_back(new Ident("*"));
     };
 
 select_list_element:
@@ -188,29 +198,25 @@ select_list_element:
         $$ = new Ident((*$1).getName(), (*$3).getName());
     } |
     id {
-        $$ = new Ident((*$1).getName());
+        $$ = $1;
+    } |
+    constant {
+        $$ = $1;
+    } |
+    exprssn {
+        $$ = $1;
     };
 
-where_condition:
-    WHERE where_element relation where_element {
-        $$ = new Relation($2, $3, $4);
-    } | 
-    /*empty*/{ $$ = nullptr; };
 
+where_expr:
+    WHERE root_expr {
+        $$ = $2;
+    } | 
+    /*empty*/ { $$ = nullptr; };
+    
 where_element:
     id { $$ = new Ident(*$1); } |
     constant { $$ = $1; };
-
-logic_operator:
-
-
-relation:
-    EQUAL { $$ = RelationType::equal; } |
-    GREATER { $$ = RelationType::greater;} |
-    GREATER_EQ { $$ = RelationType::greater_eq;} |
-    LESS { $$ = RelationType::less; } |
-    LESS_EQ { $$ = RelationType::less_eq;} |
-    NOT_EQ { $$ = RelationType::not_equal;};
 
 // --- show create table
 
@@ -266,12 +272,12 @@ value_list:
 
 // --- update
 update:
-    UPDATE id SET assignings where_condition {
+    UPDATE id SET assignings where_expr {
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $2;
         children[NodeType::ident_list] = new IdentList(identList);
         children[NodeType::constant_list] = new ConstantList(constantList);
-        children[NodeType::relation] = $5;
+        children[NodeType::expression] = $5;
 
         parseTree = new Query(children, CommandType::update);
     };
@@ -291,17 +297,87 @@ assigning:
 // --- delete
 
 delete:
-    DELETE FROM id where_condition {
+    DELETE FROM id where_expr {
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $3;
         children[NodeType::ident_list] = new IdentList(identList);
         children[NodeType::constant_list] = new ConstantList(constantList);
-        children[NodeType::relation] = $4;
+        children[NodeType::expression] = $4;
 
         parseTree = new Query(children, CommandType::remove);
     };
 
-// ---
+
+root_expr: 
+    root_expr logic_oper relation_expr {
+        $$ = new Expression($1, $2, $3);
+    } |
+    relation_expr {
+        $$ = $1;
+    };
+
+relation_expr: 
+    relation_expr relations exprssn {
+        $$ = new Expression($1, $2, $3);
+    } | 
+    exprssn {
+        $$ = $1;
+    };
+
+exprssn: 
+    exprssn plus_minus term {
+        $$ = new Expression($1, $2, $3);
+    } | 
+    term {
+        $$ = $1;
+    };
+
+term: 
+    term mul_div factor {
+        $$ = new Expression($1, $2, $3);
+    } | 
+    factor {
+        $$ = $1;
+    };
+
+factor: 
+    LPAREN root_expr RPAREN {
+        $$ = $2;
+    } | 
+    NOT root_expr {
+        $$ = new Expression(new Expression(new Ident("")), ExprUnit::not_, $2);
+    } |
+    MINUS factor {
+        $$ = new Expression(new Expression(new IntConstant("0")), ExprUnit::sub, $2);
+    } | 
+    val_or_var {
+        $$ = new Expression($1);
+    };
+
+relations: 
+    EQUAL { $$ = ExprUnit::equal; } |
+    NOT_EQ { $$ = ExprUnit::not_equal; } |
+    GREATER { $$ = ExprUnit::greater; } |
+    GREATER_EQ { $$ = ExprUnit::greater_eq; } |
+    LESS { $$ = ExprUnit::less; } |
+    LESS_EQ { $$ = ExprUnit::less_eq; };
+
+plus_minus: 
+    PLUS { $$ = ExprUnit::add; } |
+    MINUS { $$ = ExprUnit::sub; };
+
+mul_div:
+    DIVIDE { $$ = ExprUnit::div; } |
+    ASTERISK { $$ = ExprUnit::mul; }
+
+val_or_var:
+    constant { $$ = $1; } |
+    id { $$ = $1; } |
+    id DOT id { $$ = new Ident($1->getName(), $3->getName()); };
+
+logic_oper:
+    AND { $$ = ExprUnit::and_; } |
+    OR { $$ = ExprUnit::or_; };
 
 constant:
     int_const { $$ = $1; } |
@@ -332,7 +408,7 @@ null_:
 type:
     INT { $$ = DataType::integer; } |
     REAL { $$ = DataType::real; } |
-    TEXT { $$ = DataType::text; };
+    VARCHAR { $$ = DataType::varchar; };
 
 id:
     ID { $$ = new Ident(*yylval.name); }
@@ -340,6 +416,7 @@ id:
 %%
 
 void yyerror(const char *s) {
+    fprintf(stderr, "%s\n", s);
     ex.reset(new exc::SyntaxException());
 }
 
@@ -353,6 +430,7 @@ void destroy() {
     selectList.clear();
     constantList.clear();
     ex = nullptr;
+    yylval.varcharLen = 0;
 
     parseTree = nullptr;
 }
