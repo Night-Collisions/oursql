@@ -51,7 +51,7 @@ void Resolver::calculate(Expression* root, const rapidjson::Value& record,
             return;
         }
 
-        operations_[static_cast<unsigned int>(root->exprType())](root, e);
+        operations_[static_cast<unsigned int>(root->exprType())](root, record, e);
         if (e) {
             return;
         }
@@ -149,7 +149,12 @@ void Resolver::notEqual(Expression* root, const rapidjson::Value& record,
         return;
     }
     auto res = static_cast<Constant*>(root->getConstant())->getValue();
-    root->setConstant(new IntConstant(std::to_string(!std::stoi(res))));
+    try {
+        root->setConstant(new IntConstant(std::to_string(!std::stoi(res))));
+    } catch (std::invalid_argument& tmp) {
+        e.reset();
+        return;
+    }
 }
 
 void Resolver::greater(Expression* root, const rapidjson::Value& record,
@@ -167,18 +172,23 @@ void Resolver::greater(Expression* root, const rapidjson::Value& record,
         static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
 
     int res = 0;
-    if (type1 == DataType::integer && type2 == DataType::integer) {
-        auto a = std::stoi(value1);
-        auto b = std::stoi(value2);
+    try {
+        if (type1 == DataType::integer && type2 == DataType::integer) {
+            auto a = std::stoi(value1);
+            auto b = std::stoi(value2);
 
-        res = a > b;
-    } else if (type1 == DataType::real || type2 == DataType::real) {
-        auto a = std::stof(value1);
-        auto b = std::stof(value2);
+            res = a > b;
+        } else if (type1 == DataType::real || type2 == DataType::real) {
+            auto a = std::stof(value1);
+            auto b = std::stof(value2);
 
-        res = a > b;
-    } else {
-        res = value1 > value2;
+            res = a > b;
+        } else {
+            res = value1 > value2;
+        }
+    } catch (std::invalid_argument& tmp) {
+        e.reset();
+        return;
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -189,12 +199,6 @@ void Resolver::setStringValue(Expression* root, const rapidjson::Value& record,
                               std::string& a, std::string& b) {
     auto child1 = root->childs()[0];
     auto child2 = root->childs()[1];
-
-    /*    if (child1->exprType() != ExprUnit::value ||
-            child2->exprType() != ExprUnit::value) {
-            e.reset();  // TODO
-            return;
-        }*/
 
     if (!compareTypes(table_, all_columns_, child1->getConstant(),
                       child2->getConstant(), e, false)) {
@@ -229,18 +233,23 @@ void Resolver::greaterEqual(Expression* root, const rapidjson::Value& record,
         static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
 
     int res = 0;
-    if (type1 == DataType::integer && type2 == DataType::integer) {
-        auto a = std::stoi(value1);
-        auto b = std::stoi(value2);
+    try {
+        if (type1 == DataType::integer && type2 == DataType::integer) {
+            auto a = std::stoi(value1);
+            auto b = std::stoi(value2);
 
-        res = a >= b;
-    } else if (type1 == DataType::real || type2 == DataType::real) {
-        auto a = std::stof(value1);
-        auto b = std::stof(value2);
+            res = a >= b;
+        } else if (type1 == DataType::real || type2 == DataType::real) {
+            auto a = std::stof(value1);
+            auto b = std::stof(value2);
 
-        res = a >= b;
-    } else {
-        res = value1 >= value2;
+            res = a >= b;
+        } else {
+            res = value1 >= value2;
+        }
+    } catch (std::invalid_argument& tmp) {
+        e.reset();
+        return;
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -261,18 +270,23 @@ void Resolver::less(Expression* root, const rapidjson::Value& record,
         static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
 
     int res = 0;
-    if (type1 == DataType::integer && type2 == DataType::integer) {
-        auto a = std::stoi(value1);
-        auto b = std::stoi(value2);
+    try {
+        if (type1 == DataType::integer && type2 == DataType::integer) {
+            auto a = std::stoi(value1);
+            auto b = std::stoi(value2);
 
-        res = a < b;
-    } else if (type1 == DataType::real || type2 == DataType::real) {
-        auto a = std::stof(value1);
-        auto b = std::stof(value2);
+            res = a < b;
+        } else if (type1 == DataType::real || type2 == DataType::real) {
+            auto a = std::stof(value1);
+            auto b = std::stof(value2);
 
-        res = a < b;
-    } else {
-        res = value1 < value2;
+            res = a < b;
+        } else {
+            res = value1 < value2;
+        }
+    } catch (std::invalid_argument& tmp) {
+        e.reset();
+        return;
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -293,18 +307,23 @@ void Resolver::lessEqual(Expression* root, const rapidjson::Value& record,
         static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
 
     int res = 0;
-    if (type1 == DataType::integer && type2 == DataType::integer) {
-        auto a = std::stoi(value1);
-        auto b = std::stoi(value2);
+    try {
+        if (type1 == DataType::integer && type2 == DataType::integer) {
+            auto a = std::stoi(value1);
+            auto b = std::stoi(value2);
 
-        res = a <= b;
-    } else if (type1 == DataType::real || type2 == DataType::real) {
-        auto a = std::stof(value1);
-        auto b = std::stof(value2);
+            res = a <= b;
+        } else if (type1 == DataType::real || type2 == DataType::real) {
+            auto a = std::stof(value1);
+            auto b = std::stof(value2);
 
-        res = a <= b;
-    } else {
-        res = value1 <= value2;
+            res = a <= b;
+        } else {
+            res = value1 <= value2;
+        }
+    } catch (std::invalid_argument& tmp) {
+        e.reset();
+        return;
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -325,19 +344,24 @@ void Resolver::logicAnd(Expression* root, const rapidjson::Value& record,
         static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
 
     int res = 0;
-    if (type1 == DataType::integer && type2 == DataType::integer) {
-        auto a = std::stoi(value1);
-        auto b = std::stoi(value2);
+    try {
+        if (type1 == DataType::integer && type2 == DataType::integer) {
+            auto a = std::stoi(value1);
+            auto b = std::stoi(value2);
 
-        res = a && b;
-    } else if (type1 == DataType::real || type2 == DataType::real) {
-        auto a = std::stof(value1);
-        auto b = std::stof(value2);
+            res = a && b;
+        } else if (type1 == DataType::real || type2 == DataType::real) {
+            auto a = std::stof(value1);
+            auto b = std::stof(value2);
 
-        res = a && b;
-    } else {
+            res = a && b;
+        } else {
+            e.reset();
+            return;  // todo
+        }
+    } catch (std::invalid_argument& tmp) {
         e.reset();
-        return;  // todo
+        return;
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -358,19 +382,24 @@ void Resolver::logicOr(Expression* root, const rapidjson::Value& record,
         static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
 
     int res = 0;
-    if (type1 == DataType::integer && type2 == DataType::integer) {
-        auto a = std::stoi(value1);
-        auto b = std::stoi(value2);
+    try {
+        if (type1 == DataType::integer && type2 == DataType::integer) {
+            auto a = std::stoi(value1);
+            auto b = std::stoi(value2);
 
-        res = a || b;
-    } else if (type1 == DataType::real || type2 == DataType::real) {
-        auto a = std::stof(value1);
-        auto b = std::stof(value2);
+            res = a || b;
+        } else if (type1 == DataType::real || type2 == DataType::real) {
+            auto a = std::stof(value1);
+            auto b = std::stof(value2);
 
-        res = a || b;
-    } else {
+            res = a || b;
+        } else {
+            e.reset();
+            return;  // todo
+        }
+    } catch (std::invalid_argument& tmp) {
         e.reset();
-        return;  // todo
+        return;
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -390,28 +419,33 @@ void Resolver::div(Expression* root, const rapidjson::Value& record,
     auto type2 =
         static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
 
-    if (type1 == DataType::integer && type2 == DataType::integer) {
-        auto a = std::stoi(value1);
-        auto b = std::stoi(value2);
+    try {
+        if (type1 == DataType::integer && type2 == DataType::integer) {
+            auto a = std::stoi(value1);
+            auto b = std::stoi(value2);
 
-        if (b == 0) {
+            if (b == 0) {
+                e.reset();
+                return;  // todo
+            }
+
+            root->setConstant(new IntConstant(std::to_string(a / b)));
+        } else if (type1 == DataType::real || type2 == DataType::real) {
+            auto a = std::stof(value1);
+            auto b = std::stof(value2);
+            if (b == 0) {
+                e.reset();
+                return;  // todo
+            }
+
+            root->setConstant(new RealConstant(std::to_string(a / b)));
+        } else {
             e.reset();
             return;  // todo
         }
-
-        root->setConstant(new IntConstant(std::to_string(a / b)));
-    } else if (type1 == DataType::real || type2 == DataType::real) {
-        auto a = std::stof(value1);
-        auto b = std::stof(value2);
-        if (b == 0) {
-            e.reset();
-            return;  // todo
-        }
-
-        root->setConstant(new RealConstant(std::to_string(a / b)));
-    } else {
+    } catch (std::invalid_argument& tmp) {
         e.reset();
-        return;  // todo
+        return;
     }
 }
 
@@ -430,17 +464,22 @@ void Resolver::logicNot(Expression* root, const rapidjson::Value& record,
         static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
 
     int res = 0;
-    if (type2 == DataType::integer) {
-        auto a = std::stoi(value);
+    try {
+        if (type2 == DataType::integer) {
+            auto a = std::stoi(value);
 
-        res = !a;
-    } else if (type2 == DataType::real) {
-        auto a = std::stof(value);
+            res = !a;
+        } else if (type2 == DataType::real) {
+            auto a = std::stof(value);
 
-        res = !a;
-    } else {
+            res = !a;
+        } else {
+            e.reset();
+            return;  // todo
+        }
+    } catch (std::invalid_argument& tmp) {
         e.reset();
-        return;  // todo
+        return;
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -460,19 +499,24 @@ void Resolver::mul(Expression* root, const rapidjson::Value& record,
     auto type2 =
         static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
 
-    if (type1 == DataType::integer && type2 == DataType::integer) {
-        auto a = std::stoi(value1);
-        auto b = std::stoi(value2);
+    try {
+        if (type1 == DataType::integer && type2 == DataType::integer) {
+            auto a = std::stoi(value1);
+            auto b = std::stoi(value2);
 
-        root->setConstant(new IntConstant(std::to_string(a * b)));
-    } else if (type1 == DataType::real || type2 == DataType::real) {
-        auto a = std::stof(value1);
-        auto b = std::stof(value2);
+            root->setConstant(new IntConstant(std::to_string(a * b)));
+        } else if (type1 == DataType::real || type2 == DataType::real) {
+            auto a = std::stof(value1);
+            auto b = std::stof(value2);
 
-        root->setConstant(new RealConstant(std::to_string(a * b)));
-    } else {
+            root->setConstant(new RealConstant(std::to_string(a * b)));
+        } else {
+            e.reset();
+            return;  // todo
+        }
+    } catch (std::invalid_argument& tmp) {
         e.reset();
-        return;  // todo
+        return;
     }
 }
 
@@ -490,19 +534,24 @@ void Resolver::add(Expression* root, const rapidjson::Value& record,
     auto type2 =
         static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
 
-    if (type1 == DataType::integer && type2 == DataType::integer) {
-        auto a = std::stoi(value1);
-        auto b = std::stoi(value2);
+    try {
+        if (type1 == DataType::integer && type2 == DataType::integer) {
+            auto a = std::stoi(value1);
+            auto b = std::stoi(value2);
 
-        root->setConstant(new IntConstant(std::to_string(a + b)));
-    } else if (type1 == DataType::real || type2 == DataType::real) {
-        auto a = std::stof(value1);
-        auto b = std::stof(value2);
+            root->setConstant(new IntConstant(std::to_string(a + b)));
+        } else if (type1 == DataType::real || type2 == DataType::real) {
+            auto a = std::stof(value1);
+            auto b = std::stof(value2);
 
-        root->setConstant(new RealConstant(std::to_string(a + b)));
-    } else {
+            root->setConstant(new RealConstant(std::to_string(a + b)));
+        } else {
+            e.reset();
+            return;  // todo
+        }
+    } catch (std::invalid_argument& tmp) {
         e.reset();
-        return;  // todo
+        return;
     }
 }
 
@@ -520,18 +569,23 @@ void Resolver::sub(Expression* root, const rapidjson::Value& record,
     auto type2 =
         static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
 
-    if (type1 == DataType::integer && type2 == DataType::integer) {
-        auto a = std::stoi(value1);
-        auto b = std::stoi(value2);
+    try {
+        if (type1 == DataType::integer && type2 == DataType::integer) {
+            auto a = std::stoi(value1);
+            auto b = std::stoi(value2);
 
-        root->setConstant(new IntConstant(std::to_string(a - b)));
-    } else if (type1 == DataType::real || type2 == DataType::real) {
-        auto a = std::stof(value1);
-        auto b = std::stof(value2);
+            root->setConstant(new IntConstant(std::to_string(a - b)));
+        } else if (type1 == DataType::real || type2 == DataType::real) {
+            auto a = std::stof(value1);
+            auto b = std::stof(value2);
 
-        root->setConstant(new RealConstant(std::to_string(a - b)));
-    } else {
+            root->setConstant(new RealConstant(std::to_string(a - b)));
+        } else {
+            e.reset();
+            return;  // todo
+        }
+    } catch (std::invalid_argument& tmp) {
         e.reset();
-        return;  // todo
+        return;
     }
 }

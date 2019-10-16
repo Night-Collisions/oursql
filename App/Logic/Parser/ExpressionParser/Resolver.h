@@ -8,7 +8,9 @@
 #include "../../../Engine/Column.h"
 #include "../Nodes/Expression.h"
 
-typedef void (*func)(Expression* root, std::unique_ptr<exc::Exception>& e);
+typedef void (*func)(Expression* root, Expression* root,
+                     const rapidjson::Value& record,
+                     std::unique_ptr<exc::Exception>& e);
 
 class Resolver {
    public:
