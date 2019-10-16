@@ -4,7 +4,7 @@
 #include <map>
 
 std::array<std::string, static_cast<unsigned int>(DataType::Count)>
-    DataType2Names = {"int", "real", "text"};
+    DataType2Names = {"int", "real", "varchar"};
 std::map<std::string, DataType> Name2DataType = {
     {DataType2Names[0], DataType::integer},
     {DataType2Names[1], DataType::real},

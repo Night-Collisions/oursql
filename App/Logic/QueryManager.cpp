@@ -87,6 +87,7 @@ void QueryManager::dropTable(const Query& query,
     auto name = query.getChildren()[NodeType::ident]->getName();
     Engine::drop(name, e);
 }
+
 void QueryManager::select(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
@@ -106,32 +107,26 @@ void QueryManager::select(const Query& query,
         static_cast<SelectList*>(query.getChildren()[NodeType::select_list])
             ->getList();
 
-    std::vector<std::string> total_cols;
+    std::set<std::string> asterisk;
+    for (auto& m : all_columns) {
+        asterisk.insert(m.first);
+    }
+    ConditionChecker* checker = new ConditionChecker(true);
+    auto doc = Engine::select(name, asterisk, *checker, e);
+    auto vals = doc["values"].GetArray();
+
+    std::vector<Expression*> col_expr;
+
     for (auto& c : cols_from_parser) {
-        if (c->getName() == "*") {
-            for (auto& m : all_columns) {
-                total_cols.emplace_back(m.first);
-            }
-        } else if (all_columns.find((c->getName())) == all_columns.end()) {
-            e.reset(new exc::acc::ColumnNonexistent(c->getName(), name));
-            return;
-        } else {
-            total_cols.push_back(c->getName());
+        if (c->getNodeType() == NodeType::expression_unit) {
+            col_expr.push_back(static_cast<Expression*>(
+                query.getChildren()[NodeType::expression]));
         }
     }
 
-    ConditionChecker* checker = new ConditionChecker(true);
-
-    std::set<std::string> cols_to_engine;
-    for (auto& c : total_cols) {
-        cols_to_engine.insert(c);
-    }
-
-    auto doc = Engine::select(name, cols_to_engine, *checker, e);
     if (e != nullptr) {
         return;
     }
-    auto vals = doc["values"].GetArray();
 
     for (auto& i : vals) {
         auto root =
@@ -140,16 +135,39 @@ void QueryManager::select(const Query& query,
         if (e) {
             return;
         }
-    }
 
-    for (auto& i : vals) {
-        for (auto& c : total_cols) {
-            out << c + ": " + i[c].GetString() << std::endl;
+        int expr_cnt = 1;
+        std::string calc =
+            (root) ? (static_cast<Constant*>(root->getConstant())->getValue())
+                   : ("1");
+        if (calc != "0") {
+            for (auto& c : cols_from_parser) {
+                if (c->getNodeType() == NodeType::expression_unit) {
+                    auto expr = static_cast<Expression*>(c);
+                    Resolver::resolve(name, all_columns, expr, i, e);
+                    if (e) {
+                        return;
+                    }
+                    out << "expression " + std::to_string(expr_cnt++) + ": " +
+                               static_cast<Constant*>(expr->getConstant())
+                                   ->getValue()
+                        << std::endl;
+                } else if (c->getName() == "*") {
+                    for (auto& k : table.getColumns()) {
+                        out << k.getName() + ": " + i[k.getName()].GetString()
+                            << std::endl;
+                    }
+                } else {
+                    out << c->getName() + ": " + i[c->getName()].GetString()
+                        << std::endl;
+                }
+            }
         }
     }
 
     delete checker;
 }
+
 void QueryManager::insert(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {

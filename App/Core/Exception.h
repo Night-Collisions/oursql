@@ -13,7 +13,11 @@ enum class ExceptionType : unsigned int {
     was_not_loaded,
     repeat_column_in_table,
     repeat_column,
+    div_by_zero,
     set_data_type_mismatch = 601,
+    data_type_mismatch,
+    no_operation_for_type,
+    data_type_oversize,
     compare_data_type_mismatch,
     access_table_nonexistent = 701,
     access_column_nonexistent,
@@ -75,7 +79,7 @@ class WasNotLoaded : public Exception {
 class RepeatColumnNameInTable : public Exception {
    public:
     RepeatColumnNameInTable(const std::string& table_name,
-                     const std::string& column_name)
+                            const std::string& column_name)
         : Exception(ExceptionType::repeat_column_in_table,
                     "repeat column " + column_name + " in table " + table_name +
                         ".") {}
@@ -234,12 +238,43 @@ class SetDataTypeMismatch : public Exception {
                         DataType2String(type) + ".") {}
 };
 
+class NoOperationForType : public Exception {
+   public:
+    NoOperationForType(const DataType type1, const std::string& oper,
+                       const DataType type2)
+        : Exception(ExceptionType::no_operation_for_type,
+                    "no operation '" + oper + "' for " +
+                        DataType2String(type1) + " and " +
+                        DataType2String(type2) + ".") {}
+
+    NoOperationForType(const std::string& oper, const DataType type2)
+        : Exception(ExceptionType::no_operation_for_type,
+                    "no operation '" + oper + "' for " +
+                        DataType2String(type2) + ".") {}
+};
+
+// TODO: переделать аргумены конструктора, и переделать то, как оно вызывается в
+// коде
+class DataTypeOversize : public Exception {
+   public:
+    DataTypeOversize()
+        : Exception(ExceptionType::data_type_oversize,
+                    "value is too large for the data type.") {}
+};
+
 class CompareDataTypeMismatch : public Exception {
    public:
     CompareDataTypeMismatch(const DataType type1, const DataType type2)
         : Exception(ExceptionType::compare_data_type_mismatch,
                     "can't compare " + DataType2String(type1) + " and " +
                         DataType2String(type2) + ".") {}
+};
+
+class DivByZero : public Exception {
+   public:
+    DivByZero(const std::string& mess)
+        : Exception(ExceptionType::div_by_zero,
+                    "division by zero '" + mess + "'.") {}
 };
 };  // namespace exc
 

@@ -122,7 +122,7 @@ void Resolver::notEqual(Expression* root, const rapidjson::Value& record,
     try {
         root->setConstant(new IntConstant(std::to_string(!std::stoi(res))));
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 }
@@ -161,7 +161,7 @@ void Resolver::greater(Expression* root, const rapidjson::Value& record,
             res = value1 > value2;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 
@@ -226,7 +226,7 @@ void Resolver::greaterEqual(Expression* root, const rapidjson::Value& record,
             res = value1 >= value2;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 
@@ -267,7 +267,7 @@ void Resolver::less(Expression* root, const rapidjson::Value& record,
             res = value1 < value2;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 
@@ -308,7 +308,7 @@ void Resolver::lessEqual(Expression* root, const rapidjson::Value& record,
             res = value1 <= value2;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 
@@ -346,11 +346,12 @@ void Resolver::logicAnd(Expression* root, const rapidjson::Value& record,
 
             res = a && b;
         } else {
-            e.reset();
-            return;  // todo
+            e.reset(new exc::NoOperationForType(DataType::varchar, "and",
+                                                DataType::varchar));
+            return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 
@@ -388,11 +389,12 @@ void Resolver::logicOr(Expression* root, const rapidjson::Value& record,
 
             res = a || b;
         } else {
-            e.reset();
-            return;  // todo
+            e.reset(new exc::NoOperationForType(DataType::varchar, "or",
+                                                DataType::varchar));
+            return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 
@@ -423,8 +425,8 @@ void Resolver::div(Expression* root, const rapidjson::Value& record,
             auto b = std::stoi(value2);
 
             if (b == 0) {
-                e.reset();
-                return;  // todo
+                e.reset(new exc::DivByZero(value1 + "/" + value2));
+                return;
             }
 
             root->setConstant(new IntConstant(std::to_string(a / b)));
@@ -432,17 +434,18 @@ void Resolver::div(Expression* root, const rapidjson::Value& record,
             auto a = std::stof(value1);
             auto b = std::stof(value2);
             if (b == 0) {
-                e.reset();
-                return;  // todo
+                e.reset(new exc::DivByZero(value1 + "/" + value2));
+                return;
             }
 
             root->setConstant(new RealConstant(std::to_string(a / b)));
         } else {
-            e.reset();
-            return;  // todo
+            e.reset(new exc::NoOperationForType(DataType::varchar, "/",
+                                                DataType::varchar));
+            return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 }
@@ -458,11 +461,9 @@ void Resolver::logicNot(Expression* root, const rapidjson::Value& record,
         value = static_cast<Constant*>(child2->getConstant())->getValue();
     }
 
-    DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
-    setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+    setDataType(root->childs()[1]->getConstant(), type2, table_, all_columns_,
+                e);
     if (e) {
         return;
     }
@@ -478,11 +479,11 @@ void Resolver::logicNot(Expression* root, const rapidjson::Value& record,
 
             res = !a;
         } else {
-            e.reset();
-            return;  // todo
+            e.reset(new exc::NoOperationForType("not", DataType::varchar));
+            return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 
@@ -519,11 +520,12 @@ void Resolver::mul(Expression* root, const rapidjson::Value& record,
 
             root->setConstant(new RealConstant(std::to_string(a * b)));
         } else {
-            e.reset();
-            return;  // todo
+            e.reset(new exc::NoOperationForType(DataType::varchar, "-",
+                                                DataType::varchar));
+            return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 }
@@ -558,11 +560,12 @@ void Resolver::add(Expression* root, const rapidjson::Value& record,
 
             root->setConstant(new RealConstant(std::to_string(a + b)));
         } else {
-            e.reset();
+            e.reset(new exc::NoOperationForType(DataType::varchar, "+",
+                                                DataType::varchar));
             return;  // todo
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 }
@@ -597,11 +600,12 @@ void Resolver::sub(Expression* root, const rapidjson::Value& record,
 
             root->setConstant(new RealConstant(std::to_string(a - b)));
         } else {
-            e.reset();
-            return;  // todo
+            e.reset(new exc::NoOperationForType(DataType::varchar, "-",
+                                                DataType::varchar));
+            return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset();
+        e.reset(new exc::DataTypeOversize());
         return;
     }
 }
@@ -632,5 +636,21 @@ void Resolver::setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
         };
     } else {
         b = static_cast<Constant*>(right)->getDataType();
+    }
+}
+
+void Resolver::setDataType(Node* nod, DataType& a, const std::string& table,
+                           std::map<std::string, Column> all_columns,
+                           std::unique_ptr<exc::Exception>& e) {
+    if (nod->getNodeType() == NodeType::ident) {
+        auto col_name = static_cast<Ident*>(nod)->getName();
+        if (all_columns.find(col_name) != all_columns.end()) {
+            a = all_columns[col_name].getType();
+        } else {
+            e.reset(new exc::acc::ColumnNonexistent(col_name, table));
+            return;
+        };
+    } else {
+        a = static_cast<Constant*>(nod)->getDataType();
     }
 }

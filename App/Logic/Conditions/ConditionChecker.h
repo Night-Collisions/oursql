@@ -14,9 +14,9 @@
 
 class ConditionChecker {
    public:
-    ConditionChecker(bool alwaysTrue) : always_true_(alwaysTrue) {}
+   [[deprecated]] ConditionChecker(bool alwaysTrue) : always_true_(alwaysTrue) {}
 
-    ConditionChecker(std::string left, std::string right, NodeType leftNd,
+    [[deprecated]] ConditionChecker(std::string left, std::string right, NodeType leftNd,
                      NodeType rightNd, RelationType rel, DataType dataType)
         : left_(left),
           right_(right),

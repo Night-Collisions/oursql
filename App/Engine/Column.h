@@ -45,6 +45,7 @@ class Column {
     [[nodiscard]] std::vector<std::string> getData() const { return data_; };
 
     void addData(const std::string&, std::unique_ptr<exc::Exception>&);
+    bool isNull() { return is_null_; }
 
    private:
     static bool checkConstraint(const std::set<ColumnConstraint>&,
@@ -55,6 +56,7 @@ class Column {
     DataType type_;
     std::set<ColumnConstraint> constraint_;
     std::vector<std::string> data_;
+    bool is_null_{false};
 };
 
 #endif

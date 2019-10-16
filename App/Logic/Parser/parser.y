@@ -208,11 +208,9 @@ select_list_element:
     constant {
         $$ = $1;
     } |
-    single_expr {
+    exprssn {
         $$ = $1;
     };
-
-single_expr: {};
 
 
 where_expr:
@@ -363,7 +361,7 @@ factor:
         $$ = $2;
     } | 
     NOT root_expr {
-        $$ = new Expression($2, ExprUnit::not_, $2);
+        $$ = new Expression(new Expression(new Ident("")), ExprUnit::not_, $2);
     } |
     MINUS factor {
         $$ = new Expression(new Expression(new IntConstant("0")), ExprUnit::sub, $2);

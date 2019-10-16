@@ -65,6 +65,10 @@ class Resolver {
                              std::map<std::string, Column> all_columns,
                              std::unique_ptr<exc::Exception>& e);
 
+    static void setDataType(Node* nod, DataType& a, const std::string& table,
+                             std::map<std::string, Column> all_columns,
+                             std::unique_ptr<exc::Exception>& e);
+
     static std::array<func, static_cast<unsigned int>(ExprUnit::Count)>
         operations_;
 
