@@ -3,6 +3,7 @@
 void Session::write(const std::string& response) {
     auto self(shared_from_this());
 
+    out_ << getSocketName() << ". Write:\n" << response << std::endl;
     tcp_socket_.async_write_some(
         asio::buffer(response.data(), response.length()),
         [self](std::error_code ec, const std::size_t) {
@@ -31,12 +32,11 @@ void Session::read() {
                 std::vector<char> a(bytes_readable);
                 auto b = asio::buffer(a.data(), a.size());
                 self->tcp_socket_.read_some(b);
-                std::string ans =
-                    std::string(self->data_.data(), length) +
-                    std::string(a.data(), a.size());
+                std::string ans = std::string(self->data_.data(), length) +
+                                  std::string(a.data(), a.size());
 
-                self->out_ << "From: " << self->getSocketName()
-                           << ". Get: " << ans << std::endl;
+                self->out_ << self->getSocketName() << ". Get: " << ans
+                           << std::endl;
 
                 self->executer_->add({ans, self});
             }
