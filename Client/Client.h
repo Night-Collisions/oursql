@@ -1,6 +1,8 @@
 #ifndef OURSQL_CLIENT_H
 #define OURSQL_CLIENT_H
 
+#define ASIO_STANDALONE
+
 #include <iostream>
 #include <string>
 

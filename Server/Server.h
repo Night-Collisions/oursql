@@ -1,6 +1,8 @@
 #ifndef OURSQL_SERVER_H
 #define OURSQL_SERVER_H
 
+#define ASIO_STANDALONE
+
 #include <iostream>
 #include <mutex>
 #include <queue>

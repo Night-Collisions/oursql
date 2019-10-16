@@ -8,6 +8,8 @@ set(HEADERS
         Engine/Table.h
         Engine/Engine.h
         Core/Exception.h
+        Core/DataType.h
+        Logic/Parser/ParserManager.h
         Logic/Parser/Nodes/Node.h
         Logic/Parser/Nodes/Query.h
         Logic/Parser/Nodes/VarList.h
@@ -20,10 +22,9 @@ set(HEADERS
         Logic/Parser/Nodes/ConstantList.h
         Logic/Parser/Nodes/TextConstant.h
         Logic/Parser/Nodes/Constant.h
-        Logic/Conditions/ConditionChecker.h
-        Logic/Parser/ParserManager.h
-        Core/DataType.h
         Logic/Parser/Nodes/Relation.h
+        Logic/Parser/Nodes/NullConstant.h
+        Logic/Conditions/ConditionChecker.h
         Logic/QueryManager.h
         )
 
@@ -34,7 +35,9 @@ set(DEFINITIONS
         Engine/Engine.cpp
         Engine/Table.cpp
         Core/Exception.cpp
+        Core/DataType.cpp
         Engine/Engine.cpp
+        Logic/Parser/ParserManager.cpp
         Logic/Parser/Nodes/Node.cpp
         Logic/Parser/Nodes/Query.cpp
         Logic/Parser/Nodes/VarList.cpp
@@ -42,15 +45,14 @@ set(DEFINITIONS
         Logic/Parser/Nodes/Variable.cpp
         Logic/Parser/Nodes/Ident.cpp
         Logic/Parser/Nodes/SelectList.cpp
-        Logic/Conditions/ConditionChecker.cpp
         Logic/Parser/Nodes/IntConstant.cpp
         Logic/Parser/Nodes/RealConstant.cpp
         Logic/Parser/Nodes/TextConstant.cpp
         Logic/Parser/Nodes/IdentList.cpp
-        Logic/Parser/ParserManager.cpp
         Logic/Parser/Nodes/Relation.cpp
         Logic/Parser/Nodes/Constant.cpp
-        Core/DataType.cpp
+        Logic/Parser/Nodes/NullConstant.cpp
+        Logic/Conditions/ConditionChecker.cpp
         Logic/QueryManager.cpp
         )
 
@@ -60,7 +62,7 @@ init(${PROJECT_BINARY_DIR})
 
 init(${PROJECT_BINARY_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Logic/Parser/Nodes/NullConstant.cpp Logic/Parser/Nodes/NullConstant.h)
+add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
 
 add_library(${PROJECT_NAME}_SURSE ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
 

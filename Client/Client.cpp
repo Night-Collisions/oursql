@@ -1,5 +1,3 @@
-#define ASIO_STANDALONE
-
 #include "Client.h"
 
 #include <iostream>

@@ -54,7 +54,9 @@ FetchContent_Declare(
 FetchContent_Populate(asio)
 include_directories(${asio_SOURCE_DIR}/asio/include/)
 
-link_libraries(ws2_32 wsock32)
+if(WIN32)
+    link_libraries(ws2_32 wsock32)
+endif()
 
 add_subdirectory(Server)
 
