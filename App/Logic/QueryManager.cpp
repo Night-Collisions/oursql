@@ -283,42 +283,13 @@ void QueryManager::remove(const Query& query,
         return;
     }
 
-    ConditionChecker* checker = nullptr;
+    ConditionChecker* checker = new ConditionChecker(true);
 
     std::map<std::string, Column> all_columns;
     for (auto& c : table.getColumns()) {
         all_columns[c.getName()] = c;
     }
 
-    auto rel = static_cast<Relation*>(query.getChildren()[NodeType::relation]);
-    if (rel) {
-        auto left = rel->getLeft();
-        auto right = rel->getRight();
-        auto op = rel->getOperator();
-        DataType comp_type;
-        std::string left_value;
-        std::string right_value;
-
-        if (Resolver::compareTypes(name, all_columns, left, right, e, false)) {
-            setValue(left, left_value);
-            setValue(right, right_value);
-            if (left->getNodeType() == NodeType::ident) {
-                comp_type = all_columns[left->getName()].getType();
-            } else {
-                comp_type = static_cast<Constant*>(left)->getDataType();
-            }
-        } else {
-            return;
-        }
-
-        checker =
-            new ConditionChecker(left_value, right_value, left->getNodeType(),
-                                 right->getNodeType(), op, comp_type);
-    }
-
-    if (checker == nullptr) {
-        checker = new ConditionChecker(true);
-    }
 
     Engine::remove(name, *checker, e);
 

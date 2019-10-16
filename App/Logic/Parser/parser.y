@@ -10,7 +10,6 @@
     #include "../../App/Logic/Parser/Nodes/TextConstant.h"
     #include "../../App/Logic/Parser/Nodes/ConstantList.h"
     #include "../../App/Logic/Parser/Nodes/IdentList.h"
-    #include "../../App/Logic/Parser/Nodes/Relation.h"
     #include "../../App/Logic/Parser/Nodes/NullConstant.h"
     #include "../../App/Logic/Parser/Nodes/SelectList.h"
     #include "../../App/Logic/Parser/Nodes/Expression.h"
@@ -218,15 +217,6 @@ where_expr:
 where_element:
     id { $$ = new Ident(*$1); } |
     constant { $$ = $1; };
-
-
-relation:
-    EQUAL { $$ = RelationType::equal; } |
-    GREATER { $$ = RelationType::greater;} |
-    GREATER_EQ { $$ = RelationType::greater_eq;} |
-    LESS { $$ = RelationType::less; } |
-    LESS_EQ { $$ = RelationType::less_eq;} |
-    NOT_EQ { $$ = RelationType::not_equal;};
 
 // --- show create table
 
