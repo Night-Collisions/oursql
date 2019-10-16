@@ -102,10 +102,11 @@ std::string Engine::showCreate(const std::string& name,
 
         unsigned char mask = 1;
         while (mask != 0) {
-            if (mask & column.getConstraint() != 0) {
-                query.append(" " + ColumnConstraint2String(mask & column.getConstraint()));
+            unsigned char constraint = mask & column.getConstraint();
+            if (constraint != 0) {
+                query.append(" " + ColumnConstraint2String(constraint));
             }
-            mask <<= 1;
+            mask <<= 1u;
         }
 
         if (i != table.getColumns().size() - 1) {
