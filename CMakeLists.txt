@@ -51,6 +51,7 @@ FetchContent_Declare(
         UPDATE_DISCONNECTED 1
 )
 
+SET(CMAKE_CXX_FLAGS "-DASIO_STANDALONE -pthread")
 FetchContent_Populate(asio)
 include_directories(${asio_SOURCE_DIR}/asio/include/)
 
