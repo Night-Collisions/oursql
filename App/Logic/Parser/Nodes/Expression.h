@@ -50,7 +50,7 @@ class Expression : public Node {
     void setExprType(ExprUnit expr) { expr_unit_ = expr; }
 
     Node* getConstant() { return value_; }
-    void setVal(Node* val) {
+    void setConstant(Node* val) {
         delete value_;
         value_ = val;
     }

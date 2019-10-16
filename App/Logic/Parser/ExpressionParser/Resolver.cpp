@@ -1,6 +1,7 @@
 #include "Resolver.h"
 #include "../Nodes/Ident.h"
 #include "../Nodes/IntConstant.h"
+#include "../Nodes/RealConstant.h"
 
 void Resolver::resolve(std::string table,
                        std::map<std::string, Column> all_columns,
@@ -105,6 +106,12 @@ bool Resolver::compareTypes(const std::string& table_name,
         return true;
     }
 
+    if (!is_set) {
+        if (right_type == DataType::real && left_type == DataType::integer) {
+            return true;
+        }
+    }
+
     if (right_type == DataType::null_) {
         return true;
     }
@@ -124,35 +131,378 @@ bool Resolver::compareTypes(const std::string& table_name,
 
 void Resolver::equal(Expression* root, const rapidjson::Value& record,
                      std::unique_ptr<exc::Exception>& e) {
-    auto child1 = root->childs()[0];
-    auto child2 = root->childs()[1];
-
-    if (child1->exprType() != ExprUnit::value ||
-        child2->exprType() != ExprUnit::value) {
-        e.reset();  // TODO
-        return;
-    }
-
-    if (!compareTypes(table_, all_columns_, child1, child2, e, false)) {
-        return;
-    }
-
     std::string value1;
     std::string value2;
-
-    if (child1->getNodeType() == NodeType::ident) {
-        value1 = record[child1->getName()].GetString();
-    } else {
-        value1 = static_cast<Constant*>(child1->getConstant())->getValue();
-    }
-
-    if (child2->getNodeType() == NodeType::ident) {
-        value2 = record[child2->getName()].GetString();
-    } else {
-        value2 = static_cast<Constant*>(child2->getConstant())->getValue();
+    setStringValue(root, record, e, value1, value2);
+    if (e) {
+        return;
     }
 
     std::string res = std::to_string(value1 == value2);
-    root->setVal(new IntConstant(res));
+    root->setConstant(new IntConstant(res));
     // root->setExprType(ExprUnit::value);
+}
+
+void Resolver::notEqual(Expression* root, const rapidjson::Value& record,
+                        std::unique_ptr<exc::Exception>& e) {
+    equal(root, record, e);
+    if (e) {
+        return;
+    }
+    auto res = static_cast<Constant*>(root->getConstant())->getValue();
+    root->setConstant(new IntConstant(std::to_string(!std::stoi(res))));
+}
+
+void Resolver::greater(Expression* root, const rapidjson::Value& record,
+                       std::unique_ptr<exc::Exception>& e) {
+    std::string value1;
+    std::string value2;
+    setStringValue(root, record, e, value1, value2);
+    if (e) {
+        return;
+    }
+
+    auto type1 =
+        static_cast<Constant*>(root->childs()[0]->getConstant())->getDataType();
+    auto type2 =
+        static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
+
+    int res = 0;
+    if (type1 == DataType::integer && type2 == DataType::integer) {
+        auto a = std::stoi(value1);
+        auto b = std::stoi(value2);
+
+        res = a > b;
+    } else if (type1 == DataType::real || type2 == DataType::real) {
+        auto a = std::stof(value1);
+        auto b = std::stof(value2);
+
+        res = a > b;
+    } else {
+        res = value1 > value2;
+    }
+
+    root->setConstant(new IntConstant(std::to_string(res)));
+}
+
+void Resolver::setStringValue(Expression* root, const rapidjson::Value& record,
+                              std::unique_ptr<exc::Exception>& e,
+                              std::string& a, std::string& b) {
+    auto child1 = root->childs()[0];
+    auto child2 = root->childs()[1];
+
+    /*    if (child1->exprType() != ExprUnit::value ||
+            child2->exprType() != ExprUnit::value) {
+            e.reset();  // TODO
+            return;
+        }*/
+
+    if (!compareTypes(table_, all_columns_, child1->getConstant(),
+                      child2->getConstant(), e, false)) {
+        return;
+    }
+
+    if (child1->getConstant()->getNodeType() == NodeType::ident) {
+        a = record[child1->getName()].GetString();
+    } else {
+        a = static_cast<Constant*>(child1->getConstant())->getValue();
+    }
+
+    if (child2->getConstant()->getNodeType() == NodeType::ident) {
+        b = record[child2->getName()].GetString();
+    } else {
+        b = static_cast<Constant*>(child2->getConstant())->getValue();
+    }
+}
+
+void Resolver::greaterEqual(Expression* root, const rapidjson::Value& record,
+                            std::unique_ptr<exc::Exception>& e) {
+    std::string value1;
+    std::string value2;
+    setStringValue(root, record, e, value1, value2);
+    if (e) {
+        return;
+    }
+
+    auto type1 =
+        static_cast<Constant*>(root->childs()[0]->getConstant())->getDataType();
+    auto type2 =
+        static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
+
+    int res = 0;
+    if (type1 == DataType::integer && type2 == DataType::integer) {
+        auto a = std::stoi(value1);
+        auto b = std::stoi(value2);
+
+        res = a >= b;
+    } else if (type1 == DataType::real || type2 == DataType::real) {
+        auto a = std::stof(value1);
+        auto b = std::stof(value2);
+
+        res = a >= b;
+    } else {
+        res = value1 >= value2;
+    }
+
+    root->setConstant(new IntConstant(std::to_string(res)));
+}
+
+void Resolver::less(Expression* root, const rapidjson::Value& record,
+                    std::unique_ptr<exc::Exception>& e) {
+    std::string value1;
+    std::string value2;
+    setStringValue(root, record, e, value1, value2);
+    if (e) {
+        return;
+    }
+
+    auto type1 =
+        static_cast<Constant*>(root->childs()[0]->getConstant())->getDataType();
+    auto type2 =
+        static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
+
+    int res = 0;
+    if (type1 == DataType::integer && type2 == DataType::integer) {
+        auto a = std::stoi(value1);
+        auto b = std::stoi(value2);
+
+        res = a < b;
+    } else if (type1 == DataType::real || type2 == DataType::real) {
+        auto a = std::stof(value1);
+        auto b = std::stof(value2);
+
+        res = a < b;
+    } else {
+        res = value1 < value2;
+    }
+
+    root->setConstant(new IntConstant(std::to_string(res)));
+}
+
+void Resolver::lessEqual(Expression* root, const rapidjson::Value& record,
+                         std::unique_ptr<exc::Exception>& e) {
+    std::string value1;
+    std::string value2;
+    setStringValue(root, record, e, value1, value2);
+    if (e) {
+        return;
+    }
+
+    auto type1 =
+        static_cast<Constant*>(root->childs()[0]->getConstant())->getDataType();
+    auto type2 =
+        static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
+
+    int res = 0;
+    if (type1 == DataType::integer && type2 == DataType::integer) {
+        auto a = std::stoi(value1);
+        auto b = std::stoi(value2);
+
+        res = a <= b;
+    } else if (type1 == DataType::real || type2 == DataType::real) {
+        auto a = std::stof(value1);
+        auto b = std::stof(value2);
+
+        res = a <= b;
+    } else {
+        res = value1 <= value2;
+    }
+
+    root->setConstant(new IntConstant(std::to_string(res)));
+}
+
+void Resolver::logicAnd(Expression* root, const rapidjson::Value& record,
+                        std::unique_ptr<exc::Exception>& e) {
+    std::string value1;
+    std::string value2;
+    setStringValue(root, record, e, value1, value2);
+    if (e) {
+        return;
+    }
+
+    auto type1 =
+        static_cast<Constant*>(root->childs()[0]->getConstant())->getDataType();
+    auto type2 =
+        static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
+
+    int res = 0;
+    if (type1 == DataType::integer && type2 == DataType::integer) {
+        auto a = std::stoi(value1);
+        auto b = std::stoi(value2);
+
+        res = a && b;
+    } else if (type1 == DataType::real || type2 == DataType::real) {
+        auto a = std::stof(value1);
+        auto b = std::stof(value2);
+
+        res = a && b;
+    } else {
+        e.reset();
+        return;  // todo
+    }
+
+    root->setConstant(new IntConstant(std::to_string(res)));
+}
+
+void Resolver::logicOr(Expression* root, const rapidjson::Value& record,
+                       std::unique_ptr<exc::Exception>& e) {
+    std::string value1;
+    std::string value2;
+    setStringValue(root, record, e, value1, value2);
+    if (e) {
+        return;
+    }
+
+    auto type1 =
+        static_cast<Constant*>(root->childs()[0]->getConstant())->getDataType();
+    auto type2 =
+        static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
+
+    int res = 0;
+    if (type1 == DataType::integer && type2 == DataType::integer) {
+        auto a = std::stoi(value1);
+        auto b = std::stoi(value2);
+
+        res = a || b;
+    } else if (type1 == DataType::real || type2 == DataType::real) {
+        auto a = std::stof(value1);
+        auto b = std::stof(value2);
+
+        res = a || b;
+    } else {
+        e.reset();
+        return;  // todo
+    }
+
+    root->setConstant(new IntConstant(std::to_string(res)));
+}
+
+void Resolver::div(Expression* root, const rapidjson::Value& record,
+                   std::unique_ptr<exc::Exception>& e) {
+    std::string value1;
+    std::string value2;
+    setStringValue(root, record, e, value1, value2);
+    if (e) {
+        return;
+    }
+
+    auto type1 =
+        static_cast<Constant*>(root->childs()[0]->getConstant())->getDataType();
+    auto type2 =
+        static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
+
+    if (type1 == DataType::integer && type2 == DataType::integer) {
+        auto a = std::stoi(value1);
+        auto b = std::stoi(value2);
+
+        if (b == 0) {
+            e.reset();
+            return;  // todo
+        }
+
+        root->setConstant(new IntConstant(std::to_string(a / b)));
+    } else if (type1 == DataType::real || type2 == DataType::real) {
+        auto a = std::stof(value1);
+        auto b = std::stof(value2);
+        if (b == 0) {
+            e.reset();
+            return;  // todo
+        }
+
+        root->setConstant(new RealConstant(std::to_string(a / b)));
+    } else {
+        e.reset();
+        return;  // todo
+    }
+}
+
+void Resolver::logicNot(Expression* root, const rapidjson::Value& record,
+                        std::unique_ptr<exc::Exception>& e) {
+    auto child2 = root->childs()[1];
+    std::string value;
+
+    if (child2->getConstant()->getNodeType() == NodeType::ident) {
+        value = record[child2->getName()].GetString();
+    } else {
+        value = static_cast<Constant*>(child2->getConstant())->getValue();
+    }
+
+    auto type2 =
+        static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
+
+    int res = 0;
+    if (type2 == DataType::integer) {
+        auto a = std::stoi(value);
+
+        res = !a;
+    } else if (type2 == DataType::real) {
+        auto a = std::stof(value);
+
+        res = !a;
+    } else {
+        e.reset();
+        return;  // todo
+    }
+
+    root->setConstant(new IntConstant(std::to_string(res)));
+}
+
+void Resolver::mul(Expression* root, const rapidjson::Value& record,
+                   std::unique_ptr<exc::Exception>& e) {
+    std::string value1;
+    std::string value2;
+    setStringValue(root, record, e, value1, value2);
+    if (e) {
+        return;
+    }
+
+    auto type1 =
+        static_cast<Constant*>(root->childs()[0]->getConstant())->getDataType();
+    auto type2 =
+        static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
+
+    if (type1 == DataType::integer && type2 == DataType::integer) {
+        auto a = std::stoi(value1);
+        auto b = std::stoi(value2);
+
+        root->setConstant(new IntConstant(std::to_string(a * b)));
+    } else if (type1 == DataType::real || type2 == DataType::real) {
+        auto a = std::stof(value1);
+        auto b = std::stof(value2);
+
+        root->setConstant(new RealConstant(std::to_string(a * b)));
+    } else {
+        e.reset();
+        return;  // todo
+    }
+}
+
+void Resolver::add(Expression* root, const rapidjson::Value& record,
+                   std::unique_ptr<exc::Exception>& e) {
+    std::string value1;
+    std::string value2;
+    setStringValue(root, record, e, value1, value2);
+    if (e) {
+        return;
+    }
+
+    auto type1 =
+        static_cast<Constant*>(root->childs()[0]->getConstant())->getDataType();
+    auto type2 =
+        static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
+
+    if (type1 == DataType::integer && type2 == DataType::integer) {
+        auto a = std::stoi(value1);
+        auto b = std::stoi(value2);
+
+        root->setConstant(new IntConstant(std::to_string(a * b)));
+    } else if (type1 == DataType::real || type2 == DataType::real) {
+        auto a = std::stof(value1);
+        auto b = std::stof(value2);
+
+        root->setConstant(new RealConstant(std::to_string(a * b)));
+    } else {
+        e.reset();
+        return;  // todo
+    }
 }

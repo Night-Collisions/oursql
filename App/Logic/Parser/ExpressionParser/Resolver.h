@@ -57,6 +57,10 @@ class Resolver {
     static void deductVal(Expression* root, const rapidjson::Value& record,
                           std::unique_ptr<exc::Exception>& e);
 
+    static void setStringValue(Expression* root, const rapidjson::Value& record,
+                               std::unique_ptr<exc::Exception>& e,
+                               std::string& a, std::string& b);
+
     static std::map<unsigned int, func> operations_;
     static std::string table_;
     static std::map<std::string, Column> all_columns_;
