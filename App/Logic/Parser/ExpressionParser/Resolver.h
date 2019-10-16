@@ -54,9 +54,6 @@ class Resolver {
     static void sub(Expression* root, const rapidjson::Value& record,
                     std::unique_ptr<exc::Exception>& e);
 
-    static void deductVal(Expression* root, const rapidjson::Value& record,
-                          std::unique_ptr<exc::Exception>& e);
-
     static void setStringValue(Expression* root, const rapidjson::Value& record,
                                std::unique_ptr<exc::Exception>& e,
                                std::string& a, std::string& b);

@@ -24,8 +24,7 @@ void Resolver::resolve(std::string table,
         mul,
         div,
         add,
-        sub,
-        deductVal};
+        sub};
 
     operations_ = operations;  // ДАНИЛА, НЕ РАБОТАЕТ
 
@@ -495,12 +494,42 @@ void Resolver::add(Expression* root, const rapidjson::Value& record,
         auto a = std::stoi(value1);
         auto b = std::stoi(value2);
 
-        root->setConstant(new IntConstant(std::to_string(a * b)));
+        root->setConstant(new IntConstant(std::to_string(a + b)));
     } else if (type1 == DataType::real || type2 == DataType::real) {
         auto a = std::stof(value1);
         auto b = std::stof(value2);
 
-        root->setConstant(new RealConstant(std::to_string(a * b)));
+        root->setConstant(new RealConstant(std::to_string(a + b)));
+    } else {
+        e.reset();
+        return;  // todo
+    }
+}
+
+void Resolver::sub(Expression* root, const rapidjson::Value& record,
+                   std::unique_ptr<exc::Exception>& e) {
+    std::string value1;
+    std::string value2;
+    setStringValue(root, record, e, value1, value2);
+    if (e) {
+        return;
+    }
+
+    auto type1 =
+        static_cast<Constant*>(root->childs()[0]->getConstant())->getDataType();
+    auto type2 =
+        static_cast<Constant*>(root->childs()[1]->getConstant())->getDataType();
+
+    if (type1 == DataType::integer && type2 == DataType::integer) {
+        auto a = std::stoi(value1);
+        auto b = std::stoi(value2);
+
+        root->setConstant(new IntConstant(std::to_string(a - b)));
+    } else if (type1 == DataType::real || type2 == DataType::real) {
+        auto a = std::stof(value1);
+        auto b = std::stof(value2);
+
+        root->setConstant(new RealConstant(std::to_string(a - b)));
     } else {
         e.reset();
         return;  // todo
