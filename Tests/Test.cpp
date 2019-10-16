@@ -1,5 +1,7 @@
 #include "Test.h"
+
 #include "../Server/Engine/Engine.h"
+#include "../Server/Our.h"
 
 bool operator==(const Column& a, const Column& b) {
     return a.getName() == b.getName() && a.getType() == b.getType() &&
@@ -46,4 +48,13 @@ void clearDB() {
     std::system(command.c_str());
 
     Engine::freeAll();
+}
+
+void check_requests(const std::vector<request_description>& requests) {
+    for (const auto& i : requests) {
+        std::stringstream in(i.request);
+        std::stringstream out;
+        ASSERT_EQ(ourSQL::perform(in, out), i.exception);
+        EXPECT_EQ(out.str(), i.answer);
+    }
 }
