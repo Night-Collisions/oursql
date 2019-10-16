@@ -48,6 +48,10 @@ void QueryManager::createTable(const Query& query,
     for (auto& v : vars) {
         std::string col_name = v->getName();
         DataType type = v->getType();
+        int len = 0;
+        if (type == DataType::varchar) {
+            len = v->getVarcharLen();
+        }
 
         std::set<ColumnConstraint> constr_set;
 
@@ -250,36 +254,7 @@ void QueryManager::update(const Query& query,
         static_cast<ConstantList*>(query.getChildren()[NodeType::constant_list])
             ->getConstants();
 
-    ConditionChecker* c = nullptr;
-    auto rel = static_cast<Relation*>(query.getChildren()[NodeType::relation]);
-
-    if (rel) {
-        auto left = rel->getLeft();
-        auto right = rel->getRight();
-        auto op = rel->getOperator();
-        DataType comp_type;
-        std::string left_value;
-        std::string right_value;
-
-        if (Resolver::compareTypes(name, all_columns, left, right, e, false)) {
-            setValue(left, left_value);
-            setValue(right, right_value);
-            if (left->getNodeType() == NodeType::ident) {
-                comp_type = all_columns[left->getName()].getType();
-            } else {
-                comp_type = static_cast<Constant*>(left)->getDataType();
-            }
-        } else {
-            return;
-        }
-
-        c = new ConditionChecker(left_value, right_value, left->getNodeType(),
-                                 right->getNodeType(), op, comp_type);
-    }
-
-    if (c == nullptr) {
-        c = new ConditionChecker(true);
-    }
+    ConditionChecker* c = new ConditionChecker(true);
 
     std::unordered_map<std::string, std::string> values;
 

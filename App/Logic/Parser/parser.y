@@ -67,10 +67,8 @@
 %type<tConst> text_const
 %type<nullConst> null_
 %type<anyConstant> constant where_element select_list_element val_or_var
-%type<relation> where_condition
-%type<relType> relation
 %type<exprUnit> logic_oper plus_minus mul_div relations
-%type<expr> where_expr root_expr relation_expr exprssn term factor single_expr //delete last 
+%type<expr> where_expr root_expr relation_expr exprssn term factor 
 
 %start start_expression
 
@@ -86,8 +84,6 @@
     TextConstant *tConst;
     NullConstant *nullConst;
     Node *anyConstant;
-    Relation *relation;
-    RelationType relType;
     ExprUnit exprUnit;
     Expression *expr;
 
@@ -223,8 +219,6 @@ where_element:
     id { $$ = new Ident(*$1); } |
     constant { $$ = $1; };
 
-where_condition: {};
-
 
 relation:
     EQUAL { $$ = RelationType::equal; } |
@@ -288,12 +282,12 @@ value_list:
 
 // --- update
 update:
-    UPDATE id SET assignings where_condition {
+    UPDATE id SET assignings where_expr {
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $2;
         children[NodeType::ident_list] = new IdentList(identList);
         children[NodeType::constant_list] = new ConstantList(constantList);
-        children[NodeType::relation] = $5;
+        children[NodeType::expression] = $5;
 
         parseTree = new Query(children, CommandType::update);
     };
@@ -313,12 +307,12 @@ assigning:
 // --- delete
 
 delete:
-    DELETE FROM id where_condition {
+    DELETE FROM id where_expr {
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $3;
         children[NodeType::ident_list] = new IdentList(identList);
         children[NodeType::constant_list] = new ConstantList(constantList);
-        children[NodeType::relation] = $4;
+        children[NodeType::expression] = $4;
 
         parseTree = new Query(children, CommandType::remove);
     };

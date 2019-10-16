@@ -19,6 +19,7 @@ class Variable : public Node {
           constraints_(constraints) {}
 
     void addVarcharLen(size_t len) { varchar_len_ = len; }
+    size_t getVarcharLen() { return varchar_len_; }
 
     std::string getName() override { return name_; }
     DataType getType() { return data_type_; }
