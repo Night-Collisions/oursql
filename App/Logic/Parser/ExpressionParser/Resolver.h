@@ -14,9 +14,9 @@ typedef void (*func)(Expression* root, const rapidjson::Value& record,
 class Resolver {
    public:
     static void resolve(const std::string& table,
-                 std::map<std::string, Column> all_columns, Expression* root,
-                 const rapidjson::Value& record,
-                 std::unique_ptr<exc::Exception>& e);
+                        std::map<std::string, Column> all_columns,
+                        Expression* root, const rapidjson::Value& record,
+                        std::unique_ptr<exc::Exception>& e);
 
     static bool compareTypes(const std::string& table_name,
                              std::map<std::string, Column>& all_columns,
@@ -24,8 +24,8 @@ class Resolver {
                              std::unique_ptr<exc::Exception>& e, bool);
 
    private:
-    void calculate(Expression* root, const rapidjson::Value& record,
-                   std::unique_ptr<exc::Exception>& e);
+    static void calculate(Expression* root, const rapidjson::Value& record,
+                          std::unique_ptr<exc::Exception>& e);
 
     static void equal(Expression* root, const rapidjson::Value& record,
                       std::unique_ptr<exc::Exception>& e);
@@ -60,7 +60,13 @@ class Resolver {
                                std::unique_ptr<exc::Exception>& e,
                                std::string& a, std::string& b);
 
-    static std::array<func, static_cast<unsigned int>(ExprUnit::Count)> operations_;
+    static void setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
+                             const std::string& table,
+                             std::map<std::string, Column> all_columns,
+                             std::unique_ptr<exc::Exception>& e);
+
+    static std::array<func, static_cast<unsigned int>(ExprUnit::Count)>
+        operations_;
 
     static std::string table_;
     static std::map<std::string, Column> all_columns_;

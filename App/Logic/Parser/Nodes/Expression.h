@@ -34,7 +34,10 @@ class Expression : public Node {
     explicit Expression(Node* val)
         : Node(NodeType::expression_unit),
           expr_unit_(ExprUnit::value),
-          value_(val) {}
+          value_(val) {
+        childs_.push_back(nullptr);
+        childs_.push_back(nullptr);
+    }
 
     ~Expression() override {
         for (auto& c : childs_) {

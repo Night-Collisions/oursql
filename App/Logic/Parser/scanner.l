@@ -28,13 +28,14 @@
     
     extern FILE *yyin;
     extern FILE *yyout;
+    void yyerror(const char *s);
 
     int lineno = 1;
     long long int symbols = 0;
     //todo: free?
     char *tmp_str = (char *) malloc(100);
     std::string in;
-
+    std::string local_str;
 %}
 
 %option noyywrap
@@ -52,7 +53,7 @@ ICONST        "0"|[0-9]{digit}*
 FCONST        {digit}*"."{digit}+
 SCONST        {dquote}.*{dquote}|{aquote}.*{aquote}
 
-VARCHAR       "varchar"[ \t\r\f]*"("ICONST?[ \t\r\f]*")"
+VARCHAR       "varchar"[ \t\r\f]*"("[ \t\r\f]*{ICONST}{1}[ \t\r\f]*")"
 
 NOT_NULL      "not"[ \t\r\f]+"null"
 PRIMARY_KEY   "primary"[ \t\r\f]+"key"
@@ -105,7 +106,22 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "int"                      { return INT; }
 "real"                     { return REAL; }
 {VARCHAR}                  { 
-                              sscanf(yytext, "%d", &yylval.varcharLen);
+                              int i = 0;
+                              while (yytext[i] != '\0') {
+                                if (isdigit(yytext[i])) {
+                                    local_str += yytext[i];
+                                }
+                                ++i;
+                               }
+
+                               try {
+                                  yylval.varcharLen = std::stoi(local_str);
+                                  printf("%d", yylval.varcharLen);
+                               } catch(std::invalid_argument& tmp) {
+                                 yyerror("varchar oversize");
+                                 return 1;
+                               }
+
                               return VARCHAR; 
                            }
 

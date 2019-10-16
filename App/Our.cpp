@@ -35,7 +35,8 @@ unsigned int perform(std::istream& in, std::ostream& out) {
             return 0;
         }
         ParserManager pm;
-       // pm.setDebug(1);
+        //pm.setDebug(1);
+
        //select * from a where id = 5 or not (5 = id * b and 15 - 3 = 12);
        //select * from a where id = 5 or not (5 = id * b and 15 - 3 = 12);
        //select * from t where not not (id = (id + 5)*2 + 1 and sdf = 'sdf') or gg > 7;

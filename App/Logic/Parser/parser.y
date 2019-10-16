@@ -26,6 +26,8 @@
     #include <map>
     #include <sstream>
 
+    #define VARCHAR_MAX_LEN (1024)
+
     extern FILE *yyin;
     extern FILE *yyout;
 
@@ -142,6 +144,9 @@ variables:
 variable:
     id type {
         $$ = new Variable($1->getName(), $2);
+        if ($2 == DataType::varchar) {
+            $$->addVarcharLen(yylval.varcharLen);
+        }
     } | id type constraints {
         $$ = new Variable($1->getName(), $2, constraintList);
         if ($2 == DataType::varchar) {

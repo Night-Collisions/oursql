@@ -163,6 +163,11 @@ void QueryManager::select(const Query& query,
     }
     auto vals = doc["values"].GetArray();
 
+    Resolver::resolve(
+        name, all_columns,
+        static_cast<Expression*>(query.getChildren()[NodeType::expression]),
+        vals[1], e);
+
     for (auto& i : vals) {
         for (auto& c : total_cols) {
             out << c + ": " + i[c].GetString() << std::endl;
@@ -219,7 +224,8 @@ void QueryManager::insert(const Query& query,
     std::unordered_map<std::string, std::string> values;
 
     for (size_t i = 0; i < constants.size(); ++i) {
-        if (Resolver::compareTypes(name, all_columns, idents[i], constants[i], e, true)) {
+        if (Resolver::compareTypes(name, all_columns, idents[i], constants[i],
+                                   e, true)) {
             values[idents[i]->getName()] =
                 static_cast<Constant*>(constants[i])->getValue();
         } else {
@@ -229,7 +235,6 @@ void QueryManager::insert(const Query& query,
 
     Engine::insert(name, values, e);
 }
-
 
 void QueryManager::update(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
@@ -287,7 +292,8 @@ void QueryManager::update(const Query& query,
     std::unordered_map<std::string, std::string> values;
 
     for (size_t i = 0; i < constants.size(); ++i) {
-        if (Resolver::compareTypes(name, all_columns, idents[i], constants[i], e, true)) {
+        if (Resolver::compareTypes(name, all_columns, idents[i], constants[i],
+                                   e, true)) {
             values[idents[i]->getName()] =
                 static_cast<Constant*>(constants[i])->getValue();
         } else {
