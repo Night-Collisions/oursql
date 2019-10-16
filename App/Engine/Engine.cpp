@@ -1,6 +1,12 @@
 #include "Engine.h"
 #include "../Core/Exception.h"
 
+// Metafile:
+// reserved: 1 byte;
+// table name: 128 bytes (with '\0');
+// columns count: 1 byte;
+// columns: reserved: 1 byte, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
+
 std::unordered_map<std::string, rapidjson::Document> Engine::loaded_tables_;
 
 std::string Engine::getPathToTable(const std::string& name) {
@@ -17,35 +23,27 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
         return;
     }
 
-    rapidjson::Document d(rapidjson::kObjectType);
-    d.AddMember("name", table.getName(), d.GetAllocator());
-
-    rapidjson::Value columns(rapidjson::kArrayType);
-    for (const auto& column : table.getColumns()) {
-        rapidjson::Value column_value(rapidjson::kObjectType);
-        column_value.AddMember("name", column.getName(), d.GetAllocator());
-        column_value.AddMember("type",
-                               static_cast<unsigned int>(column.getType()),
-                               d.GetAllocator());
-
-        rapidjson::Value constraints(rapidjson::kArrayType);
-        for (const auto& constraint : column.getConstraint()) {
-            constraints.PushBack(static_cast<unsigned int>(constraint),
-                                 d.GetAllocator());
-        }
-        column_value.AddMember("constraints", constraints, d.GetAllocator());
-
-        columns.PushBack(column_value, d.GetAllocator());
-    }
-    d.AddMember("columns", columns, d.GetAllocator());
-
     try {
-        rapidjson::StringBuffer buffer;
-        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-        d.Accept(writer);
+        std::ofstream metafile(getPathToTableMeta(table.getName()), std::ios::binary);
+        unsigned char reserved = 0;
+        metafile << reserved;
+        char table_name[kTableNameLength_] = {0};
+        std::memcpy(table_name, table.getName().c_str(), table.getName().size());
+        metafile.write(table_name, kTableNameLength_);
+        unsigned char columns_count = table.getColumns().size();
+        metafile << columns_count;
 
-        std::ofstream metafile(getPathToTableMeta(table.getName()));
-        metafile << buffer.GetString();
+        for (const auto& column : table.getColumns()) {
+            unsigned char reserved = 0;
+            metafile << reserved;
+            unsigned char type = static_cast<unsigned char>(column.getType());
+            metafile << type;
+            unsigned char constraints = 0;  // TODO = column.getConstraints();
+            metafile << constraints;
+            char column_name[kColumnNameLength_] = {0};
+            std::memcpy(column_name, column.getName().c_str(), column.getName().size());
+            metafile.write(column_name, kColumnNameLength_);
+        }
 
         std::ofstream(getPathToTable(table.getName()));
     } catch (std::bad_alloc& bad_alloc) {
@@ -55,39 +53,34 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
     }
 }
 
-Table Engine::show(const std::string& name,
-                   std::unique_ptr<exc::Exception>& e) {
+Table Engine::show(const std::string& name, std::unique_ptr<exc::Exception>& e) {
     if (!exists(name)) {
         e.reset(new exc::acc::TableNonexistent(name));
         return Table();
     }
 
-    std::ifstream metafile(getPathToTableMeta(name));
-    std::stringstream sstream;
-    sstream << metafile.rdbuf();
-
-    rapidjson::Document d;
-    d.Parse(sstream.str());
-
+    std::ifstream metafile(getPathToTableMeta(name), std::ios::binary);
     Table table;
-    table.setName(d["name"].GetString());
 
-    const rapidjson::Value& columns_value = d["columns"];
-    for (auto& column_value : columns_value.GetArray()) {
-        std::set<ColumnConstraint> constraints;
+    unsigned char reserved;
+    metafile >> reserved;
+    char table_name[kTableNameLength_];
+    metafile.read(table_name, kTableNameLength_);
+    table.setName(table_name);
+    unsigned char columns_count;
+    metafile >> columns_count;
 
-        const rapidjson::Value& constraints_value = column_value["constraints"];
-        for (auto& constraint_value : constraints_value.GetArray()) {
-            constraints.insert(
-                static_cast<ColumnConstraint>(constraint_value.GetInt()));
-        }
-
+    for (int i = 0; i < columns_count; ++i) {
+        unsigned char reserved;
+        metafile >> reserved;
+        unsigned char type;
+        metafile >> type;
+        unsigned char constraints;
+        metafile >> constraints;
+        char column_name[kTableNameLength_];
+        metafile.read(column_name, kColumnNameLength_);
         std::unique_ptr<exc::Exception> e;
-        table.addColumn(
-            Column(column_value["name"].GetString(),
-                   static_cast<DataType>(column_value["type"].GetInt()), e,
-                   constraints),
-            e);
+        table.addColumn(Column(column_name, static_cast<DataType>(type), e), e);
     }
 
     return table;

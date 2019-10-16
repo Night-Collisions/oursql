@@ -4,6 +4,7 @@
 #define RAPIDJSON_HAS_STDSTRING 1
 
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
@@ -60,7 +61,9 @@ class Engine {
             std::unique_ptr<exc::Exception>& e);
 
    private:
-    static std::unordered_map<std::string, rapidjson::Document> loaded_tables_;
+    static const size_t kTableNameLength_ = 128;
+   static const size_t kColumnNameLength_ = 128;
+   static std::unordered_map<std::string, rapidjson::Document> loaded_tables_;
 };
 
 #endif
