@@ -3,31 +3,28 @@
 #include "../Nodes/IntConstant.h"
 #include "../Nodes/RealConstant.h"
 
+std::array<func, static_cast<unsigned int>(ExprUnit::Count)> Resolver::operations_ = {
+    equal,
+    notEqual,
+    greater,
+    greaterEqual,
+    less,
+    lessEqual,
+    logicAnd,
+    logicOr,
+    logicNot,
+    mul,
+    div,
+    add,
+    sub
+};
+std::string Resolver::table_;
+std::map<std::string, Column> Resolver::all_columns_;
+
 void Resolver::resolve(const std::string& table,
                        std::map<std::string, Column> all_columns,
                        Expression* root, const rapidjson::Value& record,
                        std::unique_ptr<exc::Exception>& e) {
-    void (*const operations[static_cast<unsigned int>(ExprUnit::Count)])(
-        Expression * root, const rapidjson::Value& record,
-        std::unique_ptr<exc::Exception>& e) = {
-        [](Expression* root, const rapidjson::Value& record,
-           std::unique_ptr<exc::Exception>& e) { assert(false); },
-        equal,
-        notEqual,
-        greater,
-        greaterEqual,
-        less,
-        lessEqual,
-        logicAnd,
-        logicOr,
-        logicNot,
-        mul,
-        div,
-        add,
-        sub};
-
-//    operations_ = operations;  // ДАНИЛА, НЕ РАБОТАЕТ
-
     table_ = table;
     all_columns_ = std::move(all_columns);
 }
