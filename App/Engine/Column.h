@@ -45,6 +45,10 @@ class Column {
     [[nodiscard]] std::vector<std::string> getData() const { return data_; };
 
     void addData(const std::string&, std::unique_ptr<exc::Exception>&);
+
+    void setN(size_t n) { n_ = n; }
+    size_t getN() const { return n_; }
+
    private:
     static bool checkConstraint(const std::set<ColumnConstraint>&,
                                 std::pair<ColumnConstraint, ColumnConstraint>&);
@@ -54,6 +58,7 @@ class Column {
     DataType type_;
     std::set<ColumnConstraint> constraint_;
     std::vector<std::string> data_;
+    size_t n_;
 };
 
 #endif

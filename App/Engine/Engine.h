@@ -1,17 +1,12 @@
 #ifndef OURSQL_APP_ENGINE_ENGINE_H_
 #define OURSQL_APP_ENGINE_ENGINE_H_
 
-#define RAPIDJSON_HAS_STDSTRING 1
-
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <sstream>
-#include <unordered_map>
-#include "../Logic/Conditions/ConditionChecker.h"
 #include "Table.h"
-#include "rapidjson/document.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/writer.h"
+#include "Cursor.h"
 
 class Engine {
    public:
@@ -19,48 +14,26 @@ class Engine {
 
     static void create(const Table& table, std::unique_ptr<exc::Exception>& e);
 
-    static Table show(const std::string& name,
+    static Table show(const std::string& table_name,
                       std::unique_ptr<exc::Exception>& e);
 
-    static std::string showCreate(const std::string& name,
+    static std::string showCreate(const std::string& table_name,
                                   std::unique_ptr<exc::Exception>& e);
 
-    static void drop(const std::string& name,
+    static void drop(const std::string& table_name,
                      std::unique_ptr<exc::Exception>& e);
 
-    static bool exists(const std::string& name);
+    static bool exists(const std::string& table_name);
 
-    static std::string getPathToTable(const std::string& name);
+    static std::string getPathToTable(const std::string& table_name);
 
-    static std::string getPathToTableMeta(const std::string& name);
+    static std::string getPathToTableMeta(const std::string& table_name);
 
-    static void load(const std::string& name,
-                     std::unique_ptr<exc::Exception>& e);
-
-    static void commit(const std::string& name,
-                       std::unique_ptr<exc::Exception>& e);
-
-    static void free(const std::string& name,
-                     std::unique_ptr<exc::Exception>& e);
-
-    static void freeAll();
-
-    static rapidjson::Document select(const std::string& table,
-                                      const std::set<std::string>& columns,
-                                      const ConditionChecker& condition,
-                                      std::unique_ptr<exc::Exception>& e);
-
-    static void insert(const std::string& table, const std::unordered_map<std::string,std::string>& values,
-            std::unique_ptr<exc::Exception>& e);
-
-    static void update(const std::string& table,  const std::unordered_map<std::string,std::string>& columns,
-            const ConditionChecker& conditionChecker, std::unique_ptr<exc::Exception>& e);
-
-    static void remove(const std::string& table, const ConditionChecker& conditionChecker,
-            std::unique_ptr<exc::Exception>& e);
+    static void freeMemory(const std::string& table_name);
 
    private:
-    static std::unordered_map<std::string, rapidjson::Document> loaded_tables_;
+    static const size_t kTableNameLength_ = 128;
+    static const size_t kColumnNameLength_ = 128;
 };
 
 #endif
