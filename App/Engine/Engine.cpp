@@ -80,7 +80,7 @@ Table Engine::show(const std::string& name, std::unique_ptr<exc::Exception>& e) 
         char column_name[kTableNameLength_];
         metafile.read(column_name, kColumnNameLength_);
         std::unique_ptr<exc::Exception> e;
-        table.addColumn(Column(column_name, static_cast<DataType>(type), e), e);
+        table.addColumn(Column(column_name, static_cast<DataType>(type), e), e);  // TODO constraints
     }
 
     return table;
@@ -100,8 +100,12 @@ std::string Engine::showCreate(const std::string& name,
         query.append("\n    " + column.getName() + " " +
                      DataType2String(column.getType()));
 
-        for (const auto& constraint : column.getConstraint()) {
-            query.append(" " + ColumnConstraint2String(constraint));
+        unsigned char mask = 1;
+        while (mask != 0) {
+            if (mask & column.getConstraint() != 0) {
+                query.append(" " + ColumnConstraint2String(mask & column.getConstraint()));
+            }
+            mask <<= 1;
         }
 
         if (i != table.getColumns().size() - 1) {
