@@ -17,11 +17,17 @@ class Executer;
 class Session : public std::enable_shared_from_this<Session> {
    public:
     Session(asio::ip::tcp::socket socket, std::shared_ptr<Executer> executer,
-            std::ostream& out = std::cout)
-        : tcp_socket_(std::move(socket)), executer_(executer), out_(out) {
+            std::ostream& out, std::shared_ptr<std::mutex> out_lock)
+        : tcp_socket_(std::move(socket)), executer_(executer), out_(out), out_lock_(out_lock) {
+        out_lock_->lock();
         out_ << "Start of session: " << getSocketName() << std::endl;
+        out_lock_->unlock();
     }
-    ~Session() { out_ << "End of session: " << getSocketName() << std::endl; }
+    ~Session() {
+        out_lock_->lock();
+        out_ << "End of session: " << getSocketName() << std::endl;
+        out_lock_->unlock();
+    }
     void start() { read(); }
     void write(const std::string& response);
 
@@ -30,6 +36,7 @@ class Session : public std::enable_shared_from_this<Session> {
     void read();
 
     std::ostream& out_;
+    std::shared_ptr<std::mutex> out_lock_;
     std::shared_ptr<Executer> executer_;
     std::array<char, 1024> data_;
     asio::ip::tcp::socket tcp_socket_;
@@ -45,7 +52,7 @@ class Server {
         tcp_acceptor_.async_accept(tcp_socket_, [this](std::error_code ec) {
             if (!ec)
                 std::make_shared<Session>(std::move(tcp_socket_), executer_,
-                                          out_)
+                                          out_, out_lock_)
                     ->start();
             accept();
         });
@@ -54,6 +61,7 @@ class Server {
     asio::ip::tcp::socket tcp_socket_;
     std::shared_ptr<Executer> executer_;
     std::ostream& out_;
+    std::shared_ptr<std::mutex> out_lock_;
 };
 
 class Executer : public std::enable_shared_from_this<Executer> {
@@ -64,9 +72,9 @@ class Executer : public std::enable_shared_from_this<Executer> {
         }
     }
     void add(std::pair<std::string, std::shared_ptr<Session>> pair) {
-        queue_lock.lock();
+        queue_lock_.lock();
         queue_.push(std::move(pair));
-        queue_lock.unlock();
+        queue_lock_.unlock();
     }
 
     void run();
@@ -74,7 +82,7 @@ class Executer : public std::enable_shared_from_this<Executer> {
    private:
     std::thread executer_;
     std::queue<std::pair<std::string, std::shared_ptr<Session>>> queue_;
-    std::mutex queue_lock;
+    std::mutex queue_lock_;
 };
 
 void run_server(const short port);

@@ -4,7 +4,8 @@
 
 size_t number_digit(unsigned int n) {
     size_t k;
-    for (k = 0; n > 0; n /= 10) {
+    n /= 10;
+    for (k = 1; n > 0; n /= 10, k++) {
     }
     return k;
 }
@@ -29,7 +30,7 @@ long Client::request(const std::string& request, std::string& ans) {
         std::istringstream(ans) >> code_exception;
         if (code_exception >= 0) {
             ans.erase(0,
-                      number_digit(code_exception) + 2);
+                      number_digit(code_exception) + 1);
         } else {
             assert("Server response failed.");
         }

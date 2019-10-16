@@ -3,7 +3,10 @@
 void Session::write(const std::string& response) {
     auto self(shared_from_this());
 
+    out_lock_->lock();
     out_ << getSocketName() << ". Write:\n" << response << std::endl;
+    out_lock_->unlock();
+
     tcp_socket_.async_write_some(
         asio::buffer(response.data(), response.length()),
         [self](std::error_code ec, const std::size_t) {
@@ -35,8 +38,10 @@ void Session::read() {
                 std::string ans = std::string(self->data_.data(), length) +
                                   std::string(a.data(), a.size());
 
+                self->out_lock_->lock();
                 self->out_ << self->getSocketName() << ". Get: " << ans
                            << std::endl;
+                self->out_lock_->unlock();
 
                 self->executer_->add({ans, self});
             }
@@ -49,8 +54,10 @@ Server::Server(asio::io_service& context, const short port,
                     asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
       tcp_socket_(context),
       executer_(executer),
-      out_(out) {
+      out_(out), out_lock_(std::make_shared<std::mutex>()) {
+    out_lock_->lock();
     out_ << "Start of server." << std::endl;
+    out_lock_->unlock();
     executer_->run();
     accept();
 }
@@ -59,16 +66,16 @@ void Executer::run() {
     auto self(shared_from_this());
     executer_ = std::thread([self]() {
         while (1) {
-            self->queue_lock.lock();
+            self->queue_lock_.lock();
             bool is_empty = self->queue_.empty();
-            self->queue_lock.unlock();
+            self->queue_lock_.unlock();
 
             if (!is_empty) {
-                self->queue_lock.lock();
+                self->queue_lock_.lock();
                 std::pair<std::string, std::shared_ptr<Session>> i =
                     self->queue_.front();
                 self->queue_.pop();
-                self->queue_lock.unlock();
+                self->queue_lock_.unlock();
 
                 std::stringstream in(i.first);
                 std::stringstream out;
