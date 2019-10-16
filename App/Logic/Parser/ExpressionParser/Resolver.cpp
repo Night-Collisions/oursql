@@ -54,31 +54,7 @@ bool Resolver::compareTypes(const std::string& table_name,
     DataType left_type = DataType::Count;
     DataType right_type = DataType::Count;
 
-    /*if (left->getNodeType() == NodeType::ident) {
-        auto col_name = static_cast<Ident*>(left)->getName();
-        if (all_columns.find(col_name) != all_columns.end()) {
-            left_type = all_columns[col_name].getType();
-        } else {
-            e.reset(new exc::acc::ColumnNonexistent(col_name, table_name));
-            return false;
-        };
-    } else {
-        left_type = static_cast<Constant*>(left)->getDataType();
-    }
-
-    if (right->getNodeType() == NodeType::ident) {
-        auto col_name = static_cast<Ident*>(right)->getName();
-        if (all_columns.find(col_name) != all_columns.end()) {
-            right_type = all_columns[col_name].getType();
-        } else {
-            e.reset(new exc::acc::ColumnNonexistent(col_name, table_name));
-            return false;
-        };
-    } else {
-        right_type = static_cast<Constant*>(right)->getDataType();
-    }*/
-
-    setDataTypes(left, right, left_type, right_type, table_name, all_columns_,
+    setDataTypes(left, right, left_type, right_type, table_name, all_columns,
                  e);
     if (e) {
         return false;
@@ -134,7 +110,6 @@ void Resolver::equal(Expression* root, const rapidjson::Value& record,
 
     std::string res = std::to_string(value1 == value2);
     root->setConstant(new IntConstant(res));
-    // root->setExprType(ExprUnit::value);
 }
 
 void Resolver::notEqual(Expression* root, const rapidjson::Value& record,

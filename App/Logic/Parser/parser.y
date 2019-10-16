@@ -363,7 +363,7 @@ factor:
         $$ = $2;
     } | 
     NOT root_expr {
-        $$ = new Expression(nullptr, ExprUnit::not_, $2);
+        $$ = new Expression($2, ExprUnit::not_, $2);
     } |
     MINUS factor {
         $$ = new Expression(new Expression(new IntConstant("0")), ExprUnit::sub, $2);

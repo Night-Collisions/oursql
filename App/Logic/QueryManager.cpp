@@ -166,7 +166,9 @@ void QueryManager::select(const Query& query,
     Resolver::resolve(
         name, all_columns,
         static_cast<Expression*>(query.getChildren()[NodeType::expression]),
-        vals[1], e);
+        vals[0], e);
+
+    auto root = static_cast<Expression*>(query.getChildren()[NodeType::expression]);
 
     for (auto& i : vals) {
         for (auto& c : total_cols) {

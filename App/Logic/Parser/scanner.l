@@ -116,7 +116,6 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 
                                try {
                                   yylval.varcharLen = std::stoi(local_str);
-                                  printf("%d", yylval.varcharLen);
                                } catch(std::invalid_argument& tmp) {
                                  yyerror("varchar oversize");
                                  return 1;

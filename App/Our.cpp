@@ -49,6 +49,8 @@ unsigned int perform(std::istream& in, std::ostream& out) {
     return 0;
 }
 
+//select * from t where not not (id = (id + 5)*2 + 1 and sdf = 'sdf') or gg > 7;
+
 void nonstop_perform(std::istream& in, std::ostream& out) {
     while (!in.eof()) {
         perform(in, out);
