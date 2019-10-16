@@ -3,7 +3,7 @@
 #include "../Nodes/IntConstant.h"
 #include "../Nodes/RealConstant.h"
 
-void Resolver::resolve(std::string table,
+void Resolver::resolve(const std::string& table,
                        std::map<std::string, Column> all_columns,
                        Expression* root, const rapidjson::Value& record,
                        std::unique_ptr<exc::Exception>& e) {
@@ -26,10 +26,10 @@ void Resolver::resolve(std::string table,
         add,
         sub};
 
-    operations_ = operations;  // ДАНИЛА, НЕ РАБОТАЕТ
+//    operations_ = operations;  // ДАНИЛА, НЕ РАБОТАЕТ
 
     table_ = table;
-    all_columns_ = all_columns;
+    all_columns_ = std::move(all_columns);
 }
 
 void Resolver::calculate(Expression* root, const rapidjson::Value& record,
@@ -51,7 +51,7 @@ void Resolver::calculate(Expression* root, const rapidjson::Value& record,
             return;
         }
 
-        operations_[static_cast<unsigned int>(root->exprType())](root, record, e);
+        //operations_[static_cast<unsigned int>(root->exprType())](root, record, e);
         if (e) {
             return;
         }

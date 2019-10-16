@@ -52,6 +52,8 @@ ICONST        "0"|[0-9]{digit}*
 FCONST        {digit}*"."{digit}+
 SCONST        {dquote}.*{dquote}|{aquote}.*{aquote}
 
+VARCHAR       "varchar"[ \t\r\f]*"("ICONST?[ \t\r\f]*")"
+
 NOT_NULL      "not"[ \t\r\f]+"null"
 PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 
@@ -101,8 +103,11 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 
 
 "int"                      { return INT; }
-"text"                     { return TEXT; }
 "real"                     { return REAL; }
+{VARCHAR}                  { 
+                              sscanf(yytext, "%d", &yylval.varcharLen);
+                              return VARCHAR; 
+                           }
 
 {NOT_NULL}                 { return NOT_NULL; }
 "null"                     { return NULL_; }

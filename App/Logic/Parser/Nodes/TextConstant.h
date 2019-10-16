@@ -13,7 +13,7 @@ class TextConstant : public Constant {
    public:
     explicit TextConstant(const std::string& value) : Constant(value) {}
 
-    DataType getDataType() override { return DataType::text; }
+    DataType getDataType() override { return DataType::varchar; }
 };
 
 #endif  // OURSQL_APP_LOGIC_PARSER_NODES_TEXTCONSTANT_H_

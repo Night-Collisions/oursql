@@ -51,7 +51,7 @@
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA ASTERISK
 %token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ
 %token ID ICONST FCONST SCONST
-%token INT REAL TEXT
+%token INT REAL VARCHAR
 %token NOT_NULL PRIMARY_KEY UNIQUE NULL_
 %token AND OR DIVIDE PLUS MINUS NOT
 
@@ -88,6 +88,8 @@
     RelationType relType;
     ExprUnit exprUnit;
     Expression *expr;
+
+    int varcharLen;
 }
 
 %%
@@ -142,6 +144,9 @@ variable:
         $$ = new Variable($1->getName(), $2);
     } | id type constraints {
         $$ = new Variable($1->getName(), $2, constraintList);
+        if ($2 == DataType::varchar) {
+            $$->addVarcharLen(yylval.varcharLen);
+        }
         constraintList.clear();
     };
 
@@ -416,7 +421,7 @@ null_:
 type:
     INT { $$ = DataType::integer; } |
     REAL { $$ = DataType::real; } |
-    TEXT { $$ = DataType::text; };
+    VARCHAR { $$ = DataType::varchar; };
 
 id:
     ID { $$ = new Ident(*yylval.name); }
@@ -438,6 +443,7 @@ void destroy() {
     selectList.clear();
     constantList.clear();
     ex = nullptr;
+    yylval.varcharLen = 0;
 
     parseTree = nullptr;
 }

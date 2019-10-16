@@ -3,7 +3,13 @@
 
 #include <string>
 
-enum class DataType : unsigned int { integer, real, text, null_, Count };
+enum class DataType : unsigned int {
+    integer,
+    real,
+    varchar,
+    null_,
+    Count,
+};
 
 std::string DataType2String(const DataType&);
 DataType String2DataType(const std::string&);
