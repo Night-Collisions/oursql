@@ -176,7 +176,7 @@ TEST(SYNTAX, TEST_3) {
 TEST(SYNTAX, TEST_4) {
     clearDB();
     check_requests({{"create table a(b text);", 0, ""},
-                    {"insert into a values ('\\';');", 0, ""}},
+                    {"insert into a values ('\\' ;');", 0, ""}},
                    client);
 }
 
@@ -674,3 +674,90 @@ TEST(DROP_TABLE, TEST_3) {
 //          "int.\n~~Exception in command:\"update a set a = '2';\"\n"}},
 //        client);
 //}
+
+TEST(WHERE, TEST_1) {
+    clearDB();
+    check_requests(
+        {{"create table a (a text, b text);", 0, ""},
+         {"insert into a values('ab', 'ab');", 0, ""},
+         {"select * from a where '1';", 0, ""},
+         {"insert into a values('ab', 'abc');", 0, ""},
+         {"insert into a values('ab', 'b');", 0, ""},
+         {"insert into a values('ab', 'bb');", 0, ""},
+         {"insert into a values('ab', 'a');", 0, ""},
+         {"insert into a values('ab', 'aa');", 0, ""},
+         {"insert into a values('ab', '');", 0, ""},
+         {"select * from a where a < b;", 0, "a: ab\nb: abc\na: ab\nb: b\na: ab\nb: bb\n"},
+         {"select * from a where a <= b;", 0, "a: ab\nb: ab\na: ab\nb: abc\na: ab\nb: b\na: ab\nb: bb\n"},
+         {"select * from a where a = b;", 0, "a: ab\nb: ab\n"},
+         {"select * from a where a >= b;", 0, "a: ab\nb: ab\na: ab\nb: a\na: ab\nb: aa\na: ab\nb: \n"},
+         {"select * from a where a > b;", 0, "a: ab\nb: a\na: ab\nb: aa\na: ab\nb: \n"},
+         {"select * from a where a >= b and b > 'aa' or b = 'b';", 0, "a: ab\nb: ab\na: ab\nb: b\n"},
+         {"select * from a where a < b and b != abc;", 0, "a: ab\nb: b\na: ab\nb: bb\n"},
+         {"select * from a where a + 'b' = 'abb';", -1, ""}, //TODO
+         {"select * from a where a - 'b' = 'a';", -1, ""}, //TODO
+         {"select * from a where a * 2 = 'abb';", -1, ""}, //TODO
+         {"select * from a where a / 'b' = 'abb';", -1, ""}}, client); //TODO
+}
+
+TEST(WHERE, TEST_2) {
+    clearDB();
+    check_requests({{"create table a (a int, b int);", 0, ""},
+                    {"insert into a values(-3, 3);", 0, ""},
+                    {"select * from a where 1;", 0, "a: -3\nb: 3"},
+                    {"select * from a where 0;", 0, ""},
+                    {"insert into a values(-1, -1);", 0, ""},
+                    {"insert into a values(-1, -10);", 0, ""},
+                    {"insert into a values(-1, 10);", 0, ""},
+                    {"select * from a where a < b;", 0, "a: -3\nb: 3\na: -1\nb: 10\n"},
+                    {"select * from a where a <= b;", 0, "a: -3\nb: 3\na: -1\nb: -1\na: -1\nb: 10\n"},
+                    {"select * from a where (12 + (4.5 * 2 / 3) + 2.0 * 2 - a * (-1)) / 2 = b + a;", 0, "a: -1\nb: 10\n"},
+                    {"select * from a where a >= -0.567;", 0, "a: -3\nb: 3\na: -1\nb: -1\na: -1\nb: 10\n"},
+                    {"select * from a where b != a and b != 10 and b != -10;", 0, "a: -3\nb: 3\n"}
+                    }, client);
+}
+
+TEST(WHERE, TEST_3) {
+    clearDB();
+    check_requests({{"create table a (a real, b real);", 0, ""},
+                    {"insert into a values(-3.25, 3);", 0, ""},
+                    {"select * from a where 0.0;", 0, ""},
+                    {"select * from a where 0.12;", 0, "a: -3.25\nb: 3\n"},
+                    {"insert into a values(-1.0, -1);", 0, ""},
+                    {"insert into a values(0.123, -10);", 0, ""},
+                    {"select * from a where a + b < (-1.234 * (-1) + 2.05 * 3 - 1.2 / 2.1) / (-3.7);", 0, "a: -1.0\nb: -1.0\na: 0.123\nb: -10.0\n"},
+                    {"select * from a where a  <= b;", 0, "a: -3.25\nb: 3.0\na: -1.0\nb: -1.0\n"},
+                    {"select * from a where a / 3.25 * 3 = b * -1;", 0, "a: -3.25\nb: 3.0\n"},
+                    {"select * from a where a >= b;", 0, "a: -1.0\nb: -1.0\na: 0.123\nb: -10.0\n"},
+                    {"select * from a where a > 0;", 0, "a: 0.123\nb: -10.0\n"}
+                   }, client);
+}
+
+TEST(WHERE, TEST_4) {
+    clearDB();
+    check_requests({{"create table a (a int, b real, c text);", 0, ""},
+                    {"insert into a values(1, 2.35, '67 89');", 0, ""},
+                    {"select * from a where a = b - 1.35;", 0, "a: 1\nb: 2.35\nc: 67 89\n"},
+                    {"select * from a where a <= c;", -1, ""}, //TODO
+                    {"select * from a where b = c;", -1, ""}, //TODO
+                    {"select * from a where -1;", -1, ""}, //TODO
+                    {"select * from a where not not a = a;", 0, "a: 1\nb: 2.35\nc: 67 89\n"},
+                    {"select * from a where not a != a;", 0, "a: 1\nb: 2.35\nc: 67 89\n"},
+                    {"select * from a where (a = 1) < 3;", 0, "a: 1\nb: 2.35\nc: 67 89\n"},
+                    {"select * from a where (a = 1) > (3 != 3);", 0, "a: 1\nb: 2.35\nc: 67 89\n"},
+                    {"select * from a where (a = 1) <= (3 != 3);", 0, ""},
+                    {"select * from a where (a = 1) * (3 != 3);", 0, "a: 1\nb: 2.35\nc: 67 89\n"},
+                    {"select * from a where (a = 1) + (3 != 3);", 0, "a: 1\nb: 2.35\nc: 67 89\n"},
+                    {"select * from a where (a = 1) / (3 != 3);", 0, "a: 1\nb: 2.35\nc: 67 89\n"},
+                    {"select * from a where (a = 1) - (3 != 3);", 0, ""},
+                    {"insert into a values(3, 0, '');", 0, ""},
+                    {"select * from a where c =;", -1, ""}, //TODO
+                    {"select * from a where not a < 1 or b = 2 and c = '';", 0, "a: 3\nb: 0\nc: \n"}, // Пока работает так. Разработчик Виктор обещал пофиксить к паре, но не сказал к какой. Ну или это особенность субд
+                    {"select * from a where a >= 1 and (b = 2 or c = '');", 0, "a: 3\nb: 0\nc: \n"},
+                    {"select * from a where a - 3 = b = 0;", 0, "a: 1\nb: 2.35\nc: 67 89\n"},
+                    {"select * from a where (a - 3 = b) * 3 = 0;", -1, ""}, //TODO
+                    {"select * from a where a - 3 = b * 1 = 0;", 0, "a: 3\nb: 0\nc: \n"}
+                   }, client);
+}
+
+//TODO: where delete, update
