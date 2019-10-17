@@ -117,10 +117,6 @@ void QueryManager::select(const Query& query,
         asterisk.insert(m.first);
     }
 
-    auto cursor = Cursor(name);
-    //    auto doc = Engine::select(name, asterisk, *checker, e);
-    //    auto vals = doc["values"].GetArray();
-
     std::vector<Expression*> col_expr;
 
     for (auto& c : cols_from_parser) {
@@ -134,6 +130,7 @@ void QueryManager::select(const Query& query,
         return;
     }
 
+    auto cursor = Cursor(name);
     while (cursor.next()) {
         auto ftch = cursor.fetch();
         std::map<std::string, std::string> m = mapFromFetch(all_columns, ftch);

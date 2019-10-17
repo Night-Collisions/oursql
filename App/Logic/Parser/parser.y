@@ -66,8 +66,8 @@
 %type<tConst> text_const
 %type<nullConst> null_
 %type<anyConstant> constant where_element select_list_element val_or_var
-%type<exprUnit> logic_oper plus_minus mul_div relations
-%type<expr> where_expr root_expr relation_expr exprssn term factor 
+%type<exprUnit> logic_or logic_and plus_minus mul_div relations
+%type<expr> where_expr root_expr relation_expr exprssn term factor under_root_expr
 
 %start start_expression
 
@@ -309,7 +309,15 @@ delete:
 
 
 root_expr: 
-    root_expr logic_oper relation_expr {
+    root_expr logic_or under_root_expr {
+        $$ = new Expression($1, $2, $3);
+    } |
+    under_root_expr {
+        $$ = $1;
+    };
+
+under_root_expr:
+    under_root_expr logic_and relation_expr {
         $$ = new Expression($1, $2, $3);
     } |
     relation_expr {
@@ -375,9 +383,11 @@ val_or_var:
     id { $$ = $1; } |
     id DOT id { $$ = new Ident($1->getName(), $3->getName()); };
 
-logic_oper:
-    AND { $$ = ExprUnit::and_; } |
-    OR { $$ = ExprUnit::or_; };
+logic_or:
+        OR { $$ = ExprUnit::or_; };
+
+logic_and:
+    AND { $$ = ExprUnit::and_; };
 
 constant:
     int_const { $$ = $1; } |
