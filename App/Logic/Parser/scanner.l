@@ -48,8 +48,8 @@ dquote        \"
 aquote        \'
 
 ID            {alpha}+{alnum_dash}*
-ICONST        "0"|[0-9]{digit}*
-FCONST        {digit}*"."{digit}+
+ICONST        "0"|"-"?[ \t\r\f]*[0-9]{digit}*
+FCONST        "-"?[ \t\r\f]*{digit}*"."{digit}+
 SCONST        {dquote}.*{dquote}|{aquote}.*{aquote}
 
 VARCHAR       "varchar"[ \t\r\f]*"("[ \t\r\f]*{ICONST}{1}[ \t\r\f]*")"
