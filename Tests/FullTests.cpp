@@ -515,7 +515,7 @@ TEST(DROP_TABLE, TEST_3) {
 //    clearDB();
 //    check_requests(
 //        {{"create table a(a int, b real, c text);", 0, ""},
-//         {"insert into a values (12, 12, ' ') where b = 3;",
+//         {"insert into a values (12, 12, ' ') where b = 2 + 1;",
 //          EXCEPTION2NUMB(exc::ExceptionType::syntax),
 //          "~~Exception 1:\n wrong syntax!\n"
 //          "~~Exception in command:\"insert into a values (12, 12, ' ') where "
@@ -580,7 +580,20 @@ TEST(DROP_TABLE, TEST_3) {
 //          "command:\"delete from a where b = '0';\"\n"}},
 //        client);
 //}
-
+//
+//TEST(DELETE, TEST_6) {
+//    clearDB();
+//    check_requests(
+//        {{"create table a(a int, b real, c text);", 0, ""},
+//         {"insert into a values (1, 0, '1');", 0, ""},
+//         {"insert into a values (1, 1, '0');", 0, ""},
+//         {"insert into a values (0, 1, '1');", 0, ""},
+//         {"insert into a values (0, 0, '1');", 0, ""},
+//         {"delete from a where b = a or a = 1;", 0, ""},
+//         {"select a from a;", 0, "a: 0\n"}},
+//        client);
+//}
+//
 //TEST(UPDATE, TEST_1) {
 //    clearDB();
 //    check_requests(
@@ -759,5 +772,3 @@ TEST(WHERE, TEST_4) {
                     {"select * from a where a - 3 = b * 1 = 0;", 0, "a: 3\nb: 0\nc: \n"}
                    }, client);
 }
-
-//TODO: where delete, update
