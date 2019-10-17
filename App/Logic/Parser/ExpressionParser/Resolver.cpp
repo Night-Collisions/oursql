@@ -20,7 +20,7 @@ std::string Resolver::resolve(const std::string& table,
 
     calculate(root, record, e);
     return (root) ? (static_cast<Constant*>(root->getConstant())->getValue())
-                  : ("1");
+                  : ("0");
 }
 
 void Resolver::calculate(Expression* root,
