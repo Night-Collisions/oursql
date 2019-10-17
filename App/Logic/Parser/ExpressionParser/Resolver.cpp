@@ -12,7 +12,8 @@ std::map<std::string, Column> Resolver::all_columns_;
 
 void Resolver::resolve(const std::string& table,
                        std::map<std::string, Column> all_columns,
-                       Expression* root, const rapidjson::Value& record,
+                       Expression* root,
+                       std::map<std::string, std::string> record,
                        std::unique_ptr<exc::Exception>& e) {
     table_ = table;
     all_columns_ = std::move(all_columns);
@@ -20,7 +21,8 @@ void Resolver::resolve(const std::string& table,
     calculate(root, record, e);
 }
 
-void Resolver::calculate(Expression* root, const rapidjson::Value& record,
+void Resolver::calculate(Expression* root,
+                         std::map<std::string, std::string> record,
                          std::unique_ptr<exc::Exception>& e) {
     if (e) {
         return;
@@ -99,7 +101,8 @@ bool Resolver::compareTypes(const std::string& table_name,
     }
 }
 
-void Resolver::equal(Expression* root, const rapidjson::Value& record,
+void Resolver::equal(Expression* root,
+                     std::map<std::string, std::string> record,
                      std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -112,7 +115,8 @@ void Resolver::equal(Expression* root, const rapidjson::Value& record,
     root->setConstant(new IntConstant(res));
 }
 
-void Resolver::notEqual(Expression* root, const rapidjson::Value& record,
+void Resolver::notEqual(Expression* root,
+                        std::map<std::string, std::string> record,
                         std::unique_ptr<exc::Exception>& e) {
     equal(root, record, e);
     if (e) {
@@ -127,7 +131,8 @@ void Resolver::notEqual(Expression* root, const rapidjson::Value& record,
     }
 }
 
-void Resolver::greater(Expression* root, const rapidjson::Value& record,
+void Resolver::greater(Expression* root,
+                       std::map<std::string, std::string> record,
                        std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -168,7 +173,8 @@ void Resolver::greater(Expression* root, const rapidjson::Value& record,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::setStringValue(Expression* root, const rapidjson::Value& record,
+void Resolver::setStringValue(Expression* root,
+                              std::map<std::string, std::string> record,
                               std::unique_ptr<exc::Exception>& e,
                               std::string& a, std::string& b) {
     auto child1 = root->childs()[0];
@@ -180,19 +186,20 @@ void Resolver::setStringValue(Expression* root, const rapidjson::Value& record,
     }
 
     if (child1->getConstant()->getNodeType() == NodeType::ident) {
-        a = record[child1->getConstant()->getName()].GetString();
+        a = record[child1->getConstant()->getName()];
     } else {
         a = static_cast<Constant*>(child1->getConstant())->getValue();
     }
 
     if (child2->getConstant()->getNodeType() == NodeType::ident) {
-        b = record[child2->getConstant()->getName()].GetString();
+        b = record[child2->getConstant()->getName()];
     } else {
         b = static_cast<Constant*>(child2->getConstant())->getValue();
     }
 }
 
-void Resolver::greaterEqual(Expression* root, const rapidjson::Value& record,
+void Resolver::greaterEqual(Expression* root,
+                            std::map<std::string, std::string> record,
                             std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -233,7 +240,7 @@ void Resolver::greaterEqual(Expression* root, const rapidjson::Value& record,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::less(Expression* root, const rapidjson::Value& record,
+void Resolver::less(Expression* root, std::map<std::string, std::string> record,
                     std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -274,7 +281,8 @@ void Resolver::less(Expression* root, const rapidjson::Value& record,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::lessEqual(Expression* root, const rapidjson::Value& record,
+void Resolver::lessEqual(Expression* root,
+                         std::map<std::string, std::string> record,
                          std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -315,7 +323,8 @@ void Resolver::lessEqual(Expression* root, const rapidjson::Value& record,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::logicAnd(Expression* root, const rapidjson::Value& record,
+void Resolver::logicAnd(Expression* root,
+                        std::map<std::string, std::string> record,
                         std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -358,7 +367,8 @@ void Resolver::logicAnd(Expression* root, const rapidjson::Value& record,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::logicOr(Expression* root, const rapidjson::Value& record,
+void Resolver::logicOr(Expression* root,
+                       std::map<std::string, std::string> record,
                        std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -401,7 +411,7 @@ void Resolver::logicOr(Expression* root, const rapidjson::Value& record,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::div(Expression* root, const rapidjson::Value& record,
+void Resolver::div(Expression* root, std::map<std::string, std::string> record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -450,13 +460,14 @@ void Resolver::div(Expression* root, const rapidjson::Value& record,
     }
 }
 
-void Resolver::logicNot(Expression* root, const rapidjson::Value& record,
+void Resolver::logicNot(Expression* root,
+                        std::map<std::string, std::string> record,
                         std::unique_ptr<exc::Exception>& e) {
     auto child2 = root->childs()[1];
     std::string value;
 
     if (child2->getConstant()->getNodeType() == NodeType::ident) {
-        value = record[child2->getName()].GetString();
+        value = record[child2->getName()];
     } else {
         value = static_cast<Constant*>(child2->getConstant())->getValue();
     }
@@ -490,7 +501,7 @@ void Resolver::logicNot(Expression* root, const rapidjson::Value& record,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::mul(Expression* root, const rapidjson::Value& record,
+void Resolver::mul(Expression* root, std::map<std::string, std::string> record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -530,7 +541,7 @@ void Resolver::mul(Expression* root, const rapidjson::Value& record,
     }
 }
 
-void Resolver::add(Expression* root, const rapidjson::Value& record,
+void Resolver::add(Expression* root, std::map<std::string, std::string> record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -570,7 +581,7 @@ void Resolver::add(Expression* root, const rapidjson::Value& record,
     }
 }
 
-void Resolver::sub(Expression* root, const rapidjson::Value& record,
+void Resolver::sub(Expression* root, std::map<std::string, std::string> record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;

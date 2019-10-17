@@ -3,7 +3,7 @@
 
 bool operator==(const Column& a, const Column& b) {
     return a.getName() == b.getName() && a.getType() == b.getType() &&
-        a.getConstraint() == b.getConstraint();
+           a.getBitConstraint() == b.getBitConstraint();
 }
 
 bool operator==(const Table& a, const Table& b) {

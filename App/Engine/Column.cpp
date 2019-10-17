@@ -19,12 +19,20 @@ std::string ColumnConstraint2String(const ColumnConstraint& c) {
     return ColumnConstraint2Names[static_cast<unsigned int>(c)];
 }
 
+std::string ColumnConstraint2String(unsigned char constraint) {
+    for (auto& c : Column::bitConstraintToSet(constraint)) {
+        return ColumnConstraint2String(c);
+    }
+    return std::string();
+}
+
 ColumnConstraint String2ColumnConstraint(const std::string& s) {
     return Name2ColumnConstraint.at(s);
 }
 //------//
 
-void Column::addData(const std::string& data, std::unique_ptr<exc::Exception>& e) {
+void Column::addData(const std::string& data,
+                     std::unique_ptr<exc::Exception>& e) {
     e.reset(nullptr);
     if (!checkDataForType(type_, data)) {
         e.reset(new exc::SetDataTypeMismatch(type_, data));
@@ -33,7 +41,9 @@ void Column::addData(const std::string& data, std::unique_ptr<exc::Exception>& e
     data_.push_back(data);
 }
 
-bool Column::checkConstraint(const std::set<ColumnConstraint>& constraint, std::pair<ColumnConstraint, ColumnConstraint>& constraints) {
+bool Column::checkConstraint(
+    const std::set<ColumnConstraint>& constraint,
+    std::pair<ColumnConstraint, ColumnConstraint>& constraints) {
     std::array<std::set<ColumnConstraint>,
                static_cast<unsigned int>(ColumnConstraint::Count)>
         incompatible = {std::set<ColumnConstraint>{},

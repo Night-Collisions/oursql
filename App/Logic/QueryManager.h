@@ -4,6 +4,7 @@
 #include <set>
 #include "../Engine/Column.h"
 #include "../Engine/Table.h"
+#include "../Engine/Value.h"
 #include "Parser/Nodes/Query.h"
 
 class QueryManager {
@@ -38,6 +39,8 @@ class QueryManager {
 
     static void setValue(Node* nod, std::string& value);
 
+    static std::map<std::string, std::string> mapFromFetch(
+        std::map<std::string, Column> all_columns, std::vector<Value> ftch);
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_

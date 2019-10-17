@@ -16,10 +16,10 @@ void Table::addColumn(const Column& column, std::unique_ptr<exc::Exception>& e) 
             return;
         }
     }
-    auto constraint = column.getConstraint();
+    auto constraint = column.getConstraints();
     if (constraint.find(ColumnConstraint::primary_key) != constraint.end()) {
         for (const auto& i : columns_) {
-            auto buff = i.getConstraint();
+            auto buff = i.getConstraints();
             if (buff.find(ColumnConstraint::primary_key) != buff.end()) {
                 e.reset(new exc::constr::DuplicatedPrimaryKeyInColumn(
                                      name_, i.getName(), column.getName()));

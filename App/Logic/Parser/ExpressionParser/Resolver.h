@@ -8,14 +8,16 @@
 #include "../../../Engine/Column.h"
 #include "../Nodes/Expression.h"
 
-typedef void (*func)(Expression* root, const rapidjson::Value& record,
+typedef void (*func)(Expression* root,
+                     std::map<std::string, std::string> record,
                      std::unique_ptr<exc::Exception>& e);
 
 class Resolver {
    public:
     static void resolve(const std::string& table,
                         std::map<std::string, Column> all_columns,
-                        Expression* root, const rapidjson::Value& record,
+                        Expression* root,
+                        std::map<std::string, std::string> record,
                         std::unique_ptr<exc::Exception>& e);
 
     static bool compareTypes(const std::string& table_name,
@@ -24,39 +26,50 @@ class Resolver {
                              std::unique_ptr<exc::Exception>& e, bool);
 
    private:
-    static void calculate(Expression* root, const rapidjson::Value& record,
+    static void calculate(Expression* root,
+                          std::map<std::string, std::string> record,
                           std::unique_ptr<exc::Exception>& e);
 
-    static void equal(Expression* root, const rapidjson::Value& record,
+    static void equal(Expression* root,
+                      std::map<std::string, std::string> record,
                       std::unique_ptr<exc::Exception>& e);
-    static void notEqual(Expression* root, const rapidjson::Value& record,
+    static void notEqual(Expression* root,
+                         std::map<std::string, std::string> record,
                          std::unique_ptr<exc::Exception>& e);
-    static void greater(Expression* root, const rapidjson::Value& record,
+    static void greater(Expression* root,
+                        std::map<std::string, std::string> record,
                         std::unique_ptr<exc::Exception>& e);
-    static void greaterEqual(Expression* root, const rapidjson::Value& record,
+    static void greaterEqual(Expression* root,
+                             std::map<std::string, std::string> record,
                              std::unique_ptr<exc::Exception>& e);
-    static void less(Expression* root, const rapidjson::Value& record,
+    static void less(Expression* root,
+                     std::map<std::string, std::string> record,
                      std::unique_ptr<exc::Exception>& e);
-    static void lessEqual(Expression* root, const rapidjson::Value& record,
+    static void lessEqual(Expression* root,
+                          std::map<std::string, std::string> record,
                           std::unique_ptr<exc::Exception>& e);
 
-    static void logicAnd(Expression* root, const rapidjson::Value& record,
+    static void logicAnd(Expression* root,
+                         std::map<std::string, std::string> record,
                          std::unique_ptr<exc::Exception>& e);
-    static void logicOr(Expression* root, const rapidjson::Value& record,
+    static void logicOr(Expression* root,
+                        std::map<std::string, std::string> record,
                         std::unique_ptr<exc::Exception>& e);
-    static void logicNot(Expression* root, const rapidjson::Value& record,
+    static void logicNot(Expression* root,
+                         std::map<std::string, std::string> record,
                          std::unique_ptr<exc::Exception>& e);
 
-    static void mul(Expression* root, const rapidjson::Value& record,
+    static void mul(Expression* root, std::map<std::string, std::string> record,
                     std::unique_ptr<exc::Exception>& e);
-    static void div(Expression* root, const rapidjson::Value& record,
+    static void div(Expression* root, std::map<std::string, std::string> record,
                     std::unique_ptr<exc::Exception>& e);
-    static void add(Expression* root, const rapidjson::Value& record,
+    static void add(Expression* root, std::map<std::string, std::string> record,
                     std::unique_ptr<exc::Exception>& e);
-    static void sub(Expression* root, const rapidjson::Value& record,
+    static void sub(Expression* root, std::map<std::string, std::string> record,
                     std::unique_ptr<exc::Exception>& e);
 
-    static void setStringValue(Expression* root, const rapidjson::Value& record,
+    static void setStringValue(Expression* root,
+                               std::map<std::string, std::string> record,
                                std::unique_ptr<exc::Exception>& e,
                                std::string& a, std::string& b);
 
@@ -66,8 +79,8 @@ class Resolver {
                              std::unique_ptr<exc::Exception>& e);
 
     static void setDataType(Node* nod, DataType& a, const std::string& table,
-                             std::map<std::string, Column> all_columns,
-                             std::unique_ptr<exc::Exception>& e);
+                            std::map<std::string, Column> all_columns,
+                            std::unique_ptr<exc::Exception>& e);
 
     static std::array<func, static_cast<unsigned int>(ExprUnit::Count)>
         operations_;

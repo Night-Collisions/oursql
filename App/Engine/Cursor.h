@@ -21,7 +21,7 @@ class Cursor {
     void remove();
 
 private:
-    void saveBlock(Block block, int n);
+    void saveBlock(Block& block, int n);
     std::fstream fstream_;
     Table table_;
     Block block_;

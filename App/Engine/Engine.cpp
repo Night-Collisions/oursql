@@ -5,7 +5,7 @@
 // reserved: 1 byte;
 // table name: 128 bytes (with '\0');
 // columns count: 1 byte;
-// columns: reserved: 1 byte, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
+// columns: reserved: 1 byte, n: 4 bytes, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
 
 std::string Engine::getPathToTable(const std::string& table_name) {
     return "DataBD/" + table_name;
@@ -34,9 +34,11 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
         for (const auto& column : table.getColumns()) {
             unsigned char reserved = 0;
             metafile << reserved;
+            int n = column.getN();
+            metafile.write((char*) &n, sizeof(n));
             unsigned char type = static_cast<unsigned char>(column.getType());
             metafile << type;
-            unsigned char constraints = column.getConstraints();
+            unsigned char constraints = column.getBitConstraint();
             metafile << constraints;
             char column_name[kColumnNameLength_] = {0};
             std::memcpy(column_name, column.getName().c_str(), column.getName().size());
@@ -62,8 +64,8 @@ Table Engine::show(const std::string& table_name, std::unique_ptr<exc::Exception
 
     unsigned char reserved;
     metafile >> reserved;
-    char table_name[kTableNameLength_];
-    metafile.read(table_name, kTableNameLength_);
+    char table_name_[kTableNameLength_];
+    metafile.read(table_name_, kTableNameLength_);
     table.setName(table_name);
     unsigned char columns_count;
     metafile >> columns_count;
@@ -71,6 +73,8 @@ Table Engine::show(const std::string& table_name, std::unique_ptr<exc::Exception
     for (int i = 0; i < columns_count; ++i) {
         unsigned char reserved;
         metafile >> reserved;
+        int n;
+        metafile.read((char*) &n, sizeof(n));
         unsigned char type;
         metafile >> type;
         unsigned char constraints;
@@ -78,7 +82,9 @@ Table Engine::show(const std::string& table_name, std::unique_ptr<exc::Exception
         char column_name[kTableNameLength_];
         metafile.read(column_name, kColumnNameLength_);
         std::unique_ptr<exc::Exception> e;
-        table.addColumn(Column(column_name, static_cast<DataType>(type), e, constraints), e);
+        Column column(column_name, static_cast<DataType>(type), e, constraints);
+        column.setN(n);
+        table.addColumn(column, e);
     }
 
     return table;
@@ -96,10 +102,13 @@ std::string Engine::showCreate(const std::string& table_name, std::unique_ptr<ex
         Column column = table.getColumns()[i];
         query.append("\n    " + column.getName() + " " +
                      DataType2String(column.getType()));
+        if (column.getType() == DataType::varchar) {
+            query.append("(" + std::to_string(column.getN()) + ")");
+        }
 
         unsigned char mask = 1;
         while (mask != 0) {
-            unsigned char constraint = mask & column.getConstraint();
+            unsigned char constraint = mask & column.getBitConstraint();
             if (constraint != 0) {
                 query.append(" " + ColumnConstraint2String(constraint));
             }

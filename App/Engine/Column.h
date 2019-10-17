@@ -18,6 +18,7 @@ enum class ColumnConstraint : unsigned int {
 };
 
 std::string ColumnConstraint2String(const ColumnConstraint&);
+std::string ColumnConstraint2String(unsigned char constraint);
 ColumnConstraint String2ColumnConstraint(const std::string&);
 
 class Column {
@@ -37,17 +38,48 @@ class Column {
         constraint_ = constraints;
     }
 
+    Column(std::string name, const DataType type,
+           std::unique_ptr<exc::Exception>& e, unsigned char constraint)
+        : name_(std::move(name)), type_(type) {
+        auto constraints = bitConstraintToSet(constraint);
+        constraint_ = constraints;
+    }
+
     [[nodiscard]] DataType getType() const { return type_; };
     [[nodiscard]] std::string getName() const { return name_; };
-    const std::set<ColumnConstraint>& getConstraint() const {
+    [[depricated]] const std::set<ColumnConstraint>& getConstraints() const {
         return constraint_;
     };
+
+    unsigned char getBitConstraint() const {
+        unsigned char res = 0;
+        for (auto& c : constraint_) {
+            res |= 1 << static_cast<unsigned char>(c);
+        }
+
+        return res;
+    }
+
+    static std::set<ColumnConstraint> bitConstraintToSet(unsigned char constraint) {
+        std::set<ColumnConstraint> res;
+        ColumnConstraint arr[]{ColumnConstraint::primary_key,
+                               ColumnConstraint::not_null,
+                               ColumnConstraint::unique};
+        for (int i = 0; i < 8; ++i) {
+            if ((constraint << (i)) != 0) {
+                res.insert(arr[i]);
+            }
+        }
+
+        return res;
+    }
+
     [[nodiscard]] std::vector<std::string> getData() const { return data_; };
 
     void addData(const std::string&, std::unique_ptr<exc::Exception>&);
 
-    void setN(size_t n) { n_ = n; }
-    size_t getN() const { return n_; }
+    void setN(int n) { n_ = n; }
+    int getN() const { return n_; }
 
    private:
     static bool checkConstraint(const std::set<ColumnConstraint>&,
@@ -58,7 +90,7 @@ class Column {
     DataType type_;
     std::set<ColumnConstraint> constraint_;
     std::vector<std::string> data_;
-    size_t n_;
+    int n_;
 };
 
 #endif

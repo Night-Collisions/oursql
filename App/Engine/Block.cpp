@@ -99,7 +99,7 @@ bool Block::insert(const std::vector<Value>& values) {
         memcpy(&(buffer_[4]), &(buffer_[stack + 1]), 4);
     }
     if (pos == -1) {
-        pos = position_;
+        pos = 8;
         while (true) {
             if (kBlockSize - pos < row_size_) {
                 return false;
@@ -113,10 +113,13 @@ bool Block::insert(const std::vector<Value>& values) {
 
     buffer_[pos] = State::exists;
     ++pos;
+    for (int i = 0; i < row_size_ - 1; ++i) {
+        buffer_[pos + i] = 0;
+    }
 
     for (int i = 0; i < table_.getColumns().size(); ++i) {
         if (values[i].is_null) {
-            buffer_[pos] &= 1;
+            buffer_[pos] = 1;
         }
         ++pos;
         switch (table_.getColumns()[i].getType()) {
@@ -152,10 +155,13 @@ bool Block::insert(const std::vector<Value>& values) {
 
 void Block::update(const std::vector<Value>& values) {
     int pos = position_ + 1;
+    for (int i = 0; i < row_size_ - 1; ++i) {
+        buffer_[pos + i] = 0;
+    }
 
     for (int i = 0; i < table_.getColumns().size(); ++i) {
         if (values[i].is_null) {
-            buffer_[pos] &= 1;
+            buffer_[pos] = 1;
         }
         ++pos;
         switch (table_.getColumns()[i].getType()) {

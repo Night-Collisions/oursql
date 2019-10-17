@@ -40,7 +40,7 @@ void Cursor::insert(const std::vector<Value>& values) {
     int p = fstream_.tellp();
 
     bool was_insert = false;
-    fstream_.seekg(0);
+    fstream_.seekg(0, std::ios::beg);
     int num = 0;
     while (!fstream_.eof() && !was_insert) {
         Block block = Block(table_, fstream_);
@@ -70,10 +70,10 @@ void Cursor::remove() {
     block_.remove();
 }
 
-void Cursor::saveBlock(Block block, int num) {
+void Cursor::saveBlock(Block& block, int num) {
     int p = fstream_.tellp();
     fstream_.seekp(num * Block::kBlockSize);
-    fstream_ << block.getBuffer();
+    fstream_.write(block.getBuffer(), Block::kBlockSize);
     fstream_.seekp(p);
 }
 

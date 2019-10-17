@@ -260,6 +260,10 @@ class DataTypeOversize : public Exception {
     DataTypeOversize()
         : Exception(ExceptionType::data_type_oversize,
                     "value is too large for the data type.") {}
+
+    explicit DataTypeOversize(const std::string& s)
+        : Exception(ExceptionType::data_type_oversize,
+                    "value of '" + s + "' is too large for the data type.") {}
 };
 
 class CompareDataTypeMismatch : public Exception {
