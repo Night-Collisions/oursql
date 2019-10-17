@@ -10,15 +10,17 @@ std::array<func, static_cast<unsigned int>(ExprUnit::Count)>
 std::string Resolver::table_;
 std::map<std::string, Column> Resolver::all_columns_;
 
-void Resolver::resolve(const std::string& table,
-                       std::map<std::string, Column> all_columns,
-                       Expression* root,
-                       std::map<std::string, std::string> record,
-                       std::unique_ptr<exc::Exception>& e) {
+std::string Resolver::resolve(const std::string& table,
+                              std::map<std::string, Column> all_columns,
+                              Expression* root,
+                              std::map<std::string, std::string> record,
+                              std::unique_ptr<exc::Exception>& e) {
     table_ = table;
     all_columns_ = std::move(all_columns);
 
     calculate(root, record, e);
+    return (root) ? (static_cast<Constant*>(root->getConstant())->getValue())
+                  : ("1");
 }
 
 void Resolver::calculate(Expression* root,

@@ -14,7 +14,7 @@ typedef void (*func)(Expression* root,
 
 class Resolver {
    public:
-    static void resolve(const std::string& table,
+    static std::string resolve(const std::string& table,
                         std::map<std::string, Column> all_columns,
                         Expression* root,
                         std::map<std::string, std::string> record,

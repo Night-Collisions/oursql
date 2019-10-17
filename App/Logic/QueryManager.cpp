@@ -136,26 +136,21 @@ void QueryManager::select(const Query& query,
         std::map<std::string, std::string> m = mapFromFetch(all_columns, ftch);
         auto root =
             static_cast<Expression*>(query.getChildren()[NodeType::expression]);
-        Resolver::resolve(name, all_columns, root, m, e);
+        std::string response = Resolver::resolve(name, all_columns, root, m, e);
         if (e) {
             return;
         }
-
         int expr_cnt = 1;
-        std::string calc =
-            (root) ? (static_cast<Constant*>(root->getConstant())->getValue())
-                   : ("1");
-        if (calc != "0") {
+        if (response != "0") {
             for (auto& c : cols_from_parser) {
                 if (c->getNodeType() == NodeType::expression_unit) {
                     auto expr = static_cast<Expression*>(c);
-                    Resolver::resolve(name, all_columns, expr, m, e);
+                    response = Resolver::resolve(name, all_columns, expr, m, e);
                     if (e) {
                         return;
                     }
                     out << "expression " + std::to_string(expr_cnt++) + ": " +
-                               static_cast<Constant*>(expr->getConstant())
-                                   ->getValue()
+                               response
                         << std::endl;
                 } else if (c->getName() == "*") {
                     for (auto& k : table.getColumns()) {
@@ -417,17 +412,13 @@ void QueryManager::update(const Query& query,
                     mapFromFetch(all_columns, f);
                 auto root = static_cast<Expression*>(
                     query.getChildren()[NodeType::expression]);
-                Resolver::resolve(name, all_columns, root, m, e);
+                std::string resp =
+                    Resolver::resolve(name, all_columns, root, m, e);
                 if (e) {
                     return;
                 }
 
-                std::string calc =
-                    (root) ? (static_cast<Constant*>(root->getConstant())
-                                  ->getValue())
-                           : ("1");
-
-                if (calc != "0") {
+                if (resp != "0") {
                     cursor.update(updated_records[k]);
                 }
             }
@@ -456,14 +447,11 @@ void QueryManager::remove(const Query& query,
         std::map<std::string, std::string> m = mapFromFetch(all_columns, ftch);
         auto root =
             static_cast<Expression*>(query.getChildren()[NodeType::expression]);
-        Resolver::resolve(name, all_columns, root, m, e);
+        std::string resp = Resolver::resolve(name, all_columns, root, m, e);
         if (e) {
             return;
         }
-        std::string calc =
-            (root) ? (static_cast<Constant*>(root->getConstant())->getValue())
-                   : ("1");
-        if (calc != "0") {
+        if (resp != "0") {
             cursor.remove();
         }
     }
