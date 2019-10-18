@@ -14,6 +14,7 @@ class Cursor {
    public:
     Cursor(const std::string& table_name);
     ~Cursor();
+    void reset();
     std::vector<Value> fetch();
     bool next();
     void insert(const std::vector<Value>& values);
