@@ -133,7 +133,8 @@ void QueryManager::select(const Query& query,
     auto cursor = Cursor(name);
     while (cursor.next()) {
         auto ftch = cursor.fetch();
-        std::map<std::string, std::string> m = mapFromFetch(all_columns, ftch);
+        std::map<std::string, std::string> m =
+            mapFromFetch(table.getColumns(), ftch);
         auto root =
             static_cast<Expression*>(query.getChildren()[NodeType::expression]);
         std::string response = Resolver::resolve(name, all_columns, root, m, e);
@@ -361,7 +362,8 @@ void QueryManager::update(const Query& query,
         auto ftch = cursor.fetch();
         fetch_arr.push_back(cursor.fetch());
         std::vector<Value> rec;
-        std::map<std::string, std::string> m = mapFromFetch(all_columns, ftch);
+        std::map<std::string, std::string> m =
+            mapFromFetch(table.getColumns(), ftch);
         for (int i = 0; i < table.getColumns().size(); ++i) {
             if (values.find(table.getColumns()[i].getName()) != values.end()) {
                 Value v;
@@ -409,7 +411,7 @@ void QueryManager::update(const Query& query,
                     continue;
                 }
                 std::map<std::string, std::string> m =
-                    mapFromFetch(all_columns, f);
+                    mapFromFetch(table.getColumns(), f);
                 auto root = static_cast<Expression*>(
                     query.getChildren()[NodeType::expression]);
                 std::string resp =
@@ -444,7 +446,8 @@ void QueryManager::remove(const Query& query,
 
     while (cursor.next()) {
         auto ftch = cursor.fetch();
-        std::map<std::string, std::string> m = mapFromFetch(all_columns, ftch);
+        std::map<std::string, std::string> m =
+            mapFromFetch(table.getColumns(), ftch);
         auto root =
             static_cast<Expression*>(query.getChildren()[NodeType::expression]);
         std::string resp = Resolver::resolve(name, all_columns, root, m, e);
@@ -466,16 +469,21 @@ void QueryManager::setValue(Node* nod, std::string& value) {
 }
 
 std::map<std::string, std::string> QueryManager::mapFromFetch(
-    std::map<std::string, Column> all_columns, std::vector<Value> ftch) {
+    const std::vector<Column>& cols, std::vector<Value> ftch) {
     std::map<std::string, std::string> m;
     int counter = 0;
-    for (auto& k : all_columns) {
-        if (ftch[counter++].is_null) {
-            m[k.first] = "0";
-            ++counter;
+    for (auto& k : cols) {
+        if (ftch[counter].is_null) {
+            if (k.getType() == DataType::varchar) {
+                m[k.getName()] = "";
+            } else {
+                m[k.getName()] = "null";
+            }
         } else {
-            m[k.first] = ftch[counter++].data;
+            m[k.getName()] = ftch[counter].data;
         }
+
+        ++counter;
     }
     return m;
 }

@@ -147,7 +147,10 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
                            }
                            
 {SCONST}                   {
-                              yylval.tConst = new TextConstant(std::string(yytext));
+                              for (int i = 1; i < sizeof(yytext) - 1; ++i) {
+                                local_str += yytext[i];
+                              }
+                              yylval.tConst = new TextConstant(local_str);
                               return SCONST; 
                            }        
 
