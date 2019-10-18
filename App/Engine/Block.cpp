@@ -1,11 +1,13 @@
 #include "Block.h"
 
+
+// delimiter: 1 byte;
 // Block:
 // rows count: 4 bytes;
 // address of removed stack: 4 bytes;
 // rows: state: 1 byte, fields
 // field: mask: 1 byte: not null: 0 bit
-//        integer: value / real: value / varchar(n): 2 bytes: value: 2 bytes
+//        integer: 4 bytes / real: 8 bytes / varchar(n): n bytes
 
 enum State : char {
     empty = 0,
@@ -13,30 +15,42 @@ enum State : char {
     removed = 1 << 1
 };
 
-Block::Block(Table table) : table_(std::move(table)) {
+Block::Block(const Table& table) {
+    setTable(table);
+    position_ = 8 - row_size_;
+}
+
+Block::Block(const Table& table, std::fstream& fstream) : Block(table) {
+    load(fstream);
+}
+
+void Block::setTable(const Table& table) {
+    table_ = table;
     row_size_ = 1 + table_.getColumns().size();
     for (const auto& column : table_.getColumns()) {
         switch (column.getType()) {
             case DataType::integer:
-                row_size_ += 4;
+                row_size_ += sizeof(int);
                 break;
             case DataType::real:
-                row_size_ += 8;
+                row_size_ += sizeof(double);
                 break;
             case DataType::varchar:
                 row_size_ += column.getN();
                 break;
         }
     }
+}
+
+void Block::load(std::fstream& fstream) {
+    fstream.read(buffer_, kBlockSize);
     position_ = 8 - row_size_;
 }
 
-Block::Block(Table table, std::fstream& fstream) : Block(std::move(table)) {
-    fstream.read(buffer_, kBlockSize);
-}
-
 int Block::getCount() const {
-    return *((int*) buffer_[0]);
+    int count;
+    memcpy(&count, buffer_, sizeof(count));
+    return count;
 }
 
 void Block::setCount(int count) {
@@ -60,19 +74,21 @@ std::vector<Value> Block::fetch() {
 
     for (const auto& column : table_.getColumns()) {
         Value value;
-        if ((buffer_[pos] & 1) != 0) {
-            value.is_null = true;
-        }
+        value.is_null = (buffer_[pos] == 1);
         ++pos;
         switch (column.getType()) {
             case DataType::integer: {
-                value.data = std::to_string(*((int*) buffer_[pos]));
-                pos += 4;
+                int i;
+                memcpy(&i, &(buffer_[pos]), sizeof(i));
+                value.data = std::to_string(i);
+                pos += sizeof(i);
                 break;
             }
             case DataType::real: {
-                value.data = std::to_string(*((double *) buffer_[pos]));
-                pos += 8;
+                double d;
+                memcpy(&d, &(buffer_[pos]), sizeof(d));
+                value.data = std::to_string(d);
+                pos += sizeof(d);
                 break;
             }
             case DataType::varchar:
@@ -112,79 +128,41 @@ bool Block::insert(const std::vector<Value>& values) {
     }
 
     buffer_[pos] = State::exists;
-    ++pos;
-    for (int i = 0; i < row_size_ - 1; ++i) {
-        buffer_[pos + i] = 0;
-    }
-
-    for (int i = 0; i < table_.getColumns().size(); ++i) {
-        if (values[i].is_null) {
-            buffer_[pos] = 1;
-        }
-        ++pos;
-        switch (table_.getColumns()[i].getType()) {
-            case DataType::integer: {
-                int a = std::stoi(values[i].data);
-                memcpy(&(buffer_[pos]), &a, sizeof(a));
-                pos += 4;
-                break;
-            }
-            case DataType::real: {
-                double d = std::stod(values[i].data);
-                memcpy(&(buffer_[pos]), &d, sizeof(d));
-                pos += 8;
-                break;
-            }
-            case DataType::varchar: {
-                char s[table_.getColumns()[i].getN()];
-                for (int j = 0; j < table_.getColumns()[i].getN(); ++j) {
-                    s[j] = 0;
-                }
-                for (int j = 0; j < values[i].data.size(); ++j) {
-                    s[j] = values[i].data[j];
-                }
-                memcpy(&(buffer_[pos]), s, table_.getColumns()[i].getN());
-                pos += table_.getColumns()[i].getN();
-                break;
-            }
-        }
-    }
+    setValues(values, pos + 1);
+    setCount(getCount() + 1);
 
     return true;
 }
 
 void Block::update(const std::vector<Value>& values) {
-    int pos = position_ + 1;
-    for (int i = 0; i < row_size_ - 1; ++i) {
-        buffer_[pos + i] = 0;
-    }
+    setValues(values, position_ + 1);
+}
+
+void Block::setValues(const std::vector<Value>& values, int pos) {
+    std::fill(buffer_ + pos, buffer_ + pos + row_size_ - 1, 0);
 
     for (int i = 0; i < table_.getColumns().size(); ++i) {
-        if (values[i].is_null) {
-            buffer_[pos] = 1;
-        }
+        buffer_[pos] = (values[i].is_null) ? (1) : (0);
         ++pos;
         switch (table_.getColumns()[i].getType()) {
             case DataType::integer: {
                 int a = std::stoi(values[i].data);
                 memcpy(&(buffer_[pos]), &a, sizeof(a));
-                pos += 4;
+                pos += sizeof(a);
                 break;
             }
             case DataType::real: {
                 double d = std::stod(values[i].data);
                 memcpy(&(buffer_[pos]), &d, sizeof(d));
-                pos += 8;
+                pos += sizeof(d);
                 break;
             }
             case DataType::varchar: {
                 char s[table_.getColumns()[i].getN()];
-                for (int j = 0; j < table_.getColumns()[i].getN(); ++j) {
-                    s[j] = 0;
-                }
                 for (int j = 0; j < values[i].data.size(); ++j) {
                     s[j] = values[i].data[j];
                 }
+                std::fill(s + values[i].data.size(), s + table_.getColumns()[i].getN(), 0);
                 memcpy(&(buffer_[pos]), s, table_.getColumns()[i].getN());
                 pos += table_.getColumns()[i].getN();
                 break;

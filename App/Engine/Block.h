@@ -1,6 +1,7 @@
 #ifndef OURSQL_BLOCK_H
 #define OURSQL_BLOCK_H
 
+#include <algorithm>
 #include <cstring>
 #include <vector>
 #include <array>
@@ -13,8 +14,10 @@ class Block {
    public:
     Block() = default;
     ~Block() { delete[] buffer_; }
-    Block(Table table);
-    Block(Table table, std::fstream& fstream);
+    Block(const Table& table);
+    Block(const Table& table, std::fstream& fstream);
+    void setTable(const Table& table);
+    void load(std::fstream& fstream);
     int getCount() const;
     void setCount(int count);
     bool next();
@@ -27,7 +30,9 @@ class Block {
     static const size_t kBlockSize = 65536;
 
 private:
-    char* buffer_ = new char[kBlockSize]{};
+    void setValues(const std::vector<Value>& values, int pos);
+
+    char* buffer_ = new char[kBlockSize];
     Table table_;
     size_t row_size_;
     int position_;

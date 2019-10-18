@@ -4,7 +4,10 @@ Cursor::Cursor(const std::string& table_name) {
     fstream_.open(Engine::getPathToTable(table_name), std::ios::binary | std::ios::in | std::ios::out);
     std::unique_ptr<exc::Exception> e;
     table_ = Engine::show(table_name, e);
-    block_ = Block(table_, fstream_);
+    char delimiter;
+    fstream_ >> delimiter;
+    block_.setTable(table_);
+    block_.load(fstream_);
 }
 
 Cursor::~Cursor() {
@@ -25,13 +28,19 @@ bool Cursor::next() {
         was_block_changed_ = false;
         saveBlock(block_, current_block_);
     }
-    while (!fstream_.eof()) {
-        block_ = Block(table_, fstream_);
+    char delimiter;
+    while (fstream_ >> delimiter) {
+        block_.load(fstream_);
         ++current_block_;
         if (block_.next()) {
             return true;
         }
     }
+
+    if (fstream_.fail()) {
+        fstream_.clear();
+    }
+
     return false;
 }
 
@@ -42,8 +51,9 @@ void Cursor::insert(const std::vector<Value>& values) {
     bool was_insert = false;
     fstream_.seekg(0, std::ios::beg);
     int num = 0;
-    while (!fstream_.eof() && !was_insert) {
-        Block block = Block(table_, fstream_);
+    char delimiter;
+    while (fstream_ >> delimiter && !was_insert) {
+        Block block(table_, fstream_);
         if (block.insert(values)) {
             was_insert = true;
             saveBlock(block, num);
@@ -51,11 +61,17 @@ void Cursor::insert(const std::vector<Value>& values) {
         ++num;
     }
     if (!was_insert) {
-        Block block = Block(table_);
+        char delimiter = 0;
+        Block block(table_);
         block.insert(values);
-        fstream_ << block.getBuffer();
+        fstream_.seekg(0, std::ios::end);
+        fstream_ << delimiter;
+        fstream_.write(block.getBuffer(), Block::kBlockSize);
     }
 
+    if (fstream_.fail()) {
+        fstream_.clear();
+    }
     fstream_.seekg(g);
     fstream_.seekp(p);
 }
@@ -72,7 +88,7 @@ void Cursor::remove() {
 
 void Cursor::saveBlock(Block& block, int num) {
     int p = fstream_.tellp();
-    fstream_.seekp(num * Block::kBlockSize);
+    fstream_.seekp(num * (1 + Block::kBlockSize) + 1);
     fstream_.write(block.getBuffer(), Block::kBlockSize);
     fstream_.seekp(p);
 }

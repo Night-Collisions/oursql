@@ -45,7 +45,12 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
             metafile.write(column_name, kColumnNameLength_);
         }
 
-        std::ofstream(getPathToTable(table.getName()));
+        std::fstream file(getPathToTable(table.getName()), std::ios::binary | std::ios::out);
+        char delimiter = 0;
+        file << delimiter;
+        Block block(table);
+        file.write(block.getBuffer(), Block::kBlockSize);
+
     } catch (std::bad_alloc& bad_alloc) {
         e.reset(new exc::OutOfMemory());
         std::remove(getPathToTable(table.getName()).c_str());
