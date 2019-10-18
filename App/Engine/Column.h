@@ -66,7 +66,7 @@ class Column {
                                ColumnConstraint::not_null,
                                ColumnConstraint::unique};
         for (int i = 0; i < 8; ++i) {
-            if ((constraint << (i)) != 0) {
+            if ((constraint & (1 << i)) != 0) {
                 res.insert(arr[i]);
             }
         }
