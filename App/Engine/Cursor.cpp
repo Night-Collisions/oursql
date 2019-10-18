@@ -19,6 +19,8 @@ Cursor::~Cursor() {
 void Cursor::reset() {
     fstream_.seekg(0, std::ios::beg);
     fstream_.seekp(0, std::ios::beg);
+    char delimiter;
+    fstream_ >> delimiter;
     block_.load(fstream_);
 }
 
