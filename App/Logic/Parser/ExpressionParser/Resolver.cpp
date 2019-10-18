@@ -19,8 +19,8 @@ std::string Resolver::resolve(const std::string& table,
     all_columns_ = std::move(all_columns);
 
     calculate(root, record, e);
-    return (root) ? (static_cast<Constant*>(root->getConstant())->getValue())
-                  : ("0");
+    return (root && !e) ? (static_cast<Constant*>(root->getConstant())->getValue())
+                  : ("1");
 }
 
 void Resolver::calculate(Expression* root,
@@ -575,7 +575,7 @@ void Resolver::add(Expression* root, std::map<std::string, std::string> record,
         } else {
             e.reset(new exc::NoOperationForType(DataType::varchar, "+",
                                                 DataType::varchar));
-            return;  // todo
+            return;
         }
     } catch (std::invalid_argument& tmp) {
         e.reset(new exc::DataTypeOversize());

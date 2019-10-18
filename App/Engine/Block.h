@@ -32,7 +32,7 @@ class Block {
 private:
     void setValues(const std::vector<Value>& values, int pos);
 
-    char* buffer_ = new char[kBlockSize];
+    char* buffer_ = new char[kBlockSize]{};
     Table table_;
     size_t row_size_;
     int position_;

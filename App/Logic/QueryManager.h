@@ -40,7 +40,7 @@ class QueryManager {
     static void setValue(Node* nod, std::string& value);
 
     static std::map<std::string, std::string> mapFromFetch(
-        std::map<std::string, Column> all_columns, std::vector<Value> ftch);
+        const std::vector<Column>& cols, std::vector<Value> ftch);
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_
