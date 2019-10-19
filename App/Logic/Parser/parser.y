@@ -426,7 +426,7 @@ id:
 %%
 
 void yyerror(const char *s) {
-    fprintf(stderr, "%s\n", s);
+    //fprintf(stderr, "%s\n", s);
     ex.reset(new exc::SyntaxException());
 }
 

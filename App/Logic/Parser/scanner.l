@@ -111,14 +111,14 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
                                     local_str += yytext[i];
                                 }
                                 ++i;
-                               }
+                              }
 
-                               try {
-                                  yylval.varcharLen = std::stoi(local_str);
-                               } catch(std::invalid_argument& tmp) {
-                                 yyerror("varchar oversize");
-                                 return 1;
-                               }
+                              try {
+                                yylval.varcharLen = std::stoi(local_str);
+                              } catch(std::invalid_argument& tmp) {
+                                yyerror("varchar oversize");
+                                return 1;
+                              }
 
                               return VARCHAR; 
                            }

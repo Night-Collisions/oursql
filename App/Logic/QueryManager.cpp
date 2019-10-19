@@ -1,4 +1,5 @@
 #include "QueryManager.h"
+#include <iostream>
 #include <memory>
 
 #include "../Engine/Column.h"
@@ -197,6 +198,7 @@ void QueryManager::insert(const Query& query,
         }
     } else {
         for (auto& c : table.getColumns()) {
+            col_set.insert(c.getName());
             idents.push_back(new Ident(c.getName()));
         }
     }
@@ -204,6 +206,7 @@ void QueryManager::insert(const Query& query,
     auto constants =
         static_cast<ConstantList*>(query.getChildren()[NodeType::constant_list])
             ->getConstants();
+
 
     if (constants.size() > idents.size()) {
         e.reset(new exc::ins::ConstantsMoreColumns());
@@ -234,8 +237,11 @@ void QueryManager::insert(const Query& query,
                 e.reset(new exc::DataTypeOversize(idents[i]->getName()));
                 return;
             }
-            values[idents[i]->getName()] =
-                static_cast<Constant*>(constants[i])->getValue();
+            if (static_cast<Constant*>(constants[i])->getDataType() !=
+                DataType::null_) {
+                values[idents[i]->getName()] =
+                    static_cast<Constant*>(constants[i])->getValue();
+            }
         } else {
             return;
         }
@@ -250,6 +256,13 @@ void QueryManager::insert(const Query& query,
     std::vector<Value> v_arr;
     for (auto& c : table.getColumns()) {
         if (values.find(c.getName()) == values.end()) {
+            if ((c.getConstraints().find(ColumnConstraint::primary_key) !=
+                 c.getConstraints().end()) ||
+                (c.getConstraints().find(ColumnConstraint::not_null) !=
+                 c.getConstraints().end())) {
+                e.reset(new exc::constr::NullNotNull(name, c.getName()));
+                return;
+            }
             Value v;
             if (c.getType() == DataType::varchar) {
                 v.data = "";
@@ -269,13 +282,15 @@ void QueryManager::insert(const Query& query,
     for (auto& f : fetch_arr) {
         for (int i = 0; i < f.size(); ++i) {
             if (f[i].data == v_arr[i].data &&
-                ((all_columns[v_arr[i].data].getConstraints().find(
+                ((all_columns[idents[i]->getName()].getConstraints().find(
                       ColumnConstraint::primary_key) !=
-                  all_columns[v_arr[i].data].getConstraints().end()) ||
-                 (all_columns[v_arr[i].data].getConstraints().find(
+                  all_columns[idents[i]->getName()].getConstraints().end()) ||
+                 (all_columns[idents[i]->getName()].getConstraints().find(
                       ColumnConstraint::unique) !=
-                  all_columns[v_arr[i].data].getConstraints().end()))) {
-                e.reset();
+                  all_columns[idents[i]->getName()].getConstraints().end()))) {
+                e.reset(new exc::constr::DuplicatedUnique(
+                    name, table.getColumns()[i].getName(), f[i].data));
+                return;
             }
         }
     }
@@ -304,20 +319,15 @@ void QueryManager::update(const Query& query,
         static_cast<IdentList*>(query.getChildren()[NodeType::ident_list])
             ->getIdents();
     std::set<std::string> col_set;
-    if (!idents.empty()) {
-        for (auto& c : idents) {
-            if (col_set.find(c->getName()) == col_set.end()) {
-                col_set.insert(c->getName());
-            } else {
-                e.reset(new exc::RepeatColumn(c->getName()));
-                return;
-            }
-        }
-    } else {
-        for (auto& c : table.getColumns()) {
-            idents.push_back(new Ident(c.getName()));
+    for (auto& c : idents) {
+        if (col_set.find(c->getName()) == col_set.end()) {
+            col_set.insert(c->getName());
+        } else {
+            e.reset(new exc::RepeatColumn(c->getName()));
+            return;
         }
     }
+
     auto constants =
         static_cast<ConstantList*>(query.getChildren()[NodeType::constant_list])
             ->getConstants();
@@ -343,12 +353,11 @@ void QueryManager::update(const Query& query,
     std::vector<int> unique_pos;
     int cnt = 0;
     for (auto& c : table.getColumns()) {
-        if ((col_set.find(c.getName()) == col_set.end() &&
-             c.getConstraints().find(ColumnConstraint::not_null) !=
-                 c.getConstraints().end()) ||
-            (col_set.find(c.getName()) == col_set.end() &&
+        if (c.getConstraints().find(ColumnConstraint::not_null) !=
+                 c.getConstraints().end() ||
+
              c.getConstraints().find(ColumnConstraint::primary_key) !=
-                 c.getConstraints().end())) {
+                 c.getConstraints().end()) {
             unique_pos.push_back(cnt);
         }
         ++cnt;
@@ -362,30 +371,29 @@ void QueryManager::update(const Query& query,
         auto ftch = cursor.fetch();
         fetch_arr.push_back(cursor.fetch());
         std::vector<Value> rec;
-        std::map<std::string, std::string> m =
-            mapFromFetch(table.getColumns(), ftch);
         for (int i = 0; i < table.getColumns().size(); ++i) {
-            if (values.find(table.getColumns()[i].getName()) != values.end()) {
+            auto c = table.getColumns()[i];
+            if (values.find(c.getName()) != values.end()) {
                 Value v;
                 v.is_null = false;
-                auto tmp = values[table.getColumns()[i].getName()];
+                auto tmp = values[c.getName()];
                 if (tmp == "null") {
-                    if (table.getColumns()[i].getType() == DataType::varchar) {
+                    if (c.getType() == DataType::varchar) {
                         v.data = "";
                     } else {
-                        v.data = "0";
+                        v.data = "null";
                     }
                     v.is_null = true;
                 } else {
-                    v.data = values[table.getColumns()[i].getName()];
+                    v.data = values[c.getName()];
                 }
                 rec.push_back(v);
             } else {
                 rec.push_back(ftch[i]);
             }
-            updated_records.push_back(rec);
-            ready_ftch.push_back(ftch);
         }
+        updated_records.push_back(rec);
+        ready_ftch.push_back(ftch);
     }
 
     for (auto& f : fetch_arr) {
@@ -400,10 +408,10 @@ void QueryManager::update(const Query& query,
         }
     }
 
-    auto cursor2 = Cursor(name);
+    cursor.reset();
 
-    while (cursor2.next()) {
-        auto f = cursor2.fetch();
+    while (cursor.next()) {
+        auto f = cursor.fetch();
 
         for (int k = 0; k < ready_ftch.size(); ++k) {
             for (int i = 0; i < ready_ftch[k].size(); ++i) {
@@ -457,14 +465,6 @@ void QueryManager::remove(const Query& query,
         if (resp != "0") {
             cursor.remove();
         }
-    }
-}
-
-void QueryManager::setValue(Node* nod, std::string& value) {
-    if (nod->getNodeType() == NodeType::ident) {
-        value = nod->getName();
-    } else {
-        value = static_cast<Constant*>(nod)->getValue();
     }
 }
 

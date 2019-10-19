@@ -168,8 +168,16 @@ void Resolver::greater(Expression* root,
             res = value1 > value2;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset(new exc::DataTypeOversize());
-        return;
+        if (value1 == "null" || value2 == "null") {
+            if (value1 == value2) {
+                res = 1;
+            } else {
+                res = 0;
+            }
+        } else {
+            e.reset(new exc::DataTypeOversize());
+            return;
+        }
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -187,16 +195,18 @@ void Resolver::setStringValue(Expression* root,
         return;
     }
 
-    if (child1->getConstant()->getNodeType() == NodeType::ident) {
-        a = record[child1->getConstant()->getName()];
+    auto constant1 = static_cast<Constant*>(child1->getConstant());
+    auto constant2 = static_cast<Constant*>(child2->getConstant());
+    if (constant1->getNodeType() == NodeType::ident) {
+        a = record[constant1->getName()];
     } else {
-        a = static_cast<Constant*>(child1->getConstant())->getValue();
+        a = constant1->getValue();
     }
 
     if (child2->getConstant()->getNodeType() == NodeType::ident) {
-        b = record[child2->getConstant()->getName()];
+        b = record[constant2->getName()];
     } else {
-        b = static_cast<Constant*>(child2->getConstant())->getValue();
+        b = constant2->getValue();
     }
 }
 
@@ -235,8 +245,16 @@ void Resolver::greaterEqual(Expression* root,
             res = value1 >= value2;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset(new exc::DataTypeOversize());
-        return;
+        if (value1 == "null" || value2 == "null") {
+            if (value1 == value2) {
+                res = 1;
+            } else {
+                res = 0;
+            }
+        } else {
+            e.reset(new exc::DataTypeOversize());
+            return;
+        }
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -276,8 +294,16 @@ void Resolver::less(Expression* root, std::map<std::string, std::string> record,
             res = value1 < value2;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset(new exc::DataTypeOversize());
-        return;
+        if (value1 == "null" || value2 == "null") {
+            if (value1 == value2) {
+                res = 1;
+            } else {
+                res = 0;
+            }
+        } else {
+            e.reset(new exc::DataTypeOversize());
+            return;
+        }
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -318,8 +344,16 @@ void Resolver::lessEqual(Expression* root,
             res = value1 <= value2;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset(new exc::DataTypeOversize());
-        return;
+        if (value1 == "null" || value2 == "null") {
+            if (value1 == value2) {
+                res = 1;
+            } else {
+                res = 0;
+            }
+        } else {
+            e.reset(new exc::DataTypeOversize());
+            return;
+        }
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -362,8 +396,16 @@ void Resolver::logicAnd(Expression* root,
             return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset(new exc::DataTypeOversize());
-        return;
+        if (value1 == "null" || value2 == "null") {
+            if (value1 == value2) {
+                res = 1;
+            } else {
+                res = 0;
+            }
+        } else {
+            e.reset(new exc::DataTypeOversize());
+            return;
+        }
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -406,8 +448,16 @@ void Resolver::logicOr(Expression* root,
             return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset(new exc::DataTypeOversize());
-        return;
+        if (value1 == "null" || value2 == "null") {
+            if (value1 == value2) {
+                res = 1;
+            } else {
+                res = 0;
+            }
+        } else {
+            e.reset(new exc::DataTypeOversize());
+            return;
+        }
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -457,8 +507,12 @@ void Resolver::div(Expression* root, std::map<std::string, std::string> record,
             return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset(new exc::DataTypeOversize());
-        return;
+        if (value1 == "null" || value2 == "null") {
+            e.reset(new exc::NoOperationForType());
+        } else {
+            e.reset(new exc::DataTypeOversize());
+            return;
+        }
     }
 }
 
@@ -496,8 +550,12 @@ void Resolver::logicNot(Expression* root,
             return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset(new exc::DataTypeOversize());
-        return;
+        if (value == "null") {
+            e.reset(new exc::NoOperationForType());
+        } else {
+            e.reset(new exc::DataTypeOversize());
+            return;
+        }
     }
 
     root->setConstant(new IntConstant(std::to_string(res)));
@@ -538,8 +596,12 @@ void Resolver::mul(Expression* root, std::map<std::string, std::string> record,
             return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset(new exc::DataTypeOversize());
-        return;
+        if (value1 == "null" || value2 == "null") {
+            e.reset(new exc::NoOperationForType());
+        } else {
+            e.reset(new exc::DataTypeOversize());
+            return;
+        }
     }
 }
 
@@ -578,8 +640,12 @@ void Resolver::add(Expression* root, std::map<std::string, std::string> record,
             return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset(new exc::DataTypeOversize());
-        return;
+        if (value1 == "null" || value2 == "null") {
+            e.reset(new exc::NoOperationForType());
+        } else {
+            e.reset(new exc::DataTypeOversize());
+            return;
+        }
     }
 }
 
@@ -618,8 +684,12 @@ void Resolver::sub(Expression* root, std::map<std::string, std::string> record,
             return;
         }
     } catch (std::invalid_argument& tmp) {
-        e.reset(new exc::DataTypeOversize());
-        return;
+        if (value1 == "null" || value2 == "null") {
+            e.reset(new exc::NoOperationForType());
+        } else {
+            e.reset(new exc::DataTypeOversize());
+            return;
+        }
     }
 }
 
@@ -634,7 +704,7 @@ void Resolver::setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
         } else {
             e.reset(new exc::acc::ColumnNonexistent(col_name, table));
             return;
-        };
+        }
     } else {
         a = static_cast<Constant*>(left)->getDataType();
     }

@@ -251,6 +251,10 @@ class NoOperationForType : public Exception {
         : Exception(ExceptionType::no_operation_for_type,
                     "no operation '" + oper + "' for " +
                         DataType2String(type2) + ".") {}
+
+    NoOperationForType()
+        : Exception(ExceptionType::no_operation_for_type,
+                    "no operation for these types.") {}
 };
 
 // TODO: переделать аргумены конструктора, и переделать то, как оно вызывается в
