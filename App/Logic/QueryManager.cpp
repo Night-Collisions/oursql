@@ -4,6 +4,7 @@
 
 #include "../Engine/Column.h"
 #include "../Engine/Engine.h"
+#include "../Engine/Cursor.h"
 #include "Parser/Nodes/Ident.h"
 #include "Parser/Nodes/VarList.h"
 
@@ -131,7 +132,7 @@ void QueryManager::select(const Query& query,
         return;
     }
 
-    auto cursor = Cursor(name);
+    Cursor cursor(name);
     while (cursor.next()) {
         auto ftch = cursor.fetch();
         std::map<std::string, std::string> m =
@@ -247,7 +248,7 @@ void QueryManager::insert(const Query& query,
         }
     }
 
-    auto cursor = Cursor(name);
+    Cursor cursor(name);
     std::vector<std::vector<Value>> fetch_arr;
     while (cursor.next()) {
         fetch_arr.push_back(cursor.fetch());
@@ -303,7 +304,7 @@ void QueryManager::insert(const Query& query,
 void QueryManager::update(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
-    auto name = query.getChildren()[NodeType::ident]->getName();
+    std::string name = query.getChildren()[NodeType::ident]->getName();
     auto table = Engine::show(name, e);
     if (table.getName().empty()) {
         e.reset(new exc::acc::TableNonexistent(name));
@@ -363,7 +364,7 @@ void QueryManager::update(const Query& query,
         ++cnt;
     }
 
-    auto cursor = Cursor(name);
+    Cursor cursor(name);
     std::vector<std::vector<Value>> fetch_arr;
     std::vector<std::vector<Value>> ready_ftch;
     std::vector<std::vector<Value>> updated_records;

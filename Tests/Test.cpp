@@ -44,6 +44,4 @@ void clearDB() {
 
     command = create_dir_command + name;
     std::system(command.c_str());
-
-    Engine::freeAll();
 }
