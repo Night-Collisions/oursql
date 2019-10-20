@@ -11,16 +11,32 @@
 
 #include "../Client/Client.h"
 
-#define EXCEPTION2NUMB(expect) static_cast<unsigned int>(expect)
+#define EXCEPTION2NUMB(expect) static_cast<long>(expect)
 
-struct request_description {
-    std::string request;
-    long exception;
-    std::string answer;
-};
+#define CHECK_REQUEST(request_message, exception, answer, client)           \
+    {                                                                       \
+        std::string out;                                                    \
+        const std::string error_message =                                   \
+            "Error in request:\n    " +                                     \
+            ::testing::PrintToString(request_message) + "\n";               \
+        long exception_request = client.request(request_message, out);      \
+        if (exception_request != static_cast<long>(exception)) {            \
+            FAIL() << error_message                                         \
+                   << "Wrong exception code:\n  expected:\n    "            \
+                   << static_cast<long>(exception) << "\n  real:\n    "     \
+                   << exception_request << "\n";                            \
+        }                                                                   \
+        if (out != answer) {                                                \
+            FAIL() << error_message                                         \
+                   << "Wrong exception message:\n  expected:\n    "         \
+                   << ::testing::PrintToString(answer) << "\n  real:\n    " \
+                   << ::testing::PrintToString(out);                        \
+        }                                                                   \
+    }
+
+#define CHECK_REQUEST_ST_CLIENT(request_message, exception, answer) \
+    { CHECK_REQUEST(request_message, exception, answer, client); }
 
 void clearDB();
-
-void check_requests(const std::vector<request_description>& requests, Client&);
 
 #endif

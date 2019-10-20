@@ -21,11 +21,3 @@ void clearDB() {
     command = create_dir_command + name;
     std::system(command.c_str());
 }
-
-void check_requests(const std::vector<request_description>& requests, Client& client) {
-    for (const auto& i : requests) {
-        std::string out;
-        ASSERT_EQ(client.request(i.request, out), i.exception) << "Error in request:\n  " + i.request;
-        EXPECT_EQ(out, i.answer) << "Error in request:\n  " + i.request;
-    }
-}
