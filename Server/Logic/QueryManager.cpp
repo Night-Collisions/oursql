@@ -95,6 +95,32 @@ void QueryManager::dropTable(const Query& query,
     Engine::drop(name, e);
 }
 
+void printSelect(const Table& table, std::map<std::string, Column> all_columns,
+                 std::vector<Node*> cols_from_parser,
+                 std::map<std::string, std::string> fetch_map,
+                 std::unique_ptr<exc::Exception>& e, std::ostream& out) {
+    std::string response;
+    int expr_cnt = 1;
+    for (auto& c : cols_from_parser) {
+        if (c->getNodeType() == NodeType::expression_unit) {
+            auto expr = static_cast<Expression*>(c);
+            response = Resolver::resolve(table.getName(), all_columns, expr,
+                                         fetch_map, e);
+            if (e) {
+                return;
+            }
+            out << "expression " + std::to_string(expr_cnt++) + ": " + response
+                << std::endl;
+        } else if (c->getName() == "*") {
+            for (auto& k : table.getColumns()) {
+                out << k.getName() + ": " + fetch_map[k.getName()] << std::endl;
+            }
+        } else {
+            out << c->getName() + ": " + fetch_map[c->getName()] << std::endl;
+        }
+    }
+}
+
 void QueryManager::select(const Query& query,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
@@ -114,18 +140,7 @@ void QueryManager::select(const Query& query,
         static_cast<SelectList*>(query.getChildren()[NodeType::select_list])
             ->getList();
 
-    std::set<std::string> asterisk;
-    for (auto& m : table.getColumns()) {
-        asterisk.insert(m.getName());
-    }
-
-    std::vector<Expression*> col_expr;
-
     for (auto& c : cols_from_parser) {
-        if (c->getNodeType() == NodeType::expression_unit) {
-            col_expr.push_back(static_cast<Expression*>(
-                query.getChildren()[NodeType::expression]));
-        }
         if (c->getName() != "*" &&
             c->getNodeType() != NodeType::expression_unit &&
             all_columns.find(c->getName()) == all_columns.end()) {
@@ -149,25 +164,10 @@ void QueryManager::select(const Query& query,
         if (e) {
             return;
         }
-        int expr_cnt = 1;
         if (response != "0") {
-            for (auto& c : cols_from_parser) {
-                if (c->getNodeType() == NodeType::expression_unit) {
-                    auto expr = static_cast<Expression*>(c);
-                    response = Resolver::resolve(name, all_columns, expr, m, e);
-                    if (e) {
-                        return;
-                    }
-                    out << "expression " + std::to_string(expr_cnt++) + ": " +
-                               response
-                        << std::endl;
-                } else if (c->getName() == "*") {
-                    for (auto& k : table.getColumns()) {
-                        out << k.getName() + ": " + m[k.getName()] << std::endl;
-                    }
-                } else {
-                    out << c->getName() + ": " + m[c->getName()] << std::endl;
-                }
+            printSelect(table, all_columns, cols_from_parser, m, e, out);
+            if (e) {
+                return;
             }
         }
     }
