@@ -2,6 +2,7 @@ project(OurSql_APP)
 
 set(HEADERS
         Our.h
+        Server.h
         Engine/Column.h
         Engine/Engine.h
         Engine/Table.h
@@ -9,6 +10,8 @@ set(HEADERS
         Engine/Block.h
         Engine/Cursor.h
         Core/Exception.h
+        Core/DataType.h
+        Logic/Parser/ParserManager.h
         Logic/Parser/Nodes/Node.h
         Logic/Parser/Nodes/Query.h
         Logic/Parser/Nodes/VarList.h
@@ -32,6 +35,7 @@ set(HEADERS
 
 set(DEFINITIONS
         Our.cpp
+        Server.cpp
         Engine/Column.cpp
         Engine/Engine.cpp
         Engine/Table.cpp
@@ -39,7 +43,9 @@ set(DEFINITIONS
         Engine/Cursor.cpp
         Engine/Value.h
         Core/Exception.cpp
+        Core/DataType.cpp
         Engine/Engine.cpp
+        Logic/Parser/ParserManager.cpp
         Logic/Parser/Nodes/Node.cpp
         Logic/Parser/Nodes/Query.cpp
         Logic/Parser/Nodes/VarList.cpp

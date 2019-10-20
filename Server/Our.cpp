@@ -7,7 +7,7 @@
     if (e != nullptr) {                                                     \
         out << e->getMessage() << "\n"                                      \
             << "~~Exception in command:\"" << command << "\"" << std::endl; \
-        delete query;                                                           \
+        delete query;                                                       \
         return e->getNumber();                                              \
     };
 
@@ -16,10 +16,15 @@ namespace ourSQL {
 bool get_command(std::istream& in, std::string& command) {
     int c = 0;
     command.clear();
+    bool in_quotes = false;
     while ((c = in.get()) != EOF) {
         command.push_back(c);
-        if (command.back() == ';') {
+        if (command.back() == ';' && !in_quotes) {
             return true;
+        } else if ((command.back() == '\"' || command.back() == '\'') &&
+                   (command.size() < 2 ||
+                    command[command.size() - 2] != '\\')) {
+            in_quotes = !in_quotes;
         }
     }
     return false;

@@ -6,8 +6,11 @@
 !Tests
 !Tests/**/
 
-!App
-!App/**/
+!Client
+!Client/**/
+
+!Server
+!Server/**/
 
 !TestsGenerator
 !TestsGenerator/**/

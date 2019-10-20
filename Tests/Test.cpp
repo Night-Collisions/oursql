@@ -1,31 +1,7 @@
 #include "Test.h"
-#include "../App/Engine/Engine.h"
 
-bool operator==(const Column& a, const Column& b) {
-    return a.getName() == b.getName() && a.getType() == b.getType() &&
-           a.getBitConstraint() == b.getBitConstraint();
-}
-
-bool operator==(const Table& a, const Table& b) {
-    auto a_columns = a.getColumns();
-    auto b_columns = b.getColumns();
-    if (a.getName() != b.getName() || a_columns.size() != b_columns.size()) {
-        return false;
-    }
-    for (const auto& i : a_columns) {
-        bool eq = false;
-        for (const auto& j : b_columns) {
-            if (i == j) {
-                eq = true;
-                break;
-            }
-        }
-        if (!eq) {
-            return false;
-        }
-    }
-    return true;
-}
+#include "../Server/Engine/Engine.h"
+#include "../Server/Our.h"
 
 void clearDB() {
     std::string command;
@@ -37,11 +13,19 @@ void clearDB() {
     const char *create_dir_command = "mkdir ";
 #endif
     
-    std::string name = "DataBD";
+    std::string name = "..\\Server\\DataBD";
     
     command = delete_command + name;
     std::system(command.c_str());
 
     command = create_dir_command + name;
     std::system(command.c_str());
+}
+
+void check_requests(const std::vector<request_description>& requests, Client& client) {
+    for (const auto& i : requests) {
+        std::string out;
+        ASSERT_EQ(client.request(i.request, out), i.exception) << "Error in request:\n  " + i.request;
+        EXPECT_EQ(out, i.answer) << "Error in request:\n  " + i.request;
+    }
 }

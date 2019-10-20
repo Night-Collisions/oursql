@@ -44,6 +44,23 @@ FetchContent_Declare(
 FetchContent_Populate(rapidjson)
 include_directories(${rapidjson_SOURCE_DIR}/include/)
 
-add_subdirectory(App)
+FetchContent_Declare(
+        asio
+        GIT_REPOSITORY https://github.com/chriskohlhoff/asio
+        GIT_TAG asio-1-14-0
+        UPDATE_DISCONNECTED 1
+)
+
+SET(CMAKE_CXX_FLAGS "-DASIO_STANDALONE -pthread")
+FetchContent_Populate(asio)
+include_directories(${asio_SOURCE_DIR}/asio/include/)
+
+if(WIN32)
+    link_libraries(ws2_32 wsock32)
+endif()
+
+add_subdirectory(Server)
+
+add_subdirectory(Client)
 
 add_subdirectory(Tests)

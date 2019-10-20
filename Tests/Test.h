@@ -1,27 +1,26 @@
 #ifndef OURSQL_TEST_H
 #define OURSQL_TEST_H
 
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include "../App/Engine/Column.h"
-#include "../App/Engine/Table.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
-#define NO_EXCEPTION(exception) ASSERT_EQ(exception, 0);
-#define CHECK_EXCEPTION(exception, expect) \
-    ASSERT_EQ(exception, static_cast<unsigned int>(expect));
+#include "../Client/Client.h"
 
-#define CHECK_REQUEST(request, exception, answer)         \
-    std::stringstream in(request);                        \
-    std::stringstream out;                                \
-    CHECK_EXCEPTION(ourSQL::perform(in, out), exception); \
-    EXPECT_EQ(out.str(), answer);
+#define EXCEPTION2NUMB(expect) static_cast<unsigned int>(expect)
 
-bool operator==(const Column& a, const Column& b);
-
-bool operator==(const Table& a, const Table& b);
+struct request_description {
+    std::string request;
+    long exception;
+    std::string answer;
+};
 
 void clearDB();
+
+void check_requests(const std::vector<request_description>& requests, Client&);
 
 #endif
