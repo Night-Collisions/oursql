@@ -27,7 +27,7 @@ void clearDB() {
 void check_requests(const std::vector<request_description>& requests, Client& client) {
     for (const auto& i : requests) {
         std::string out;
-        ASSERT_EQ(client.request(i.request, out), i.exception);
-        EXPECT_EQ(out, i.answer);
+        ASSERT_EQ(client.request(i.request, out), i.exception) << "Error in request:\n  " + i.request;
+        EXPECT_EQ(out, i.answer) << "Error in request:\n  " + i.request;
     }
 }
