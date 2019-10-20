@@ -19,8 +19,13 @@ std::string Resolver::resolve(const std::string& table,
     all_columns_ = std::move(all_columns);
 
     calculate(root, record, e);
-    return (root && !e) ? (static_cast<Constant*>(root->getConstant())->getValue())
-                  : ("1");
+    return (root && !e)
+               ? ((static_cast<Constant*>(root->getConstant())->getValue() ==
+                   "null")
+                      ? ("0")
+                      : (static_cast<Constant*>(root->getConstant())
+                             ->getValue()))
+               : ("1");
 }
 
 void Resolver::calculate(Expression* root,
@@ -64,17 +69,17 @@ bool Resolver::compareTypes(const std::string& table_name,
         return false;
     }
 
-/*    if (left_type == DataType::Count) {
-        e.reset(new exc::acc::ColumnNonexistent(
-            static_cast<Ident*>(left)->getName(), table_name));
-        return false;
-    }
+    /*    if (left_type == DataType::Count) {
+            e.reset(new exc::acc::ColumnNonexistent(
+                static_cast<Ident*>(left)->getName(), table_name));
+            return false;
+        }
 
-    if (right_type == DataType::Count) {
-        e.reset(new exc::acc::ColumnNonexistent(
-            static_cast<Ident*>(right)->getName(), table_name));
-        return false;
-    }*/
+        if (right_type == DataType::Count) {
+            e.reset(new exc::acc::ColumnNonexistent(
+                static_cast<Ident*>(right)->getName(), table_name));
+            return false;
+        }*/
 
     if (left_type == DataType::real && right_type == DataType::integer) {
         return true;
