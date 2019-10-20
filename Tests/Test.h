@@ -24,7 +24,8 @@
             FAIL() << error_message                                         \
                    << "Wrong exception code:\n  expected:\n    "            \
                    << static_cast<long>(exception) << "\n  real:\n    "     \
-                   << exception_request << "\n";                            \
+                   << exception_request << "\n  Exception message:\n    "   \
+                   << ::testing::PrintToString(out);                        \
         }                                                                   \
         if (out != answer) {                                                \
             FAIL() << error_message                                         \
