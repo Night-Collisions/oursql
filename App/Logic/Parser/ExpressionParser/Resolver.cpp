@@ -64,7 +64,7 @@ bool Resolver::compareTypes(const std::string& table_name,
         return false;
     }
 
-    if (left_type == DataType::Count) {
+/*    if (left_type == DataType::Count) {
         e.reset(new exc::acc::ColumnNonexistent(
             static_cast<Ident*>(left)->getName(), table_name));
         return false;
@@ -74,7 +74,7 @@ bool Resolver::compareTypes(const std::string& table_name,
         e.reset(new exc::acc::ColumnNonexistent(
             static_cast<Ident*>(right)->getName(), table_name));
         return false;
-    }
+    }*/
 
     if (left_type == DataType::real && right_type == DataType::integer) {
         return true;

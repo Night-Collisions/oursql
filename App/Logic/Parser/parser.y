@@ -398,11 +398,17 @@ constant:
 int_const:
     ICONST {
         $$ = yylval.iConst;
+    } | 
+    MINUS ICONST {
+        $$ = new IntConstant("-" + yylval.iConst->getValue());
     };
 
 real_const:
     FCONST {
 	    $$ = yylval.rConst;
+    } |
+    MINUS FCONST {
+        $$ = new RealConstant("-" + yylval.rConst->getValue());
     };
 
 text_const:

@@ -105,6 +105,7 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "int"                      { return INT; }
 "real"                     { return REAL; }
 {VARCHAR}                  { 
+                              local_str = "";
                               int i = 0;
                               while (yytext[i] != '\0') {
                                 if (isdigit(yytext[i])) {
@@ -147,6 +148,7 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
                            }
                            
 {SCONST}                   {
+                              local_str = "";
                               for (int i = 1; i < sizeof(yytext) - 1; ++i) {
                                 local_str += yytext[i];
                               }
