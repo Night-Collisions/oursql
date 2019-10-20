@@ -167,7 +167,7 @@ TEST(SYNTAX, TEST_3) {
 TEST(SYNTAX, TEST_4) {
     clearDB();
     CHECK_REQUEST_ST_CLIENT("create table a(b varchar(100));", 0, "");
-    CHECK_REQUEST_ST_CLIENT("insert into a values ('\\' ;');", 0, "");
+    CHECK_REQUEST_ST_CLIENT("insert into a values ('\'' ;');", 0, "");
 }
 
 TEST(DROP_TABLE, TEST_1) {

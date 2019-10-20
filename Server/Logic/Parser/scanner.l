@@ -50,7 +50,7 @@ aquote        \'
 ID            {alpha}+{alnum_dash}*
 ICONST        [ \t\r\f]*[0-9]{digit}*
 FCONST        [ \t\r\f]*{digit}*"."{digit}+
-SCONST        (\"([^"]|\")*\")|(\'([^']|\')*\')
+SCONST        ["]([^"]|["]["]|[']['])*["]|[']([^']|["]["]|[']['])*[']
 
 VARCHAR       "varchar"[ \t\r\f]*"("[ \t\r\f]*{ICONST}{1}[ \t\r\f]*")"
 
@@ -149,8 +149,14 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
                            
 {SCONST}                   {
                               local_str = "";
+                              int checked = 0;
                               for (int i = 1; i < strlen(yytext) - 1; ++i) {
-                                local_str += yytext[i];
+                                if (!checked && (yytext[i] == '\'' || yytext[i] == '\"')) {
+                                  checked = 1;
+                                } else {
+                                  checked = 0;
+                                  local_str += yytext[i];
+                                }
                               }
                               
                               yylval.tConst = new TextConstant(local_str);
