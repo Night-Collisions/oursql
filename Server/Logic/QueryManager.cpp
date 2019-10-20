@@ -127,6 +127,7 @@ void QueryManager::select(const Query& query,
                 query.getChildren()[NodeType::expression]));
         }
         if (c->getName() != "*" &&
+            c->getNodeType() != NodeType::expression_unit &&
             all_columns.find(c->getName()) == all_columns.end()) {
             e.reset(new exc::acc::ColumnNonexistent(c->getName(), name));
             return;
