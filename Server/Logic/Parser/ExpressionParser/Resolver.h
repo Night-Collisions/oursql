@@ -5,8 +5,8 @@
 
 #include <rapidjson/document.h>
 #include <map>
-#include "../../../Engine/Column.h"
 #include "../Nodes/Expression.h"
+#include "../../../Engine/Column.h"
 
 typedef void (*func)(Expression* root,
                      std::map<std::string, std::string> record,

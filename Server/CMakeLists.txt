@@ -1,4 +1,4 @@
-project(OurSql_APP)
+project(OurSQL_Server)
 
 set(HEADERS
         Our.h

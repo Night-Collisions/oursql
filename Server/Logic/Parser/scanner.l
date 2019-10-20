@@ -6,23 +6,23 @@
     #include <map>
 
     
-    #include "../../App/Logic/Parser/Nodes/Node.h"
-    #include "../../App/Logic/Parser/Nodes/Query.h"
-    #include "../../App/Logic/Parser/Nodes/VarList.h"
-    #include "../../App/Logic/Parser/Nodes/Variable.h"
-    #include "../../App/Logic/Parser/Nodes/Ident.h"
-    #include "../../App/Logic/Parser/Nodes/Constant.h"
-    #include "../../App/Logic/Parser/Nodes/NullConstant.h"
-    #include "../../App/Logic/Parser/Nodes/IntConstant.h"
-    #include "../../App/Logic/Parser/Nodes/RealConstant.h"
-    #include "../../App/Logic/Parser/Nodes/TextConstant.h"
-    #include "../../App/Logic/Parser/Nodes/ConstantList.h"
-    #include "../../App/Logic/Parser/Nodes/IdentList.h"
-    #include "../../App/Logic/Parser/Nodes/SelectList.h"
-    #include "../../App/Logic/Parser/Nodes/Expression.h"
+    #include "../../Server/Logic/Parser/Nodes/Node.h"
+    #include "../../Server/Logic/Parser/Nodes/Query.h"
+    #include "../../Server/Logic/Parser/Nodes/VarList.h"
+    #include "../../Server/Logic/Parser/Nodes/Variable.h"
+    #include "../../Server/Logic/Parser/Nodes/Ident.h"
+    #include "../../Server/Logic/Parser/Nodes/Constant.h"
+    #include "../../Server/Logic/Parser/Nodes/NullConstant.h"
+    #include "../../Server/Logic/Parser/Nodes/IntConstant.h"
+    #include "../../Server/Logic/Parser/Nodes/RealConstant.h"
+    #include "../../Server/Logic/Parser/Nodes/TextConstant.h"
+    #include "../../Server/Logic/Parser/Nodes/ConstantList.h"
+    #include "../../Server/Logic/Parser/Nodes/IdentList.h"
+    #include "../../Server/Logic/Parser/Nodes/SelectList.h"
+    #include "../../Server/Logic/Parser/Nodes/Expression.h"
 
 
-    #include "../../App/Engine/Engine.h"
+    #include "../../Server/Engine/Engine.h"
     #include "parser.hpp"
     
     extern FILE *yyin;
