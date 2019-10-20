@@ -149,9 +149,10 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
                            
 {SCONST}                   {
                               local_str = "";
-                              for (int i = 1; i < sizeof(yytext) - 1; ++i) {
+                              for (int i = 1; i < strlen(yytext) - 1; ++i) {
                                 local_str += yytext[i];
                               }
+                              
                               yylval.tConst = new TextConstant(local_str);
                               return SCONST; 
                            }        

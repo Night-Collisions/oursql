@@ -238,7 +238,7 @@ TEST(SELECT, TEST_7) {
         "insert into a values (1, 1, '0');"
         "insert into a values (0, 1, '1');"
         "select * from a where a = 0;",
-        0, "a: 0\nb: 1.000000\nc: 1'\n");
+        0, "a: 0\nb: 1.000000\nc: 1\n");
 }
 
 TEST(SELECT, TEST_8) {
@@ -258,7 +258,7 @@ TEST(INSERT, TEST_1) {
         "create table a(a int, b real, c varchar(100));"
         "insert into a values (3, 2.2, 'Hello');"
         "select * from a;",
-        0, "a: 3\nb: 2.200000\nc: Hello'\n");
+        0, "a: 3\nb: 2.200000\nc: Hello\n");
 }
 
 TEST(INSERT, TEST_2) {
@@ -267,7 +267,7 @@ TEST(INSERT, TEST_2) {
         "create table a(a int, b real, c varchar(100));"
         "insert into a (c, a, b) values ('Hello', 3, 2.2);"
         "select * from a;",
-        0, "a: 3\nb: 2.200000\nc: Hello'\n");
+        0, "a: 3\nb: 2.200000\nc: Hello\n");
 }
 
 TEST(INSERT, TEST_3) {
@@ -287,7 +287,7 @@ TEST(INSERT, TEST_4) {
         "create table a(a int, b real, c varchar(100));"
         "insert into a values (-2, -1, '');"
         "select * from a;",
-        0, "a: -2\nb: -1.000000\nc: '\n");
+        0, "a: -2\nb: -1.000000\nc: \n");
 }
 
 TEST(INSERT, TEST_5) {
@@ -377,7 +377,7 @@ TEST(INSERT, TEST_13) {
         "unique);"
         "insert into a values (-2, 0.1, 'Hello world!');"
         "select * from a;",
-        0, "a: -2\nb: 0.100000\nc: Hello \n");
+        0, "a: -2\nb: 0.100000\nc: Hello world!\n");
 }
 
 TEST(INSERT, TEST_14) {
@@ -445,7 +445,7 @@ TEST(INSERT, TEST_19) {
         "insert into a values (1, 0, 'H!');"
         "insert into a(a, b) values (12, 1);"
         "select * from a;",
-        0, "a: 1\nb: 0.000000\nc: H!'\na: 12\nb: 1.000000\nc: \n");
+        0, "a: 1\nb: 0.000000\nc: H!\na: 12\nb: 1.000000\nc: \n");
 }
 
 TEST(INSERT, TEST_20) {
@@ -493,9 +493,8 @@ TEST(DELETE, TEST_1) {
         "delete from a where c = '0';"
         "select * from a;",
         0,
-        "a: 1\nb: 0.000000\nc: 1'\na: 1\nb: 1.000000\nc: 0'\na: 1\nb: "
-        "0.000000\nc: 1'\na: 1\nb: 1.000000\nc: 0'\na: 1\nb: 0.000000\nc: "
-        "1'\na: 1\nb: 1.000000\nc: 0'\n");
+        "a: 1\nb: 0.000000\nc: 1\na: 1\nb: 1.000000\nc: 0\na: 1\nb: "
+        "0.000000\nc: 1\na: 1\nb: 1.000000\nc: 0\na: 1\nb: 0.000000\nc: 1\n");
 }
 
 TEST(DELETE, TEST_2) {
@@ -535,9 +534,9 @@ TEST(UPDATE, TEST_1) {
         "update a set b = 3.45, c = 'H';"
         "select * from a;",
         0,
-        "a: 2\nb: 1.000000\nc: 1'\na: 2\nb: 1.000000\nc: 1'\na: 2\nb: "
-        "1.000000\nc: 1'\na: 2\nb: 3.450000\nc: H'\na: 2\nb: 3.450000\nc: "
-        "H'\na: 2\nb: 3.450000\nc: H'\n");
+        "a: 2\nb: 1.000000\nc: 1\na: 2\nb: 1.000000\nc: 1\na: 2\nb: "
+        "1.000000\nc: 1\na: 2\nb: 3.450000\nc: H\na: 2\nb: 3.450000\nc: H\na: "
+        "2\nb: 3.450000\nc: H\n");
 }
 
 TEST(UPDATE, TEST_2) {
