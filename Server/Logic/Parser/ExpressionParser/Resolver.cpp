@@ -21,7 +21,9 @@ std::string Resolver::resolve(const std::string& table,
     calculate(root, record, e);
     return (root && !e)
                ? ((static_cast<Constant*>(root->getConstant())->getValue() ==
-                   "null")
+                       "null" ||
+                   static_cast<Constant*>(root->getConstant())->getValue() ==
+                       "0.0")
                       ? ("0")
                       : (static_cast<Constant*>(root->getConstant())
                              ->getValue()))
@@ -59,7 +61,9 @@ void Resolver::calculate(Expression* root,
 bool Resolver::compareTypes(const std::string& table_name,
                             std::map<std::string, Column>& all_columns,
                             Node* left, Node* right,
-                            std::unique_ptr<exc::Exception>& e, bool is_set) {
+                            std::unique_ptr<exc::Exception>& e,
+                            const CompareCondition& cond,
+                            const std::string& oper = "") {
     DataType left_type = DataType::Count;
     DataType right_type = DataType::Count;
 
@@ -69,24 +73,12 @@ bool Resolver::compareTypes(const std::string& table_name,
         return false;
     }
 
-    /*    if (left_type == DataType::Count) {
-            e.reset(new exc::acc::ColumnNonexistent(
-                static_cast<Ident*>(left)->getName(), table_name));
-            return false;
-        }
-
-        if (right_type == DataType::Count) {
-            e.reset(new exc::acc::ColumnNonexistent(
-                static_cast<Ident*>(right)->getName(), table_name));
-            return false;
-        }*/
-
     if (left_type == DataType::real && right_type == DataType::integer) {
         return true;
     }
 
-    if (!is_set) {
-        if (right_type == DataType::real && left_type == DataType::integer) {
+    if (cond != CompareCondition::assign) {
+        if (left_type == DataType::integer && right_type == DataType::real) {
             return true;
         }
     }
@@ -98,11 +90,15 @@ bool Resolver::compareTypes(const std::string& table_name,
     if (left_type == right_type) {
         return true;
     } else {
-        if (!is_set) {
+        if (cond == CompareCondition::compare) {
             e.reset(new exc::CompareDataTypeMismatch(left_type, right_type));
-        } else {
+        }
+        if (cond == CompareCondition::assign) {
             e.reset(new exc::SetDataTypeMismatch(
                 left_type, static_cast<Ident*>(left)->getName()));
+        }
+        if (cond == CompareCondition::operation) {
+            e.reset(new exc::NoOperationForType(left_type, oper, right_type));
         }
         return false;
     }
@@ -113,12 +109,26 @@ void Resolver::equal(Expression* root,
                      std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
-    setStringValue(root, record, e, value1, value2);
+    setStringValue(root, record, e, value1, value2, CompareCondition::compare,
+                   "=");
+    if (e) {
+        return;
+    }
+    DataType type1 = DataType::Count;
+    DataType type2 = DataType::Count;
+    setDataTypes(root->childs()[0]->getConstant(),
+                 root->childs()[1]->getConstant(), type1, type2, table_,
+                 all_columns_, e);
     if (e) {
         return;
     }
 
-    std::string res = std::to_string(value1 == value2);
+    std::string res;
+    if (type1 != DataType::varchar && type2 != DataType::varchar) {
+        res = std::to_string(std::stof(value1) == std::stof(value2));
+    } else {
+        res = std::to_string(value1 == value2);
+    }
     root->setConstant(new IntConstant(res));
 }
 
@@ -143,7 +153,8 @@ void Resolver::greater(Expression* root,
                        std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
-    setStringValue(root, record, e, value1, value2);
+    setStringValue(root, record, e, value1, value2, CompareCondition::compare,
+                   ">");
     if (e) {
         return;
     }
@@ -191,12 +202,14 @@ void Resolver::greater(Expression* root,
 void Resolver::setStringValue(Expression* root,
                               std::map<std::string, std::string> record,
                               std::unique_ptr<exc::Exception>& e,
-                              std::string& a, std::string& b) {
+                              std::string& a, std::string& b,
+                              const CompareCondition& cond,
+                              const std::string& oper) {
     auto child1 = root->childs()[0];
     auto child2 = root->childs()[1];
 
     if (!compareTypes(table_, all_columns_, child1->getConstant(),
-                      child2->getConstant(), e, false)) {
+                      child2->getConstant(), e, cond, oper)) {
         return;
     }
 
@@ -220,7 +233,8 @@ void Resolver::greaterEqual(Expression* root,
                             std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
-    setStringValue(root, record, e, value1, value2);
+    setStringValue(root, record, e, value1, value2, CompareCondition::compare,
+                   ">=");
     if (e) {
         return;
     }
@@ -269,7 +283,8 @@ void Resolver::less(Expression* root, std::map<std::string, std::string> record,
                     std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
-    setStringValue(root, record, e, value1, value2);
+    setStringValue(root, record, e, value1, value2, CompareCondition::compare,
+                   "<");
     if (e) {
         return;
     }
@@ -319,7 +334,8 @@ void Resolver::lessEqual(Expression* root,
                          std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
-    setStringValue(root, record, e, value1, value2);
+    setStringValue(root, record, e, value1, value2, CompareCondition::compare,
+                   "<=");
     if (e) {
         return;
     }
@@ -369,7 +385,8 @@ void Resolver::logicAnd(Expression* root,
                         std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
-    setStringValue(root, record, e, value1, value2);
+    setStringValue(root, record, e, value1, value2, CompareCondition::operation,
+                   "and");
     if (e) {
         return;
     }
@@ -421,7 +438,8 @@ void Resolver::logicOr(Expression* root,
                        std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
-    setStringValue(root, record, e, value1, value2);
+    setStringValue(root, record, e, value1, value2, CompareCondition::operation,
+                   "or");
     if (e) {
         return;
     }
@@ -472,7 +490,8 @@ void Resolver::div(Expression* root, std::map<std::string, std::string> record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
-    setStringValue(root, record, e, value1, value2);
+    setStringValue(root, record, e, value1, value2, CompareCondition::operation,
+                   "/");
     if (e) {
         return;
     }
@@ -570,7 +589,8 @@ void Resolver::mul(Expression* root, std::map<std::string, std::string> record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
-    setStringValue(root, record, e, value1, value2);
+    setStringValue(root, record, e, value1, value2, CompareCondition::operation,
+                   "*");
     if (e) {
         return;
     }
@@ -596,7 +616,7 @@ void Resolver::mul(Expression* root, std::map<std::string, std::string> record,
 
             root->setConstant(new RealConstant(std::to_string(a * b)));
         } else {
-            e.reset(new exc::NoOperationForType(DataType::varchar, "-",
+            e.reset(new exc::NoOperationForType(DataType::varchar, "+",
                                                 DataType::varchar));
             return;
         }
@@ -614,7 +634,8 @@ void Resolver::add(Expression* root, std::map<std::string, std::string> record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
-    setStringValue(root, record, e, value1, value2);
+    setStringValue(root, record, e, value1, value2, CompareCondition::operation,
+                   "+");
     if (e) {
         return;
     }
@@ -658,7 +679,8 @@ void Resolver::sub(Expression* root, std::map<std::string, std::string> record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
-    setStringValue(root, record, e, value1, value2);
+    setStringValue(root, record, e, value1, value2, CompareCondition::operation,
+                   "-");
     if (e) {
         return;
     }

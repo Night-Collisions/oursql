@@ -5,25 +5,34 @@
 
 #include <rapidjson/document.h>
 #include <map>
-#include "../Nodes/Expression.h"
 #include "../../../Engine/Column.h"
+#include "../Nodes/Expression.h"
 
 typedef void (*func)(Expression* root,
                      std::map<std::string, std::string> record,
                      std::unique_ptr<exc::Exception>& e);
 
+enum class CompareCondition : unsigned int {
+    assign,
+    compare,
+    operation,
+    Count
+};
+
 class Resolver {
    public:
     static std::string resolve(const std::string& table,
-                        std::map<std::string, Column> all_columns,
-                        Expression* root,
-                        std::map<std::string, std::string> record,
-                        std::unique_ptr<exc::Exception>& e);
+                               std::map<std::string, Column> all_columns,
+                               Expression* root,
+                               std::map<std::string, std::string> record,
+                               std::unique_ptr<exc::Exception>& e);
 
     static bool compareTypes(const std::string& table_name,
                              std::map<std::string, Column>& all_columns,
                              Node* left, Node* right,
-                             std::unique_ptr<exc::Exception>& e, bool);
+                             std::unique_ptr<exc::Exception>& e,
+                             const CompareCondition& cond,
+                             const std::string& oper);
 
    private:
     static void calculate(Expression* root,
@@ -71,7 +80,9 @@ class Resolver {
     static void setStringValue(Expression* root,
                                std::map<std::string, std::string> record,
                                std::unique_ptr<exc::Exception>& e,
-                               std::string& a, std::string& b);
+                               std::string& a, std::string& b,
+                               const CompareCondition& cond,
+                               const std::string& oper);
 
     static void setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
                              const std::string& table,

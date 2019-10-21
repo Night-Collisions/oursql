@@ -235,7 +235,7 @@ void QueryManager::insert(const Query& query,
 
     for (size_t i = 0; i < constants.size(); ++i) {
         if (Resolver::compareTypes(name, all_columns, idents[i], constants[i],
-                                   e, true)) {
+                                   e, CompareCondition::assign, "=")) {
             if (all_columns[idents[i]->getName()].getType() ==
                     DataType::varchar &&
                 all_columns[idents[i]->getName()].getN() <
@@ -352,7 +352,7 @@ void QueryManager::update(const Query& query,
     std::map<std::string, std::string> values;
     for (size_t i = 0; i < constants.size(); ++i) {
         if (Resolver::compareTypes(name, all_columns, idents[i], constants[i],
-                                   e, true)) {
+                                   e, CompareCondition::assign, "=")) {
             if (all_columns[idents[i]->getName()].getType() ==
                     DataType::varchar &&
                 all_columns[idents[i]->getName()].getN() <

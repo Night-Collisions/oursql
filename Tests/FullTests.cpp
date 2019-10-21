@@ -729,11 +729,11 @@ TEST(WHERE, TEST_1) {
                             "~~Exception 603:\n no operation '-' for varchar "
                             "and varchar.\n~~Exception in command:\"select * "
                             "from a where a - 'b' = 'a';\"\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a * 2 = 'abb';", // TODO
-                            exc::ExceptionType::no_operation_for_type,
-                            "~~Exception 603:\n no operation '*' for varchar "
-                            "and varchar.\n~~Exception in command:\"select * "
-                            "from a where a * 'b' = 'abb';\"\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a * 2 = 'abb';",
+        exc::ExceptionType::no_operation_for_type,
+        "~~Exception 603:\n no operation '*' for varchar and int.\n~~Exception "
+        "in command:\"select * from a where a * 2 = 'abb';\"\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where a / 'b' = 'abb';",
                             exc::ExceptionType::no_operation_for_type,
                             "~~Exception 603:\n no operation '/' for varchar "
@@ -754,9 +754,9 @@ TEST(WHERE, TEST_2) {
                             "a: -3\nb: 3\na: -1\nb: 10\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where a <= b;", 0,
                             "a: -3\nb: 3\na: -1\nb: -1\na: -1\nb: 10\n");
-    CHECK_REQUEST_ST_CLIENT( // TODO
-        "select * from a where (12 + (4.5 * 2 / 3) + 2.0 * 2 - a * (-1)) / 2 "
-        "= b + a;",
+    CHECK_REQUEST_ST_CLIENT(  // TODO
+        "select * from a where (12 + (4.5 * 2 / 3) + 2.0 * 2 - a * (-1)) / 2 = "
+        "b + a;",
         0, "a: -1\nb: 10\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where a + 2 >= -0.567;", 0,
                             "a: -1\nb: -1\na: -1\nb: -10\na: -1\nb: 10\n");
@@ -769,7 +769,7 @@ TEST(WHERE, TEST_3) {
     clearDB();
     CHECK_REQUEST_ST_CLIENT("create table a (a real, b real);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-3.25, 3);", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a where 0.0;", 0, ""); // TODO
+    CHECK_REQUEST_ST_CLIENT("select * from a where 0.0;", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a where 0.12;", 0,
                             "a: -3.250000\nb: 3.000000\n");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-1.0, -1);", 0, "");
@@ -778,12 +778,14 @@ TEST(WHERE, TEST_3) {
         "select * from a where a + b < (-1.234 * (-1) + 2.05 * 3 - 1.2 / "
         "2.1) / (-3.7);",
         0, "a: -1.000000\nb: -1.000000\na: 0.123000\nb: -10.000000\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a  <= b;", 0,
-                            "a: -3.250000\nb: 3.000000\na: -1.000000\nb: -1.000000\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a  <= b;", 0,
+        "a: -3.250000\nb: 3.000000\na: -1.000000\nb: -1.000000\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where a / 3.25 * 3 = b * -1;", 0,
                             "a: -3.250000\nb: 3.000000\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a >= b;", 0,
-                            "a: -1.000000\nb: -1.000000\na: 0.123000\nb: -10.000000\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a >= b;", 0,
+        "a: -1.000000\nb: -1.000000\na: 0.123000\nb: -10.000000\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where a > 0;", 0,
                             "a: 0.123000\nb: -10.000000\n");
 }
@@ -794,9 +796,17 @@ TEST(WHERE, TEST_4) {
                             0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(1, 2.35, '67 89');", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a where a = b - 1.35;", 0,
-                            "a: 1\nb: 2.35\nc: 67 89\n"); // TODO
-    CHECK_REQUEST_ST_CLIENT("select * from a where a <= c;", exc::ExceptionType::compare_data_type_mismatch, "~~Exception 605:\n can't compare int and varchar.\n~~Exception in command:\"select * from a where a <= c;\"\n");  // TODO
-    CHECK_REQUEST_ST_CLIENT("select * from a where b = c;", exc::ExceptionType::compare_data_type_mismatch, "~~Exception 605:\n can't compare real and varchar.\n~~Exception in command:\"select * from a where b = c;\"\n");   // TODO
+                            "a: 1\nb: 2.350000\nc: 67 89\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a <= c;",
+        exc::ExceptionType::compare_data_type_mismatch,
+        "~~Exception 605:\n can't compare int and varchar.\n~~Exception in "
+        "command:\"select * from a where a <= c;\"\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where b = c;",
+        exc::ExceptionType::compare_data_type_mismatch,
+        "~~Exception 605:\n can't compare real and varchar.\n~~Exception in "
+        "command:\"select * from a where b = c;\"\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where not not a = a;", 0,
                             "a: 1\nb: 2.350000\nc: 67 89\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where not a != a;", 0,
@@ -807,27 +817,30 @@ TEST(WHERE, TEST_4) {
                             "a: 1\nb: 2.350000\nc: 67 89\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) <= (3 != 3);", 0,
                             "");
-    CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) * (3 != 3);", 0,
-                            "a: 1\nb: 2.350000\nc: 67 89\n"); // TODO
+    CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) * (3 != 3);", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) + (3 != 3);", 0,
                             "a: 1\nb: 2.350000\nc: 67 89\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) / 0;", exc::ExceptionType::div_by_zero,
-                            "~~Exception 7:\n division by zero '1/0'.\n~~Exception in command:\"select * from a where (a = 1) / 0;\"\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) - (3 != 3);", 0, "a: 1\nb: 2.350000\nc: 67 89\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where (a = 1) / 0;", exc::ExceptionType::div_by_zero,
+        "~~Exception 7:\n division by zero '1/0'.\n~~Exception in "
+        "command:\"select * from a where (a = 1) / 0;\"\n");
+    CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) - (3 != 3);", 0,
+                            "a: 1\nb: 2.350000\nc: 67 89\n");
     CHECK_REQUEST_ST_CLIENT("insert into a values(3, 0, '');", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a where c =;", exc::ExceptionType::syntax, "~~Exception 1:\n wrong syntax!\n~~Exception in command:\"select * from a where c =;\"\n");
+    CHECK_REQUEST_ST_CLIENT("select * from a where c =;",
+                            exc::ExceptionType::syntax,
+                            "~~Exception 1:\n wrong syntax!\n~~Exception in "
+                            "command:\"select * from a where c =;\"\n");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where not a < 1 or b = 2 and c = '';", 0,
-        "a: 3\nb: 0\nc: \n");  // Пока работает так. Разработчик Виктор обещал
-                               // пофиксить к паре, но не сказал к какой. Ну
-                               // или это особенность субд TODO
+        "a: 1\nb: 2.350000\nc: 67 89\na: 3\nb: 0.000000\nc: \n");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a >= 1 and (b = 2 or c = '');", 0,
         "a: 3\nb: 0.000000\nc: \n");
     CHECK_REQUEST_ST_CLIENT("select * from a where a - 3 = b = 0;", 0,
-                            "a: 1\nb: 2.35\nc: 67 89\n"); // TODO
+                            "a: 1\nb: 2.350000\nc: 67 89\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where (a - 3 = 0) * 3 = 0;", 0,
-                            "a: -3\nb: 0.000000\nc: \n");  // TODO
+                            "a: 1\nb: 2.350000\nc: 67 89\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where a - 3 = b * 1 = 0;", 0,
-                            "a: 3\nb: 0\nc: \n"); // TODO
+                            "a: 1\nb: 2.350000\nc: 67 89\n");
 }
