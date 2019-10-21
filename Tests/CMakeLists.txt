@@ -10,7 +10,7 @@ FetchContent_MakeAvailable(googletest)
 
 macro(package_set_test TESTNAME)
     #data_directory(${TESTNAME} Tests/Data)
-    target_link_libraries(${TESTNAME} gtest gmock gtest_main OurSQL_Server_SURSE OurSQL_Client_SURSE)
+    target_link_libraries(${TESTNAME} gtest gmock gtest_main OurSQL_Client_SURSE)
     set_property(TARGET ${TESTNAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<TARGET_FILE_DIR:${TESTNAME}>)
     add_test(NAME ${TESTNAME} COMMAND ${TESTNAME})
     set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
@@ -27,8 +27,6 @@ macro(package_add_test TESTNAME)
     add_executable(${TESTNAME} ${ARGN} Test.h Test.cpp)
     package_set_test(${TESTNAME} ${ARGN})
 endmacro()
-
-assemble_parser(../../Server/Logic/Parser)
 
 init(${PROJECT_BINARY_DIR})
 

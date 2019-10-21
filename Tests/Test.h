@@ -4,6 +4,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <gmock/gmock.h>
@@ -39,5 +40,8 @@
     { CHECK_REQUEST(request_message, exception, answer, client); }
 
 void clearDB();
+
+void run_server();
+void stop_server();
 
 #endif

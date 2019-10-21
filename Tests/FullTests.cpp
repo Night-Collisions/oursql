@@ -1,3 +1,5 @@
+#define CREATE_SERVER
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -8,12 +10,24 @@
 class REQUEST_TESTS : public ::testing::Test {
    public:
     static void SetUpTestCase();
+    static void TearDownTestCase();
     void TearDown() override { clearDB(); }
 
     static Client client;
 };
 
-void REQUEST_TESTS::SetUpTestCase() { clearDB(); }
+void REQUEST_TESTS::SetUpTestCase() {
+    clearDB();
+#if defined(CREATE_SERVER)
+    run_server();
+#endif
+    client.connect();
+}
+void REQUEST_TESTS::TearDownTestCase() {
+#if defined(CREATE_SERVER)
+    stop_server();
+#endif
+}
 
 Client REQUEST_TESTS::client("localhost", 11234);
 
@@ -523,7 +537,8 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_5) {
     CHECK_REQUEST_ST_CLIENT(
         "delete from a where b = '0';",
         EXCEPTION2NUMB(exc::ExceptionType::compare_data_type_mismatch),
-        "~~Exception 602:\n can't compare real and varchar(100).\n~~Exception "
+        "~~Exception 602:\n can't compare real and "
+        "varchar(100).\n~~Exception "
         "in "
         "command:\"delete from a where b = '0';\"\n");
 }
@@ -664,7 +679,8 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a * 2 = 'abb';",
         exc::ExceptionType::no_operation_for_type,
-        "~~Exception 603:\n no operation '*' for varchar and int.\n~~Exception "
+        "~~Exception 603:\n no operation '*' for varchar and "
+        "int.\n~~Exception "
         "in command:\"select * from a where a * 2 = 'abb';\"\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where a / 'b' = 'abb';",
                             exc::ExceptionType::no_operation_for_type,
@@ -686,7 +702,8 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_2) {
     CHECK_REQUEST_ST_CLIENT("select * from a where a <= b;", 0,
                             "a: -3\nb: 3\na: -1\nb: -1\na: -1\nb: 10\n");
     CHECK_REQUEST_ST_CLIENT(  // TODO
-        "select * from a where (12 + (4.5 * 2 / 3) + 2.0 * 2 - a * (-1)) / 2 = "
+        "select * from a where (12 + (4.5 * 2 / 3) + 2.0 * 2 - a * (-1)) / "
+        "2 = "
         "b + a;",
         0, "a: -1\nb: 10\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where a + 2 >= -0.567;", 0,
@@ -731,11 +748,11 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_4) {
         exc::ExceptionType::compare_data_type_mismatch,
         "~~Exception 605:\n can't compare int and varchar.\n~~Exception in "
         "command:\"select * from a where a <= c;\"\n");
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from a where b = c;",
-        exc::ExceptionType::compare_data_type_mismatch,
-        "~~Exception 605:\n can't compare real and varchar.\n~~Exception in "
-        "command:\"select * from a where b = c;\"\n");
+    CHECK_REQUEST_ST_CLIENT("select * from a where b = c;",
+                            exc::ExceptionType::compare_data_type_mismatch,
+                            "~~Exception 605:\n can't compare real and "
+                            "varchar.\n~~Exception in "
+                            "command:\"select * from a where b = c;\"\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where not not a = a;", 0,
                             "a: 1\nb: 2.350000\nc: 67 89\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where not a != a;", 0,
