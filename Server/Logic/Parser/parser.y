@@ -13,6 +13,8 @@
     #include "../../Server/Logic/Parser/Nodes/NullConstant.h"
     #include "../../Server/Logic/Parser/Nodes/SelectList.h"
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
+    #include "../../Server/Logic/Parser/Nodes/TableIdent.h"
+    #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
     #include "../../Server/Core/Exception.h"
 
     #include "../../Server/Engine/Engine.h"
@@ -55,7 +57,7 @@
 %token INT REAL VARCHAR
 %token NOT_NULL PRIMARY_KEY UNIQUE NULL_
 %token AND OR DIVIDE PLUS MINUS NOT
-%token LEFT RIGHT INNER OUTER FULL CROSS JOIN INTERSECT UNION
+%token LEFT RIGHT INNER OUTER FULL CROSS JOIN INTERSECT UNION AS ON
 
 %type<query> create show_create drop_table select insert
 %type<ident> id col_ident
@@ -65,6 +67,8 @@
 %type<iConst> int_const
 %type<rConst> real_const
 %type<tConst> text_const
+%type<tableIdent> table_ident
+%type<relOperNodeType> join_opers union_intersect
 %type<nullConst> null_
 %type<anyConstant> constant where_element select_list_element val_or_var
 %type<exprUnit> logic_or logic_and plus_minus mul_div relations
@@ -74,6 +78,7 @@
 
 %union {
     ColumnConstraint constraint;
+    RelOperNodeType relOperNodeType;
     Ident *ident;
     Query *query;
     Variable *var;
@@ -86,6 +91,7 @@
     Node *anyConstant;
     ExprUnit exprUnit;
     Expression *expr;
+    TableIdent *tableIdent;
 
     int varcharLen;
 }
@@ -167,13 +173,13 @@ constraint:
 // --- select
 
 select:
-     SELECT select_decl FROM id where_expr {
-        std::map<NodeType, Node*> children;
-        children[NodeType::ident] = $4;
-        children[NodeType::select_list] = new SelectList(selectList);
-        children[NodeType::expression] = $5;
+     SELECT select_decl FROM /*id where_expr*/ from_expr {
+        // std::map<NodeType, Node*> children;
+        // children[NodeType::ident] = $4;
+        // children[NodeType::select_list] = new SelectList(selectList);
+        // children[NodeType::expression] = $5;
 
-        parseTree = new Query(children, CommandType::select);
+        // parseTree = new Query(children, CommandType::select);
      } ;
 
 select_decl:
@@ -429,14 +435,40 @@ col_ident:
     id DOT id { $$ = new Ident($1->getName(), $3->getName()); };
 
 id:
-    ID { $$ = new Ident(*yylval.name); }
+    ID { $$ = new Ident(*yylval.name); };
 
-    
+table_ident:
+    id { /****/ } |
+    id AS id { /****/ } |
+    LPAREN from_expr RPAREN { /****/ };
+
+from_expr:
+    from_expr join_opers table_ident join_cond |
+    from_expr union_intersect table_ident |
+    table_ident;
+
+join_opers:
+    JOIN |
+    LEFT JOIN |
+    RIGHT JOIN |
+    OUTER JOIN |
+    CROSS JOIN |
+    INNER JOIN |
+    FULL JOIN |
+
+union_intersect:
+    UNION |
+    INTERSECT;
+
+join_cond:
+    ON root_expr |
+    /*empty*/ { /***/ };
+
 
 %%
 
 void yyerror(const char *s) {
-    //fprintf(stderr, "%s\n", s);
+    fprintf(stderr, "\n%s\n", s);
     ex.reset(new exc::SyntaxException());
 }
 

@@ -75,7 +75,7 @@ assemble_parser(Logic/Parser/)
 
 init(${PROJECT_BINARY_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Logic/RelationalOperations/Union.cpp Logic/RelationalOperations/Union.h Logic/RelationalOperations/Intersect.cpp Logic/RelationalOperations/Intersect.h)
+add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Logic/RelationalOperations/Union.cpp Logic/RelationalOperations/Union.h Logic/RelationalOperations/Intersect.cpp Logic/RelationalOperations/Intersect.h Logic/Parser/Nodes/TableIdent.cpp Logic/Parser/Nodes/TableIdent.h Logic/Parser/Nodes/RelExpr.cpp Logic/Parser/Nodes/RelExpr.h)
 
 add_library(${PROJECT_NAME}_SURSE ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
 

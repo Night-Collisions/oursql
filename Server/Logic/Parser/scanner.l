@@ -20,6 +20,9 @@
     #include "../../Server/Logic/Parser/Nodes/IdentList.h"
     #include "../../Server/Logic/Parser/Nodes/SelectList.h"
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
+    #include "../../Server/Logic/Parser/Nodes/TableIdent.h"
+    #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
+
 
 
     #include "../../Server/Engine/Engine.h"
@@ -111,7 +114,9 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "union"                    { return UNION; }
 "intersect"                { return INTERSECT; }
 
-
+"as"                       { return AS; }
+"on"                       { return ON; }
+  
 "int"                      { return INT; }
 "real"                     { return REAL; }
 {VARCHAR}                  { 
