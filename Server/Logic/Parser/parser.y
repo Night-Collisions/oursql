@@ -431,6 +431,8 @@ col_ident:
 id:
     ID { $$ = new Ident(*yylval.name); }
 
+    
+
 %%
 
 void yyerror(const char *s) {
