@@ -55,9 +55,10 @@
 %token INT REAL VARCHAR
 %token NOT_NULL PRIMARY_KEY UNIQUE NULL_
 %token AND OR DIVIDE PLUS MINUS NOT
+%token LEFT RIGHT INNER OUTER FULL CROSS JOIN INTERSECT UNION
 
 %type<query> create show_create drop_table select insert
-%type<ident> id 
+%type<ident> id col_ident
 %type<var> variable
 %type<dataType> type
 %type<constraint> constraint
@@ -194,10 +195,7 @@ asterisk:
     };
 
 select_list_element:
-    id DOT id {
-        $$ = new Ident((*$1).getName(), (*$3).getName());
-    } |
-    id {
+    col_ident {
         $$ = $1;
     } |
     constant {
@@ -352,7 +350,7 @@ factor:
     LPAREN root_expr RPAREN {
         $$ = $2;
     } | 
-    NOT root_expr {
+    NOT factor {
         $$ = new Expression(new Expression(new Ident("")), ExprUnit::not_, $2);
     } |
     MINUS factor {
@@ -425,6 +423,10 @@ type:
     INT { $$ = DataType::integer; } |
     REAL { $$ = DataType::real; } |
     VARCHAR { $$ = DataType::varchar; };
+
+col_ident: 
+    id { $$ = $1; } |
+    id DOT id { $$ = new Ident($1->getName(), $3->getName()); };
 
 id:
     ID { $$ = new Ident(*yylval.name); }

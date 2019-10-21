@@ -108,8 +108,8 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "full"                     { return FULL; }
 "cross"                    { return CROSS; }
 "join"                     { return JOIN; }
-
-
+"union"                    { return UNION; }
+"intersect"                { return INTERSECT; }
 
 
 "int"                      { return INT; }
