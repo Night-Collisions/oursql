@@ -8,7 +8,6 @@
 #include "Parser/Nodes/Ident.h"
 #include "Parser/Nodes/VarList.h"
 
-#include "Conditions/ConditionChecker.h"
 #include "Parser/ExpressionParser/Resolver.h"
 #include "Parser/Nodes/ConstantList.h"
 #include "Parser/Nodes/IdentList.h"

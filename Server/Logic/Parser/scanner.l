@@ -101,6 +101,16 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "or"|"||"                  { return OR; } 
 "not"                      { return NOT; }
 
+"left"                     { return LEFT; }
+"right"                    { return RIGHT; }
+"inner"                    { return INNER; }
+"outer"                    { return OUTER; }
+"full"                     { return FULL; }
+"cross"                    { return CROSS; }
+"join"                     { return JOIN; }
+"union"                    { return UNION; }
+"intersect"                { return INTERSECT; }
+
 
 "int"                      { return INT; }
 "real"                     { return REAL; }

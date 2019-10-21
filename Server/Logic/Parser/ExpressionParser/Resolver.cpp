@@ -547,7 +547,7 @@ void Resolver::logicNot(Expression* root,
     std::string value;
 
     if (child2->getConstant()->getNodeType() == NodeType::ident) {
-        value = record[child2->getName()];
+        value = record[child2->getConstant()->getName()];
     } else {
         value = static_cast<Constant*>(child2->getConstant())->getValue();
     }
