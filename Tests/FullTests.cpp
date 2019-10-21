@@ -832,7 +832,10 @@ TEST(WHERE, TEST_4) {
                             "~~Exception 1:\n wrong syntax!\n~~Exception in "
                             "command:\"select * from a where c =;\"\n");
     CHECK_REQUEST_ST_CLIENT(
-        "select * from a where not a < 1 or b = 2 and c = '';", 0,
+        "select * from a where not a < 1 or b < 2 and c = '';", 0,
+        "a: 1\nb: 2.350000\nc: 67 89\na: 3\nb: 0.000000\nc: \n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where not a < 1 or b > 2 and c = '';", 0,
         "a: 1\nb: 2.350000\nc: 67 89\na: 3\nb: 0.000000\nc: \n");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a >= 1 and (b = 2 or c = '');", 0,
