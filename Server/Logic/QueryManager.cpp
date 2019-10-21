@@ -8,7 +8,6 @@
 #include "Parser/Nodes/Ident.h"
 #include "Parser/Nodes/VarList.h"
 
-#include "Conditions/ConditionChecker.h"
 #include "Parser/ExpressionParser/Resolver.h"
 #include "Parser/Nodes/ConstantList.h"
 #include "Parser/Nodes/IdentList.h"
@@ -106,17 +105,18 @@ void printSelect(const Table& table, std::map<std::string, Column> all_columns,
             auto expr = static_cast<Expression*>(c);
             response = Resolver::resolve(table.getName(), all_columns, expr,
                                          fetch_map, e);
+            std::string colname = expr->getConstant()->getName();
+            if (colname.empty()) {
+                colname = "expression " + std::to_string(expr_cnt++);
+            }
             if (e) {
                 return;
             }
-            out << "expression " + std::to_string(expr_cnt++) + ": " + response
-                << std::endl;
+            out << colname + ": " + response << std::endl;
         } else if (c->getName() == "*") {
             for (auto& k : table.getColumns()) {
                 out << k.getName() + ": " + fetch_map[k.getName()] << std::endl;
             }
-        } else {
-            out << c->getName() + ": " + fetch_map[c->getName()] << std::endl;
         }
     }
 }

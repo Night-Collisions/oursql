@@ -19,6 +19,9 @@ std::string Resolver::resolve(const std::string& table,
     all_columns_ = std::move(all_columns);
 
     calculate(root, record, e);
+    if (!e && root && root->getConstant()->getNodeType() == NodeType::ident) {
+        return record[root->getConstant()->getName()];
+    }
     return (root && !e)
                ? ((static_cast<Constant*>(root->getConstant())->getValue() ==
                        "null" ||
@@ -547,7 +550,7 @@ void Resolver::logicNot(Expression* root,
     std::string value;
 
     if (child2->getConstant()->getNodeType() == NodeType::ident) {
-        value = record[child2->getName()];
+        value = record[child2->getConstant()->getName()];
     } else {
         value = static_cast<Constant*>(child2->getConstant())->getValue();
     }
