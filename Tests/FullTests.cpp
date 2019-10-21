@@ -1,3 +1,5 @@
+#define CREATE_SERVER
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

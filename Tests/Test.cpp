@@ -25,7 +25,7 @@ void clearDB() {
 void run_server() {
     std::string command;
     #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-        command = "start cmd.exe /C \"..\\Server\\OurSQL_Server.exe\"";
+        command = "start cmd.exe /k \"..\\Server\\OurSQL_Server.exe\"";
     #else
     #endif
     std::system(command.c_str());
