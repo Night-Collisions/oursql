@@ -39,6 +39,9 @@ class QueryManager {
 
     static void setValue(Node* nod, std::string& value);
 
+    //todo
+    static Table resolveRelationalOperTree(Node* root);
+
     static std::map<std::string, std::string> mapFromFetch(
         const std::vector<Column>& cols, std::vector<Value> ftch);
 };
