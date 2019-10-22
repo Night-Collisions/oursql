@@ -19,13 +19,13 @@ class REQUEST_TESTS : public ::testing::Test {
 void REQUEST_TESTS::SetUpTestCase() {
     clearDB();
 #if defined(CREATE_SERVER)
-    run_server();
+    Server::get()->run();
 #endif
     client.connect();
 }
 void REQUEST_TESTS::TearDownTestCase() {
 #if defined(CREATE_SERVER)
-    stop_server();
+    Server::get()->stop();
 #endif
 }
 

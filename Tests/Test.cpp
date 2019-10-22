@@ -3,6 +3,8 @@
 #include "../Server/Engine/Engine.h"
 #include "../Server/Our.h"
 
+Server* Server::obj_ = nullptr;
+
 void clearDB() {
     std::string command;
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
@@ -22,19 +24,19 @@ void clearDB() {
     std::system(command.c_str());
 }
 
-void run_server() {
+void Server::run() {
     std::string command;
     #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-        command = "start cmd.exe /c \"..\\Server\\OurSQL_Server.exe\"";
+        command = "start cmd.exe /c \"" + directory_ + name_ + ".exe\"";
     #else
     #endif
     std::system(command.c_str());
 }
 
-void stop_server() {
+void Server::stop() {
     std::string command;
     #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-        command = "taskkill /im OurSQL_Server.exe /f";
+        command = "taskkill /im " + name_ + ".exe /f";
     #else
     #endif
     std::system(command.c_str());
