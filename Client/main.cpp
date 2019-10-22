@@ -4,6 +4,7 @@
 
 int main() {
     Client client("localhost", 11234);
+    client.connect();
     while (1) {
         std::string s;
         std::string ans;

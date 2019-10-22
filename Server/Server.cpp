@@ -56,7 +56,7 @@ Server::Server(asio::io_service& context, const short port,
       executer_(executer),
       out_(out), out_lock_(std::make_shared<std::mutex>()) {
     out_lock_->lock();
-    out_ << "Start of server." << std::endl;
+    out_ << "Start of server!." << std::endl;
     out_lock_->unlock();
     executer_->run();
     accept();

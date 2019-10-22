@@ -4,6 +4,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <gmock/gmock.h>
@@ -37,6 +38,24 @@
 
 #define CHECK_REQUEST_ST_CLIENT(request_message, exception, answer) \
     { CHECK_REQUEST(request_message, exception, answer, client); }
+
+class Server {
+   public:
+    static Server* get() {
+        if (obj_ == nullptr) {
+            obj_ = new Server();
+        }
+        return obj_; }
+
+    void run();
+    void stop();
+
+   private:
+    Server() {}
+    static Server* obj_;
+    const std::string directory_ = "..\\Server\\";
+    const std::string name_ = "OurSQL_Server";
+};
 
 void clearDB();
 
