@@ -11,7 +11,11 @@
 #include "Parser/ExpressionParser/Resolver.h"
 #include "Parser/Nodes/ConstantList.h"
 #include "Parser/Nodes/IdentList.h"
+#include "Parser/Nodes/RelExpr.h"
 #include "Parser/Nodes/SelectList.h"
+
+std::array<func, static_cast<unsigned int>(RelOperNodeType::Count)>
+    QueryManager::relational_oper_ = {};
 
 void QueryManager::execute(const Query& query,
                            std::unique_ptr<exc::Exception>& e,
@@ -121,31 +125,49 @@ void printSelect(const Table& table, std::map<std::string, Column> all_columns,
     }
 }
 
-void QueryManager::select(const Query& query,
-                          std::unique_ptr<exc::Exception>& e,
-                          std::ostream& out) {
-    auto name = query.getChildren()[NodeType::ident]->getName();
-    auto table = Engine::show(name, e);
-    if (table.getName().empty()) {
-        e.reset(new exc::acc::TableNonexistent(name));
-        return;
-    }
-
+std::map<std::string, Column> getColumnMap(const Table& t) {
     std::map<std::string, Column> all_columns;
-    for (auto& c : table.getColumns()) {
+    for (auto& c : t.getColumns()) {
         all_columns[c.getName()] = c;
     }
 
-    auto cols_from_parser =
-        static_cast<SelectList*>(query.getChildren()[NodeType::select_list])
-            ->getList();
+    return all_columns;
+}
 
-    for (auto& c : cols_from_parser) {
-        if (c->getName() != "*" &&
-            c->getNodeType() != NodeType::expression_unit &&
-            all_columns.find(c->getName()) == all_columns.end()) {
-            e.reset(new exc::acc::ColumnNonexistent(c->getName(), name));
+void QueryManager::select(const Query& query,
+                          std::unique_ptr<exc::Exception>& e,
+                          std::ostream& out) {
+    auto children = query.getChildren();
+
+    Table resolvedTable;
+    std::map<std::string, Column> all_columns;
+    std::vector<Node*> cols_from_parser;
+
+    if (children.find(NodeType::relational_oper_expr) != children.end()) {
+        // resolvedTable =
+        // resolveRelationalOperTree(children[odeType::relational_oper_expr]);
+    } else {
+        auto name = children[NodeType::ident]->getName();
+        resolvedTable = Engine::show(name, e);
+
+        if (resolvedTable.getName().empty()) {
+            e.reset(new exc::acc::TableNonexistent(name));
             return;
+        }
+
+        all_columns = getColumnMap(resolvedTable);
+
+        cols_from_parser =
+            static_cast<SelectList*>(children[NodeType::select_list])
+                ->getList();
+
+        for (auto& c : cols_from_parser) {
+            if (c->getName() != "*" &&
+                c->getNodeType() != NodeType::expression_unit &&
+                all_columns.find(c->getName()) == all_columns.end()) {
+                e.reset(new exc::acc::ColumnNonexistent(c->getName(), name));
+                return;
+            }
         }
     }
 
@@ -153,24 +175,23 @@ void QueryManager::select(const Query& query,
         return;
     }
 
-    Cursor cursor(name);
-    while (cursor.next()) {
-        auto ftch = cursor.fetch();
-        std::map<std::string, std::string> m =
-            mapFromFetch(table.getColumns(), ftch);
-        auto root =
-            static_cast<Expression*>(query.getChildren()[NodeType::expression]);
-        std::string response = Resolver::resolve(name, all_columns, root, m, e);
-        if (e) {
-            return;
-        }
-        if (response != "0") {
-            printSelect(table, all_columns, cols_from_parser, m, e, out);
-            if (e) {
-                return;
+    /*    Cursor cursor(name);
+        while (cursor.next()) {
+            auto ftch = cursor.fetch();
+            std::map<std::string, std::string> m =
+                mapFromFetch(table.getColumns(), ftch);
+            auto root =
+                static_cast<Expression*>(children[NodeType::expression]);
+            std::string response = Resolver::resolve(name, all_columns, root, m,
+       e); if (e) { return;
             }
-        }
-    }
+            if (response != "0") {
+                printSelect(table, all_columns, cols_from_parser, m, e, out);
+                if (e) {
+                    return;
+                }
+            }
+        }*/
 }
 
 void QueryManager::insert(const Query& query,
@@ -512,4 +533,34 @@ std::map<std::string, std::string> QueryManager::mapFromFetch(
         ++counter;
     }
     return m;
+}
+
+Table QueryManager::resolveRelationalOperTree(
+    RelExpr* root, std::unique_ptr<exc::Exception>& e) {
+    if (e) {
+        return Table();
+    }
+
+    if (root && root->childs()[0] && root->childs()[1]) {
+        auto child1 = root->childs()[0];
+        auto child2 = root->childs()[1];
+
+        resolveRelationalOperTree(child1, e);
+        if (e) {
+            return Table();
+        }
+        resolveRelationalOperTree(child2, e);
+        if (e) {
+            return Table();
+        }
+
+        Table res_table = relational_oper_[static_cast<unsigned int>(root->getRelOperType())](
+            root, e);
+
+        if (e) {
+            return Table();
+        }
+
+        return res_table;
+    }
 }

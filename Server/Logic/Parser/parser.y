@@ -179,10 +179,11 @@ select:
 
         parseTree = new Query(children, CommandType::select);
     } |
-    SELECT select_decl FROM relational_expr {
+    SELECT select_decl FROM relational_expr where_expr {
          std::map<NodeType, Node*> children;
          children[NodeType::select_list] = new SelectList(selectList);
          children[NodeType::relational_oper_expr] = $4;
+         children[NodeType::expression] = $5;
 
          parseTree = new Query(children, CommandType::select);
      };

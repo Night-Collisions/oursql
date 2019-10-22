@@ -6,6 +6,9 @@
 #include "../Engine/Table.h"
 #include "../Engine/Value.h"
 #include "Parser/Nodes/Query.h"
+#include "Parser/Nodes/RelExpr.h"
+
+typedef Table (*func)(RelExpr* root, std::unique_ptr<exc::Exception>& e);
 
 class QueryManager {
    public:
@@ -37,13 +40,15 @@ class QueryManager {
     static void remove(const Query& query, std::unique_ptr<exc::Exception>& e,
                        std::ostream& out);
 
-    static void setValue(Node* nod, std::string& value);
-
-    //todo
-    static Table resolveRelationalOperTree(Node* root);
+    // todo
+    static Table resolveRelationalOperTree(RelExpr* root,
+                                           std::unique_ptr<exc::Exception>& e);
 
     static std::map<std::string, std::string> mapFromFetch(
         const std::vector<Column>& cols, std::vector<Value> ftch);
+
+    static std::array<func, static_cast<unsigned int>(RelOperNodeType::Count)>
+        relational_oper_;
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_

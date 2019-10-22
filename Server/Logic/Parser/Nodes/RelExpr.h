@@ -21,11 +21,11 @@ enum class RelOperNodeType : unsigned int {
 
 class RelExpr : public Node {
    public:
-    RelExpr(Node* left, Node* right, RelOperNodeType type,
+    RelExpr(RelExpr* left, RelExpr* right, RelOperNodeType type,
             Expression* cond_expr)
         : Node(NodeType::relational_oper_expr),
           rel_oper_type_(type),
-          cond_expr_(cond_expr) {
+          on_expr_(cond_expr) {
         childs_.push_back(left);
         childs_.push_back(right);
     }
@@ -43,23 +43,25 @@ class RelExpr : public Node {
             delete c;
         }
         delete table_id_;
-        delete cond_expr_;
+        delete on_expr_;
         childs_.clear();
     }
 
     RelOperNodeType getRelOperType() { return rel_oper_type_; }
 
-    std::vector<Node*> childs() { return childs_; }
+    std::vector<RelExpr*> childs() { return childs_; }
 
     std::string getName() override {
         return (table_id_) ? (alias_name_) : (table_id_->getName());
     }
     std::string getAlias() { return alias_name_; }
 
+    Expression* getOnExpr() { return on_expr_; }
+
    private:
     RelOperNodeType rel_oper_type_;
-    std::vector<Node*> childs_;
-    Expression* cond_expr_{nullptr};
+    std::vector<RelExpr*> childs_;
+    Expression* on_expr_{nullptr};
     Ident* table_id_{nullptr};
     std::string alias_name_{""};
 };
