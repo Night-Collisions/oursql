@@ -5,7 +5,7 @@
     #include <sstream>
     #include <map>
 
-    
+  
     #include "../../Server/Logic/Parser/Nodes/Node.h"
     #include "../../Server/Logic/Parser/Nodes/Query.h"
     #include "../../Server/Logic/Parser/Nodes/VarList.h"
@@ -20,10 +20,7 @@
     #include "../../Server/Logic/Parser/Nodes/IdentList.h"
     #include "../../Server/Logic/Parser/Nodes/SelectList.h"
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
-    #include "../../Server/Logic/Parser/Nodes/TableIdent.h"
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
-
-
 
     #include "../../Server/Engine/Engine.h"
     #include "parser.hpp"
