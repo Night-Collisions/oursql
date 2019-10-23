@@ -1,3 +1,5 @@
+#define CREATE_SERVER
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -8,12 +10,24 @@
 class REQUEST_TESTS : public ::testing::Test {
    public:
     static void SetUpTestCase();
+    static void TearDownTestCase();
     void TearDown() override { clearDB(); }
 
     static Client client;
 };
 
-void REQUEST_TESTS::SetUpTestCase() { clearDB(); }
+void REQUEST_TESTS::SetUpTestCase() {
+    clearDB();
+#if defined(CREATE_SERVER)
+    Server::get()->run();
+#endif
+    client.connect();
+}
+void REQUEST_TESTS::TearDownTestCase() {
+#if defined(CREATE_SERVER)
+    Server::get()->stop();
+#endif
+}
 
 Client REQUEST_TESTS::client("localhost", 11234);
 
@@ -235,8 +249,9 @@ TEST_F(REQUEST_TESTS, SELECT_TEST_7) {
     CHECK_REQUEST_ST_CLIENT("insert into a values (1, 0, '1');", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (1, 1, '0');", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (0, 1, '1');", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a = 0;", 0,
-                            "a: 0\nb: 1.000000\nc: 1\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a = 0;", 0,
+        get_select_answer({"a", "b", "c"}, {{"0", "1.000000", "1"}}));
 }
 
 TEST_F(REQUEST_TESTS, SELECT_TEST_8) {
@@ -253,8 +268,9 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (3, 2.2, 'Hello');", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a;", 0,
-                            "a: 3\nb: 2.200000\nc: Hello\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a;", 0,
+        get_select_answer({"a", "b", "c"}, {{"3", "2.200000", "Hello"}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_2) {
@@ -262,8 +278,9 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_2) {
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a (c, a, b) values ('Hello', 3, 2.2);",
                             0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a;", 0,
-                            "a: 3\nb: 2.200000\nc: Hello\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a;", 0,
+        get_select_answer({"a", "b", "c"}, {{"3", "2.200000", "Hello"}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_3) {
@@ -281,8 +298,9 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_4) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (-2, -1, '');", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a;", 0,
-                            "a: -2\nb: -1.000000\nc: \n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a;", 0,
+        get_select_answer({"a", "b", "c"}, {{"-2", "-1.000000", ""}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_5) {
@@ -353,14 +371,18 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_11) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a(a) values (-2);", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a;", 0, "a: -2\nb: null\nc: \n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a;", 0,
+        get_select_answer({"a", "b", "c"}, {{"-2", "null", ""}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_12) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a(a) values (8);", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a;", 0, "a: 8\nb: null\nc: \n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a;", 0,
+        get_select_answer({"a", "b", "c"}, {{"8", "null", ""}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_13) {
@@ -370,8 +392,10 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_13) {
         0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (-2, 0.1, 'Hello world!');",
                             0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a;", 0,
-                            "a: -2\nb: 0.100000\nc: Hello world!\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a;", 0,
+        get_select_answer({"a", "b", "c"},
+                          {{"-2", "0.100000", "Hello world!"}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_14) {
@@ -439,7 +463,9 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_18) {
     CHECK_REQUEST_ST_CLIENT(
         "insert into a(a, b) values (12, 1);"
         "select * from a;",
-        0, "a: 1\nb: 0.000000\nc: H!\na: 12\nb: 1.000000\nc: \n");
+        0,
+        get_select_answer({"a", "b", "c"},
+                          {{"1", "0.000000", "H!"}, {"12", "1.000000", ""}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_19) {
@@ -484,9 +510,12 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("delete from a where a = 0;", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        "a: 1\nb: 0.000000\nc: 1\na: 1\nb: 1.000000\nc: 0\n");
+        get_select_answer({"a", "b", "c"},
+                          {{"1", "0.000000", "1"}, {"1", "1.000000", "0"}}));
     CHECK_REQUEST_ST_CLIENT("delete from a where b = 0;", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a;", 0, "a: 1\nb: 1.000000\nc: 0\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a;", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", "1.000000", "0"}}));
     CHECK_REQUEST_ST_CLIENT("delete from a where c = '0';", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a;", 0, "");
 }
@@ -509,19 +538,13 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_3) {
 TEST_F(REQUEST_TESTS, DELETE_TEST_4) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
-    CHECK_REQUEST_ST_CLIENT(
-        "delete from a where f = '0';",
-        0,
-        "");
+    CHECK_REQUEST_ST_CLIENT("delete from a where f = '0';", 0, "");
 }
 
 TEST_F(REQUEST_TESTS, DELETE_TEST_5) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
-    CHECK_REQUEST_ST_CLIENT(
-        "delete from a where b = '0';",
-        0,
-        "");
+    CHECK_REQUEST_ST_CLIENT("delete from a where b = '0';", 0, "");
 }
 
 TEST_F(REQUEST_TESTS, DELETE_TEST_6) {
@@ -532,7 +555,8 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_6) {
     CHECK_REQUEST_ST_CLIENT("insert into a values (0, 1, '1');", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (0, 0, '1');", 0, "");
     CHECK_REQUEST_ST_CLIENT("delete from a where b = a or a = 1;", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select a from a;", 0, "a: 0\n");
+    CHECK_REQUEST_ST_CLIENT("select a from a;", 0,
+                            get_select_answer({"a"}, {{"0"}}));
 }
 
 TEST_F(REQUEST_TESTS, UPDATE_TEST_1) {
@@ -544,13 +568,15 @@ TEST_F(REQUEST_TESTS, UPDATE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("update a set a = 2;", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        "a: 2\nb: 1.000000\nc: 1\na: 2\nb: 1.000000\nc: 1\na: "
-        "2\nb: 1.000000\nc: 1\n");
+        get_select_answer({"a", "b", "c"}, {{"2", "1.000000", "1"},
+                                            {"2", "1.000000", "1"},
+                                            {"2", "1.000000", "1"}}));
     CHECK_REQUEST_ST_CLIENT("update a set b = 3.45, c = 'H';", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        "a: 2\nb: 3.450000\nc: H\na: 2\nb: 3.450000\nc: H\na: "
-        "2\nb: 3.450000\nc: H\n");
+        get_select_answer({"a", "b", "c"}, {{"2", "3.450000", "H"},
+                                            {"2", "3.450000", "H"},
+                                            {"2", "3.450000", "H"}}));
 }
 
 TEST_F(REQUEST_TESTS, UPDATE_TEST_2) {
@@ -623,30 +649,38 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("create table a (a varchar(100), b varchar(100));",
                             0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', 'ab');", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a where '1';", 0, "a: ab\nb: ab\n");
+    CHECK_REQUEST_ST_CLIENT("select * from a where '1';", 0,
+                            get_select_answer({"a", "b"}, {{"ab", "ab"}}));
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', 'abc');", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', 'b');", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', 'bb');", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', 'a');", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', 'aa');", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', '');", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a < b;", 0,
-                            "a: ab\nb: abc\na: ab\nb: b\na: ab\nb: bb\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a < b;", 0,
+        get_select_answer({"a", "b"},
+                          {{"ab", "abc"}, {"ab", "b"}, {"ab", "bb"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a <= b;", 0,
-        "a: ab\nb: ab\na: ab\nb: abc\na: ab\nb: b\na: ab\nb: bb\n");
+        get_select_answer(
+            {"a", "b"},
+            {{"ab", "ab"}, {"ab", "abc"}, {"ab", "b"}, {"ab", "bb"}}));
     CHECK_REQUEST_ST_CLIENT("select * from a where a = b;", 0,
-                            "a: ab\nb: ab\n");
+                            get_select_answer({"a", "b"}, {{"ab", "ab"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a >= b;", 0,
-        "a: ab\nb: ab\na: ab\nb: a\na: ab\nb: aa\na: ab\nb: \n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a > b;", 0,
-                            "a: ab\nb: a\na: ab\nb: aa\na: ab\nb: \n");
+        get_select_answer(
+            {"a", "b"}, {{"ab", "ab"}, {"ab", "a"}, {"ab", "aa"}, {"ab", ""}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a > b;", 0,
+        get_select_answer({"a", "b"}, {{"ab", "a"}, {"ab", "aa"}, {"ab", ""}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a >= b and b > 'aa' or b = 'b';", 0,
-        "a: ab\nb: ab\na: ab\nb: b\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a < b and b != 'abc';", 0,
-                            "a: ab\nb: b\na: ab\nb: bb\n");
+        get_select_answer({"a", "b"}, {{"ab", "ab"}, {"ab", "b"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a < b and b != 'abc';", 0,
+        get_select_answer({"a", "b"}, {{"ab", "b"}, {"ab", "bb"}}));
     CHECK_REQUEST_ST_CLIENT("select * from a where a + 'b' = 'abb';",
                             exc::ExceptionType::no_operation_for_type,
                             "~~Exception 603:\n no operation '+' for varchar "
@@ -660,7 +694,8 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a * 2 = 'abb';",
         exc::ExceptionType::no_operation_for_type,
-        "~~Exception 603:\n no operation '*' for varchar and int.\n~~Exception "
+        "~~Exception 603:\n no operation '*' for varchar and "
+        "int.\n~~Exception "
         "in command:\"select * from a where a * 2 = 'abb';\"\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where a / 'b' = 'abb';",
                             exc::ExceptionType::no_operation_for_type,
@@ -682,7 +717,8 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_2) {
     CHECK_REQUEST_ST_CLIENT("select * from a where a <= b;", 0,
                             "a: -3\nb: 3\na: -1\nb: -1\na: -1\nb: 10\n");
     CHECK_REQUEST_ST_CLIENT(  // TODO
-        "select * from a where (12 + (4.5 * 2 / 3) + 2.0 * 2 - a * (-1)) / 2 = "
+        "select * from a where (12 + (4.5 * 2 / 3) + 2.0 * 2 - a * (-1)) / "
+        "2 = "
         "b + a;",
         0, "a: -1\nb: 10\n");
     CHECK_REQUEST_ST_CLIENT("select * from a where a + 2 >= -0.567;", 0,
@@ -696,61 +732,75 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_3) {
     CHECK_REQUEST_ST_CLIENT("create table a (a real, b real);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-3.25, 3);", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a where 0.0;", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a where 0.12;", 0,
-                            "a: -3.250000\nb: 3.000000\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where 0.12;", 0,
+        get_select_answer({"a", "b"}, {{"-3.250000", "3.000000"}}));
     CHECK_REQUEST_ST_CLIENT("insert into a values(-1.0, -1);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(0.123, -10);", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a + b < (-1.234 * (-1) + 2.05 * 3 - 1.2 / "
         "2.1) / (-3.7);",
-        0, "a: -1.000000\nb: -1.000000\na: 0.123000\nb: -10.000000\n");
+        0,
+        get_select_answer({"a", "b"}, {{"-1.000000", "-1.000000"},
+                                       {"0.123000", "-10.000000"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a  <= b;", 0,
-        "a: -3.250000\nb: 3.000000\na: -1.000000\nb: -1.000000\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a / 3.25 * 3 = b * -1;", 0,
-                            "a: -3.250000\nb: 3.000000\n");
+        get_select_answer({"a", "b"}, {{"-3.250000", "3.000000"},
+                                       {"-1.000000", "-1.000000"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a / 3.25 * 3 = b * -1;", 0,
+        get_select_answer({"a", "b"}, {{"-3.250000", "3.000000"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a >= b;", 0,
-        "a: -1.000000\nb: -1.000000\na: 0.123000\nb: -10.000000\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a > 0;", 0,
-                            "a: 0.123000\nb: -10.000000\n");
+        get_select_answer({"a", "b"}, {{"-1.000000", "-1.000000"},
+                                       {"0.123000", "-10.000000"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a > 0;", 0,
+        get_select_answer({"a", "b"}, {{"0.123000", "-10.000000"}}));
 }
 
 TEST_F(REQUEST_TESTS, WHERE_TEST_4) {
     CHECK_REQUEST_ST_CLIENT("create table a (a int, b real, c varchar(100));",
                             0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(1, 2.35, '67 89');", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a = b - 1.35;", 0,
-                            "a: 1\nb: 2.350000\nc: 67 89\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a = b - 1.35;", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a <= c;",
         exc::ExceptionType::compare_data_type_mismatch,
         "~~Exception 605:\n can't compare int and varchar.\n~~Exception in "
         "command:\"select * from a where a <= c;\"\n");
+    CHECK_REQUEST_ST_CLIENT("select * from a where b = c;",
+                            exc::ExceptionType::compare_data_type_mismatch,
+                            "~~Exception 605:\n can't compare real and "
+                            "varchar.\n~~Exception in "
+                            "command:\"select * from a where b = c;\"\n");
     CHECK_REQUEST_ST_CLIENT(
-        "select * from a where b = c;",
-        exc::ExceptionType::compare_data_type_mismatch,
-        "~~Exception 605:\n can't compare real and varchar.\n~~Exception in "
-        "command:\"select * from a where b = c;\"\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where not not a = a;", 0,
-                            "a: 1\nb: 2.350000\nc: 67 89\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where not a != a;", 0,
-                            "a: 1\nb: 2.350000\nc: 67 89\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) < 3;", 0,
-                            "a: 1\nb: 2.350000\nc: 67 89\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) > (3 != 3);", 0,
-                            "a: 1\nb: 2.350000\nc: 67 89\n");
+        "select * from a where not not a = a;", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where not a != a;", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where (a = 1) < 3;", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where (a = 1) > (3 != 3);", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) <= (3 != 3);", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) * (3 != 3);", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) + (3 != 3);", 0,
-                            "a: 1\nb: 2.350000\nc: 67 89\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where (a = 1) + (3 != 3);", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where (a = 1) / 0;", exc::ExceptionType::div_by_zero,
         "~~Exception 7:\n division by zero '1/0'.\n~~Exception in "
         "command:\"select * from a where (a = 1) / 0;\"\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) - (3 != 3);", 0,
-                            "a: 1\nb: 2.350000\nc: 67 89\n");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where (a = 1) - (3 != 3);", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT("insert into a values(3, 0, '');", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a where c =;",
                             exc::ExceptionType::syntax,
@@ -758,17 +808,85 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_4) {
                             "command:\"select * from a where c =;\"\n");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where not a < 1 or b < 2 and c = '';", 0,
-        "a: 1\nb: 2.350000\nc: 67 89\na: 3\nb: 0.000000\nc: \n");
+        get_select_answer({"a", "b", "c"},
+                          {{"1", "2.350000", "67 89"}, {"3", "0.000000", ""}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where not a < 1 or b > 2 and c = '';", 0,
-        "a: 1\nb: 2.350000\nc: 67 89\na: 3\nb: 0.000000\nc: \n");
+        get_select_answer({"a", "b", "c"},
+                          {{"1", "2.350000", "67 89"}, {"3", "0.000000", ""}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a >= 1 and (b = 2 or c = '');", 0,
-        "a: 3\nb: 0.000000\nc: \n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a - 3 = b = 0;", 0,
-                            "a: 1\nb: 2.350000\nc: 67 89\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where (a - 3 = 0) * 3 = 0;", 0,
-                            "a: 1\nb: 2.350000\nc: 67 89\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a - 3 = b * 1 = 0;", 0,
-                            "a: 1\nb: 2.350000\nc: 67 89\n");
+        get_select_answer({"a", "b", "c"}, {{"3", "0.000000", ""}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a - 3 = b = 0;", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where (a - 3 = 0) * 3 = 0;", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a - 3 = b * 1 = 0;", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
 }
+
+TEST_F(REQUEST_TESTS, INNER_JOIN_TEST_1) {
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a(a int, b varchar[100]);"
+        "insert into a values(1, 'Viktor');\n"
+        "insert into a values(1, 'Danila');\n"
+        "insert into a values(0, 'Danila');\n"
+        "insert into a values(3, 'Ivan');");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table b(a int, b real);\n"
+        "insert into b values(0, 2);\n"
+        "insert into b values(3, 0.2);");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table c(a varchar[100], b varchar[100]);\n"
+        "insert into c values('Danila', 'Write this test.');\n"
+        "insert into c values('Ivan', 'Save this data.');\n"
+        "insert into c values('Viktor', 'Parsed this request.');\n"
+        "insert into c values('Vadik', 'Do nothing.');");
+    CHECK_REQUEST_ST_CLIENT(
+        "select a.a, b.b, a.b from a INNER JOIN b on a.a = b.a;", 0,
+        get_select_answer(
+            {"a.a", "b.b", "a.b"},
+            {{"0", to_string(2), "Danila"}, {"3", to_string(0.2), "Ivan"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a INNER JOIN c on a.b = c.a;", 0,
+        get_select_answer({"a.a", "a.b", "b.a", "b.b"},
+                          {{"1", "Viktor", "Viktor", "Parsed this request."},
+                           {"1", "Danila", "Danila", "Write this test."},
+                           {"0", "Danila", "Danila", "Write this test."},
+                           {"3", "Ivan", "Ivan", "Save this data."}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select a.a as 'Number', b.a from a INNER JOIN b on a.a >= b.a;", 0,
+        get_select_answer(
+            {"Number", "b.a"},
+            {{"1", "0"}, {"1", "0"}, {"0", "0"}, {"3", "0"}, {"3", "3"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select N.aa, c.b from c INNER JOIN (select b.b as 'aa', a.b as 'bb' "
+        "from a INNER JOIN b on a.a = b.a) as 'N' on N.bb == c.a;",
+        0,
+        get_select_answer({"N.aa", "c.b"},
+                          {{to_string(2), "Write this test."},
+                           {to_string(0.2), "Save this data."}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "sselect * from \n"
+        "(select a.a as 'Meshur', a.b as 'Name', c.b 'Prof' from c INNER JOIN "
+        "a on a.b = c.a) as 'First' \n"
+        "INNER JOIN \n"
+        "(select a.a as 'M', b.b as 'B', a.b as 'Name' from a INNER JOIN b on "
+        "a.a = b.a) as 'Second'\n"
+        "on M == First.Meshur;",
+        0,
+        get_select_answer(
+            {"Meshur", "First.Name", "Prof", "M", "B", "Second.Name"},
+            {{"0", "Danila", "Write this test.", "0", to_string(2), "Danila"},
+             {"3", "Ivan", "Save this data.", "3", to_string(0.2), "Ivan"}}));
+}
+
+TEST_F(REQUEST_TESTS, NESTED_JOIN_TEST_1) {
+    //TODO: большой вложенности
+}
+
+// TODO: разнве название полей, несуществующие поля/таблицы, сравнение
+// несравнимого, большой запрос без скобочек, сам с сабой ошибка, два поля с одинаковым именем обращение ошибка, select in select without ()

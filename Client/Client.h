@@ -16,13 +16,13 @@ class Client {
           resolver_(context_),
           query_({host.data(), std::to_string(port)}),
           out_(out) {
-        connect();
     }
 
     long request(const std::string& request, std::string& ans);
 
-   protected:
     void connect();
+
+   protected:
 
     asio::io_context context_;
     asio::ip::tcp::socket tcp_socket_;
