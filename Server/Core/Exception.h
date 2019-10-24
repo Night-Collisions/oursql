@@ -13,6 +13,8 @@ enum class ExceptionType : unsigned int {
     was_not_loaded,
     repeat_column_in_table,
     repeat_column,
+    ambiguous_column_name,
+    different_column_sizes,
     div_by_zero,
     set_data_type_mismatch = 601,
     data_type_mismatch,
@@ -104,6 +106,12 @@ class TableException : public Exception {
 
    protected:
     const std::string table_name_;
+};
+
+class AmbiguousColumnName : public Exception {
+   public:
+    AmbiguousColumnName(const std::string& msg)
+        : Exception(ExceptionType::ambiguous_column_name, msg) {}
 };
 
 namespace constr {

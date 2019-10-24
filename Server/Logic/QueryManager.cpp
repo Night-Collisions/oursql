@@ -13,9 +13,10 @@
 #include "Parser/Nodes/IdentList.h"
 #include "Parser/Nodes/RelExpr.h"
 #include "Parser/Nodes/SelectList.h"
+#include "Parser/RelationalOperationsParser/Join.h"
 
-std::array<func, static_cast<unsigned int>(RelOperNodeType::Count)>
-    QueryManager::relational_oper_ = {};
+std::array<rel_func, static_cast<unsigned int>(RelOperNodeType::Count)>
+    QueryManager::relational_oper_ = {Join::makeJoin, Join::makeInnerJoin};
 
 void QueryManager::execute(const Query& query,
                            std::unique_ptr<exc::Exception>& e,
@@ -98,17 +99,17 @@ void QueryManager::dropTable(const Query& query,
     Engine::drop(name, e);
 }
 
-void printSelect(const Table& table, std::map<std::string, Column> all_columns,
-                 std::vector<Node*> cols_from_parser,
-                 std::map<std::string, std::string> fetch_map,
+void printSelect(const Table& table, t_column_infos column_infos,
+                 std::vector<Node*> cols_from_parser, t_record_infos record,
                  std::unique_ptr<exc::Exception>& e, std::ostream& out) {
     std::string response;
     int expr_cnt = 1;
+    out << "=======\n";
     for (auto& c : cols_from_parser) {
         if (c->getNodeType() == NodeType::expression_unit) {
             auto expr = static_cast<Expression*>(c);
-            response = Resolver::resolve(table.getName(), all_columns, expr,
-                                         fetch_map, e);
+            response = Resolver::resolve(table.getName(), table.getName(),
+                                         column_infos, expr, record, e);
             std::string colname = expr->getConstant()->getName();
             if (colname.empty()) {
                 colname = "expression " + std::to_string(expr_cnt++);
@@ -119,7 +120,8 @@ void printSelect(const Table& table, std::map<std::string, Column> all_columns,
             out << colname + ": " + response << std::endl;
         } else if (c->getName() == "*") {
             for (auto& k : table.getColumns()) {
-                out << k.getName() + ": " + fetch_map[k.getName()] << std::endl;
+                out << k.getName() + ": " + record[table.getName()][k.getName()]
+                    << std::endl;
             }
         }
     }
@@ -140,58 +142,63 @@ void QueryManager::select(const Query& query,
     auto children = query.getChildren();
 
     Table resolvedTable;
-    std::map<std::string, Column> all_columns;
+    t_column_infos column_info;
     std::vector<Node*> cols_from_parser;
 
     if (children.find(NodeType::relational_oper_expr) != children.end()) {
-        // resolvedTable =
-        // resolveRelationalOperTree(children[odeType::relational_oper_expr]);
-    } else {
-        auto name = children[NodeType::ident]->getName();
-        resolvedTable = Engine::show(name, e);
-
-        if (resolvedTable.getName().empty()) {
-            e.reset(new exc::acc::TableNonexistent(name));
+        auto root =
+            static_cast<RelExpr*>(children[NodeType::relational_oper_expr]);
+        resolvedTable = resolveRelationalOperTree(root, e);
+        if (e) {
             return;
         }
 
-        all_columns = getColumnMap(resolvedTable);
+    } else {
+        auto name = children[NodeType::ident]->getName();
+        resolvedTable = getFilledTable(name, e);
 
-        cols_from_parser =
-            static_cast<SelectList*>(children[NodeType::select_list])
-                ->getList();
+        if (e) {
+            return;
+        }
+    }
 
-        for (auto& c : cols_from_parser) {
-            if (c->getName() != "*" &&
-                c->getNodeType() != NodeType::expression_unit &&
-                all_columns.find(c->getName()) == all_columns.end()) {
-                e.reset(new exc::acc::ColumnNonexistent(c->getName(), name));
+    column_info[resolvedTable.getName()] = getColumnMap(resolvedTable);
+
+    cols_from_parser =
+        static_cast<SelectList*>(children[NodeType::select_list])->getList();
+
+    for (auto& c : cols_from_parser) {
+        if (c->getName() != "*" &&
+            c->getNodeType() != NodeType::expression_unit &&
+            column_info[resolvedTable.getName()].find(c->getName()) ==
+                column_info[resolvedTable.getName()].end()) {
+            e.reset(new exc::acc::ColumnNonexistent(c->getName(),
+                                                    resolvedTable.getName()));
+            return;
+        }
+    }
+
+    auto records = resolvedTable.getRecords();
+    t_record_infos record_info;
+    for (int i = 0; i < records.size(); ++i) {
+        record_info[resolvedTable.getName()] =
+            mapFromFetch(resolvedTable.getColumns(), records[i]);
+
+        auto root = static_cast<Expression*>(children[NodeType::expression]);
+        std::string response =
+            Resolver::resolve(resolvedTable.getName(), resolvedTable.getName(),
+                              column_info, root, record_info, e);
+        if (e) {
+            return;
+        }
+        if (response != "0") {
+            printSelect(resolvedTable, column_info, cols_from_parser,
+                        record_info, e, out);
+            if (e) {
                 return;
             }
         }
     }
-
-    if (e != nullptr) {
-        return;
-    }
-
-    /*    Cursor cursor(name);
-        while (cursor.next()) {
-            auto ftch = cursor.fetch();
-            std::map<std::string, std::string> m =
-                mapFromFetch(table.getColumns(), ftch);
-            auto root =
-                static_cast<Expression*>(children[NodeType::expression]);
-            std::string response = Resolver::resolve(name, all_columns, root, m,
-       e); if (e) { return;
-            }
-            if (response != "0") {
-                printSelect(table, all_columns, cols_from_parser, m, e, out);
-                if (e) {
-                    return;
-                }
-            }
-        }*/
 }
 
 void QueryManager::insert(const Query& query,
@@ -206,9 +213,9 @@ void QueryManager::insert(const Query& query,
         return;
     }
 
-    std::map<std::string, Column> all_columns;
+    std::map<std::string, std::map<std::string, Column>> column_info;
     for (auto& c : table.getColumns()) {
-        all_columns[c.getName()] = c;
+        column_info[table.getName()][c.getName()] = c;
     }
 
     auto idents =
@@ -255,11 +262,12 @@ void QueryManager::insert(const Query& query,
     }
 
     for (size_t i = 0; i < constants.size(); ++i) {
-        if (Resolver::compareTypes(name, all_columns, idents[i], constants[i],
-                                   e, CompareCondition::assign, "=")) {
-            if (all_columns[idents[i]->getName()].getType() ==
+        if (Resolver::compareTypes(name, name, column_info, idents[i],
+                                   constants[i], e, CompareCondition::assign,
+                                   "=")) {
+            if (column_info[name][idents[i]->getName()].getType() ==
                     DataType::varchar &&
-                all_columns[idents[i]->getName()].getN() <
+                column_info[name][idents[i]->getName()].getN() <
                     static_cast<Constant*>(constants[i])->getValue().length()) {
                 e.reset(new exc::DataTypeOversize(idents[i]->getName()));
                 return;
@@ -267,7 +275,7 @@ void QueryManager::insert(const Query& query,
             if (static_cast<Constant*>(constants[i])->getDataType() !=
                 DataType::null_) {
                 auto val = static_cast<Constant*>(constants[i])->getValue();
-                if (all_columns[idents[i]->getName()].getType() ==
+                if (column_info[name][idents[i]->getName()].getType() ==
                     DataType::real) {
                     values[idents[i]->getName()] =
                         std::to_string(std::stof(val));
@@ -316,12 +324,18 @@ void QueryManager::insert(const Query& query,
     for (auto& f : fetch_arr) {
         for (int i = 0; i < f.size(); ++i) {
             if (f[i].data == v_arr[i].data &&
-                ((all_columns[tbl_cols[i].getName()].getConstraints().find(
-                      ColumnConstraint::primary_key) !=
-                  all_columns[tbl_cols[i].getName()].getConstraints().end()) ||
-                 (all_columns[tbl_cols[i].getName()].getConstraints().find(
-                      ColumnConstraint::unique) !=
-                  all_columns[tbl_cols[i].getName()].getConstraints().end()))) {
+                ((column_info[name][tbl_cols[i].getName()]
+                      .getConstraints()
+                      .find(ColumnConstraint::primary_key) !=
+                  column_info[name][tbl_cols[i].getName()]
+                      .getConstraints()
+                      .end()) ||
+                 (column_info[name][tbl_cols[i].getName()]
+                      .getConstraints()
+                      .find(ColumnConstraint::unique) !=
+                  column_info[name][tbl_cols[i].getName()]
+                      .getConstraints()
+                      .end()))) {
                 auto dat = f[i].data;
                 if (tbl_cols[i].getType() == DataType::varchar) {
                     dat = "null";
@@ -348,9 +362,9 @@ void QueryManager::update(const Query& query,
         return;
     }
 
-    std::map<std::string, Column> all_columns;
+    std::map<std::string, std::map<std::string, Column>> column_info;
     for (auto& c : table.getColumns()) {
-        all_columns[c.getName()] = c;
+        column_info[table.getName()][c.getName()] = c;
     }
 
     auto idents =
@@ -372,11 +386,12 @@ void QueryManager::update(const Query& query,
 
     std::map<std::string, std::string> values;
     for (size_t i = 0; i < constants.size(); ++i) {
-        if (Resolver::compareTypes(name, all_columns, idents[i], constants[i],
-                                   e, CompareCondition::assign, "=")) {
-            if (all_columns[idents[i]->getName()].getType() ==
+        if (Resolver::compareTypes(name, name, column_info, idents[i],
+                                   constants[i], e, CompareCondition::assign,
+                                   "=")) {
+            if (column_info[name][idents[i]->getName()].getType() ==
                     DataType::varchar &&
-                all_columns[idents[i]->getName()].getN() <
+                column_info[name][idents[i]->getName()].getN() <
                     static_cast<Constant*>(constants[i])->getValue().length()) {
                 e.reset(new exc::DataTypeOversize(idents[i]->getName()));
                 return;
@@ -465,12 +480,16 @@ void QueryManager::update(const Query& query,
                 if (f[i].data != ready_ftch[k][i].data) {
                     continue;
                 }
+                std::map<std::string, std::map<std::string, std::string>>
+                    record;
                 std::map<std::string, std::string> m =
                     mapFromFetch(table.getColumns(), f);
+                record[name] = m;
+
                 auto root = static_cast<Expression*>(
                     query.getChildren()[NodeType::expression]);
                 std::string resp =
-                    Resolver::resolve(name, all_columns, root, m, e);
+                    Resolver::resolve(name, name, column_info, root, record, e);
                 if (e) {
                     return;
                 }
@@ -493,19 +512,22 @@ void QueryManager::remove(const Query& query,
         return;
     }
 
-    std::map<std::string, Column> all_columns;
+    std::map<std::string, std::map<std::string, Column>> column_info;
     for (auto& c : table.getColumns()) {
-        all_columns[c.getName()] = c;
+        column_info[table.getName()][c.getName()] = c;
     }
 
     Cursor cursor(name);
     while (cursor.next()) {
         auto ftch = cursor.fetch();
+        std::map<std::string, std::map<std::string, std::string>> record;
         std::map<std::string, std::string> m =
             mapFromFetch(table.getColumns(), ftch);
+        record[name] = m;
         auto root =
             static_cast<Expression*>(query.getChildren()[NodeType::expression]);
-        std::string resp = Resolver::resolve(name, all_columns, root, m, e);
+        std::string resp =
+            Resolver::resolve(name, name, column_info, root, record, e);
         if (e) {
             return;
         }
@@ -545,17 +567,38 @@ Table QueryManager::resolveRelationalOperTree(
         auto child1 = root->childs()[0];
         auto child2 = root->childs()[1];
 
-        resolveRelationalOperTree(child1, e);
-        if (e) {
-            return Table();
-        }
-        resolveRelationalOperTree(child2, e);
-        if (e) {
-            return Table();
+        Table table1;
+        Table table2;
+
+        if (child1->getRelOperType() == RelOperNodeType::table_ident) {
+            table1 = getFilledTable(child1->getName(), e);
+            if (e) {
+                return Table();
+            }
+        } else {
+            table1 = resolveRelationalOperTree(child1, e);
+            if (e) {
+                return Table();
+            }
         }
 
-        Table res_table = relational_oper_[static_cast<unsigned int>(root->getRelOperType())](
-            root, e);
+        if (child2->getRelOperType() == RelOperNodeType::table_ident) {
+            table2 = getFilledTable(child2->getName(), e);
+            if (e) {
+                return Table();
+            }
+        } else {
+            table2 = resolveRelationalOperTree(child2, e);
+            if (e) {
+                return Table();
+            }
+        }
+
+        Table res_table =
+            relational_oper_[static_cast<unsigned int>(root->getRelOperType())](
+                table1, table2, root->getOnExpr(), e);
+
+        res_table.setName(root->getAlias());
 
         if (e) {
             return Table();
@@ -563,4 +606,23 @@ Table QueryManager::resolveRelationalOperTree(
 
         return res_table;
     }
+}
+
+Table QueryManager::getFilledTable(const std::string& name,
+                                   std::unique_ptr<exc::Exception>& e) {
+    auto table = Engine::show(name, e);
+    if (e) {
+        return Table();
+    }
+    table.setName(name);
+    auto cursor = Cursor(name);
+
+    while (cursor.next()) {
+        table.addRecord(cursor.fetch(), e);
+        if (e) {
+            return Table();
+        }
+    }
+
+    return table;
 }

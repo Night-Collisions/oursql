@@ -70,7 +70,7 @@
 %type<anyConstant> constant where_element select_list_element val_or_var 
 %type<exprUnit> logic_or logic_and plus_minus mul_div relations
 %type<expr> where_expr root_expr relation_expr exprssn term factor under_root_expr join_cond
-%type<relExpr> table_ident relational_expr
+%type<relExpr> sub_rel_expr relational_expr
 
 %start start_expression
 
@@ -390,8 +390,8 @@ mul_div:
 
 val_or_var:
     constant { $$ = $1; } |
-    id { $$ = $1; } |
-    id DOT id { $$ = new Ident($1->getName(), $3->getName()); };
+    col_ident { $$ = $1; };
+    // id DOT id { $$ = new Ident($1->getName(), $3->getName()); };
 
 logic_or:
         OR { $$ = ExprUnit::or_; };
@@ -438,24 +438,32 @@ type:
 
 col_ident: 
     id { $$ = $1; } |
-    id DOT id { $$ = new Ident($1->getName(), $3->getName()); };
+    id DOT col_ident { 
+        if ( $3->getTableName().empty()) {
+            $$ = new Ident($1->getName(), $3->getName()); 
+        } else {
+            $$ = new Ident($1->getName(), $3->getTableName() + "." + $3->getName()); 
+        }
+    };
 
 id:
     ID { $$ = new Ident(*yylval.name); };
 
-table_ident:
+sub_rel_expr:
     id { $$ = new RelExpr($1, ""); } |
-    table_ident AS id { $$ = new RelExpr($1, $3->getName()); } |
-    LPAREN relational_expr RPAREN { $$ = $2; };
+    LPAREN relational_expr RPAREN AS id { 
+        $2->setAlias($5->getName());
+        $$ = $2;
+    };
 
 relational_expr:
-    relational_expr join_opers table_ident join_cond {
+    relational_expr join_opers sub_rel_expr join_cond {
         $$ = new RelExpr($1, $3, $2, $4);
     } |
-    relational_expr union_intersect table_ident {
+    relational_expr union_intersect sub_rel_expr {
         $$ = new RelExpr($1, $3, $2, nullptr);
     } |
-    table_ident { $$ = $1; };
+    sub_rel_expr { $$ = $1; };
 
 join_opers:
     JOIN { $$ = RelOperNodeType::join; } |

@@ -8,7 +8,9 @@
 #include "Parser/Nodes/Query.h"
 #include "Parser/Nodes/RelExpr.h"
 
-typedef Table (*func)(RelExpr* root, std::unique_ptr<exc::Exception>& e);
+typedef Table (*rel_func)(const Table& table1, const Table& table2,
+                          Expression* on_expr,
+                          std::unique_ptr<exc::Exception>& e);
 
 class QueryManager {
    public:
@@ -17,6 +19,8 @@ class QueryManager {
     static void execute(const Query& query, std::unique_ptr<exc::Exception>& e,
                         std::ostream& out);
 
+    static std::map<std::string, std::string> mapFromFetch(
+        const std::vector<Column>& cols, std::vector<Value> ftch);
    private:
     static void createTable(const Query& query,
                             std::unique_ptr<exc::Exception>& e,
@@ -44,10 +48,11 @@ class QueryManager {
     static Table resolveRelationalOperTree(RelExpr* root,
                                            std::unique_ptr<exc::Exception>& e);
 
-    static std::map<std::string, std::string> mapFromFetch(
-        const std::vector<Column>& cols, std::vector<Value> ftch);
+    static Table getFilledTable(const std::string& name,
+                                std::unique_ptr<exc::Exception>& e);
 
-    static std::array<func, static_cast<unsigned int>(RelOperNodeType::Count)>
+    static std::array<rel_func,
+                      static_cast<unsigned int>(RelOperNodeType::Count)>
         relational_oper_;
 };
 

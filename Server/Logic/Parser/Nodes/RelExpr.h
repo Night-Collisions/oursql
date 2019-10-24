@@ -47,12 +47,14 @@ class RelExpr : public Node {
         childs_.clear();
     }
 
+    void setAlias(const std::string& a) { alias_name_ = a; }
+
     RelOperNodeType getRelOperType() { return rel_oper_type_; }
 
     std::vector<RelExpr*> childs() { return childs_; }
 
     std::string getName() override {
-        return (table_id_) ? (alias_name_) : (table_id_->getName());
+        return (alias_name_.empty()) ? (table_id_->getName()) : (alias_name_);
     }
     std::string getAlias() { return alias_name_; }
 
