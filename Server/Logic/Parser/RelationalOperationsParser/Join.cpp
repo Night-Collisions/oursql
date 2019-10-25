@@ -1,26 +1,7 @@
 #include "Join.h"
+#include <iostream>
 #include <map>
 #include "../ExpressionParser/Resolver.h"
-
-std::map<std::string, std::string> getRecord(const std::vector<Column>& cols,
-                                             std::vector<Value> record) {
-    std::map<std::string, std::string> m;
-    int counter = 0;
-    for (auto& k : cols) {
-        if (record[counter].is_null) {
-            if (k.getType() == DataType::varchar) {
-                m[k.getName()] = "";
-            } else {
-                m[k.getName()] = "null";
-            }
-        } else {
-            m[k.getName()] = record[counter].data;
-        }
-
-        ++counter;
-    }
-    return m;
-}
 
 Table Join::makeJoin(const Table& table1, const Table& table2,
                      Expression* on_expr, std::unique_ptr<exc::Exception>& e) {
@@ -82,10 +63,10 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             key_col = col2;
             pos_right =
                 std::distance(column_info[table2.getName()].find(col1),
-                              column_info[table2.getName()].begin()) - 1;
+                              column_info[table2.getName()].begin());
             pos_left =
                 std::distance(column_info[table1.getName()].find(col2),
-                              column_info[table1.getName()].begin()) - 1;
+                              column_info[table1.getName()].begin());
             tablename_to_run = table1.getName();
             tablename_to_hash = table2.getName();
             table_to_run = table1;
@@ -96,10 +77,10 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             key_col = col1;
             pos_right =
                 std::distance(column_info[table1.getName()].find(col2),
-                              column_info[table1.getName()].begin()) - 1;
+                              column_info[table1.getName()].begin()) ;
             pos_left =
                 std::distance(column_info[table2.getName()].find(col1),
-                              column_info[table2.getName()].begin()) - 1;
+                              column_info[table2.getName()].begin()) ;
             tablename_to_run = table2.getName();
             tablename_to_hash = table1.getName();
             table_to_run = table2;
@@ -112,12 +93,14 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
         for (auto& r : record_to_hash) {
             std::string key;
             if (type_right == DataType::integer) {
+                std::cout << r[pos_right].data << std::endl;
                 key = std::to_string(std::stof(r[pos_right].data));
             } else {
                 key = r[pos_right].data;
             }
             hashed_records[key].push_back(r);
         }
+
         for (auto& r : record_to_run) {
             std::string key;
             if (type_left == DataType::integer) {
@@ -145,9 +128,9 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             for (int j = 0; j < siz2; ++j) {
                 auto rec2 = records2[j];
                 record_info[table1.getName()] =
-                    getRecord(table1.getColumns(), rec1);
+                    Resolver::getRecord(table1.getColumns(), rec1);
                 record_info[table2.getName()] =
-                    getRecord(table2.getColumns(), rec2);
+                    Resolver::getRecord(table2.getColumns(), rec2);
 
                 auto res =
                     Resolver::resolve(table1.getName(), table2.getName(),

@@ -13,6 +13,9 @@ class Ident : public Node {
 
     [[nodiscard]] std::string getName() override { return name_; }
     std::string getTableName() { return table_name_; }
+    std::string getFullName() {
+        return (table_name_.empty()) ? (name_) : (table_name_ + "." + name_);
+    }
 
     void setName(const std::string& name) { name_ = name; }
     void setTableName(const std::string& name) { table_name_ = name; }

@@ -106,24 +106,31 @@ void printSelect(const Table& table, t_column_infos column_infos,
     int expr_cnt = 1;
     out << "=======\n";
     for (auto& c : cols_from_parser) {
-        if (c->getNodeType() == NodeType::expression_unit) {
-            auto expr = static_cast<Expression*>(c);
-            response = Resolver::resolve(table.getName(), table.getName(),
-                                         column_infos, expr, record, e);
-            std::string colname = expr->getConstant()->getName();
-            if (colname.empty()) {
-                colname = "expression " + std::to_string(expr_cnt++);
-            }
-            if (e) {
-                return;
-            }
-            out << colname + ": " + response << std::endl;
-        } else if (c->getName() == "*") {
+        auto expr = static_cast<Expression*>(c);
+        std::string prefix =
+            (table.getName().empty()) ? ("") : (table.getName() + ".");
+        if (expr->getConstant()->getName() == "*") {
             for (auto& k : table.getColumns()) {
-                out << k.getName() + ": " + record[table.getName()][k.getName()]
+                out << prefix + k.getName() + ": " + record[table.getName()][k.getName()]
                     << std::endl;
             }
+            continue;
         }
+        response = Resolver::resolve(table.getName(), table.getName(),
+                                     column_infos, expr, record, e);
+        std::string colname = expr->getConstant()->getName();
+        if (colname.empty()) {
+            colname = "expression " + std::to_string(expr_cnt++);
+        } else {
+            auto id = static_cast<Ident*>(expr->getConstant());
+            colname = (id->getTableName().empty()) ? ("")
+                                                   : (id->getTableName() + ".");
+            colname += id->getName();
+        }
+        if (e) {
+            return;
+        }
+        out << colname + ": " + response << std::endl;
     }
 }
 
@@ -168,11 +175,38 @@ void QueryManager::select(const Query& query,
         static_cast<SelectList*>(children[NodeType::select_list])->getList();
 
     for (auto& c : cols_from_parser) {
-        if (c->getName() != "*" &&
-            c->getNodeType() != NodeType::expression_unit &&
-            column_info[resolvedTable.getName()].find(c->getName()) ==
+        std::string colname;
+        std::string tablename;
+        auto expr = static_cast<Expression*>(c);
+        if (expr->getConstant()->getName() == "*") {
+            continue;
+        }
+        auto node = expr->getConstant();
+        if (node->getNodeType() == NodeType::ident) {
+            auto id = static_cast<Ident*>(node);
+            /*            tablename = (id->getTableName().empty()) ?
+               (resolvedTable.getName()) : (id->getTableName());*/
+            tablename = resolvedTable.getName();
+            colname = node->getName();
+            if (tablename.empty()) {
+                /*                tablename = (id->getTableName().empty())
+                                                ? (resolvedTable.getName())
+                                                : (id->getTableName());*/
+                colname = (id->getTableName().empty())
+                              ? (node->getName())
+                              : (id->getTableName() + "." + node->getName());
+            }
+
+            id->setTableName(tablename);
+            id->setName(colname);
+        } else {
+            colname = node->getName();
+        }
+
+        if (node->getNodeType() == NodeType::ident &&
+            column_info[resolvedTable.getName()].find(colname) ==
                 column_info[resolvedTable.getName()].end()) {
-            e.reset(new exc::acc::ColumnNonexistent(c->getName(),
+            e.reset(new exc::acc::ColumnNonexistent(colname,
                                                     resolvedTable.getName()));
             return;
         }
@@ -182,7 +216,7 @@ void QueryManager::select(const Query& query,
     t_record_infos record_info;
     for (int i = 0; i < records.size(); ++i) {
         record_info[resolvedTable.getName()] =
-            mapFromFetch(resolvedTable.getColumns(), records[i]);
+            Resolver::getRecord(resolvedTable.getColumns(), records[i]);
 
         auto root = static_cast<Expression*>(children[NodeType::expression]);
         std::string response =
@@ -483,7 +517,7 @@ void QueryManager::update(const Query& query,
                 std::map<std::string, std::map<std::string, std::string>>
                     record;
                 std::map<std::string, std::string> m =
-                    mapFromFetch(table.getColumns(), f);
+                    Resolver::getRecord(table.getColumns(), f);
                 record[name] = m;
 
                 auto root = static_cast<Expression*>(
@@ -522,7 +556,7 @@ void QueryManager::remove(const Query& query,
         auto ftch = cursor.fetch();
         std::map<std::string, std::map<std::string, std::string>> record;
         std::map<std::string, std::string> m =
-            mapFromFetch(table.getColumns(), ftch);
+            Resolver::getRecord(table.getColumns(), ftch);
         record[name] = m;
         auto root =
             static_cast<Expression*>(query.getChildren()[NodeType::expression]);
@@ -535,26 +569,6 @@ void QueryManager::remove(const Query& query,
             cursor.remove();
         }
     }
-}
-
-std::map<std::string, std::string> QueryManager::mapFromFetch(
-    const std::vector<Column>& cols, std::vector<Value> ftch) {
-    std::map<std::string, std::string> m;
-    int counter = 0;
-    for (auto& k : cols) {
-        if (ftch[counter].is_null) {
-            if (k.getType() == DataType::varchar) {
-                m[k.getName()] = "";
-            } else {
-                m[k.getName()] = "null";
-            }
-        } else {
-            m[k.getName()] = ftch[counter].data;
-        }
-
-        ++counter;
-    }
-    return m;
 }
 
 Table QueryManager::resolveRelationalOperTree(

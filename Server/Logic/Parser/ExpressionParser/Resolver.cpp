@@ -1,4 +1,5 @@
 #include "Resolver.h"
+#include <iostream>
 #include "../Nodes/Ident.h"
 #include "../Nodes/IntConstant.h"
 #include "../Nodes/RealConstant.h"
@@ -20,12 +21,12 @@ std::string Resolver::resolve(const std::string& table1,
     table2_ = table2;
     column_infos_ = column_infos;
 
-    calculate(root, record, e);
 
-    if (!e && root && root->getConstant()->getNodeType() == NodeType::ident) {
+    if (!e && root && root->getConstant() && root->getConstant()->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(root->getConstant());
         return record[id->getTableName()][id->getName()];
     }
+    calculate(root, record, e);
     return (root && !e)
                ? ((static_cast<Constant*>(root->getConstant())->getValue() ==
                        "null" ||
@@ -224,13 +225,14 @@ void Resolver::setStringValue(Expression* root, t_record_infos record,
     }
     bindColumnToTable(constant2, e);
     if (e) {
+        return;
     }
 
     if (constant1->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(constant1);
         a = record[id->getTableName()][id->getName()];
     } else {
-        std::string val;
+        std::string val = static_cast<Constant*>(constant1)->getValue();
         if (static_cast<Constant*>(constant1)->getDataType() !=
             DataType::varchar) {
             val = std::to_string(
@@ -243,7 +245,7 @@ void Resolver::setStringValue(Expression* root, t_record_infos record,
         auto id = static_cast<Ident*>(constant2);
         b = record[id->getTableName()][id->getName()];
     } else {
-        std::string val;
+        std::string val = static_cast<Constant*>(constant2)->getValue();
         if (static_cast<Constant*>(constant2)->getDataType() !=
             DataType::varchar) {
             val = std::to_string(
@@ -815,4 +817,25 @@ void Resolver::bindColumnToTable(Node* nod,
             }
         }
     }
+}
+
+std::map<std::string, std::string> Resolver::getRecord(
+    const std::vector<Column>& cols, std::vector<Value> record) {
+    std::map<std::string, std::string> m;
+    int counter = 0;
+    for (auto& k : cols) {
+        auto c = k.getName();
+        if (record[counter].is_null) {
+            if (k.getType() == DataType::varchar) {
+                m[c] = "";
+            } else {
+                m[c] = "null";
+            }
+        } else {
+            m[c] = record[counter].data;
+        }
+
+        ++counter;
+    }
+    return m;
 }

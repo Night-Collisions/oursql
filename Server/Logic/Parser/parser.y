@@ -67,7 +67,7 @@
 %type<tConst> text_const
 %type<relOperNodeType> join_opers union_intersect
 %type<nullConst> null_
-%type<anyConstant> constant where_element select_list_element val_or_var 
+%type<anyConstant> constant where_element select_list_element val_or_var
 %type<exprUnit> logic_or logic_and plus_minus mul_div relations
 %type<expr> where_expr root_expr relation_expr exprssn term factor under_root_expr join_cond
 %type<relExpr> sub_rel_expr relational_expr
@@ -203,16 +203,10 @@ select_list:
 
 asterisk:
     ASTERISK {
-    	selectList.push_back(new Ident("*"));
+    	selectList.push_back(new Expression(new Ident("*")));
     };
 
 select_list_element:
-    col_ident {
-        $$ = $1;
-    } |
-    constant {
-        $$ = $1;
-    } |
     exprssn {
         $$ = $1;
     };

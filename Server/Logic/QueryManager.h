@@ -19,8 +19,6 @@ class QueryManager {
     static void execute(const Query& query, std::unique_ptr<exc::Exception>& e,
                         std::ostream& out);
 
-    static std::map<std::string, std::string> mapFromFetch(
-        const std::vector<Column>& cols, std::vector<Value> ftch);
    private:
     static void createTable(const Query& query,
                             std::unique_ptr<exc::Exception>& e,
@@ -44,7 +42,6 @@ class QueryManager {
     static void remove(const Query& query, std::unique_ptr<exc::Exception>& e,
                        std::ostream& out);
 
-    // todo
     static Table resolveRelationalOperTree(RelExpr* root,
                                            std::unique_ptr<exc::Exception>& e);
 

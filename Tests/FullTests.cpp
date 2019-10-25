@@ -229,7 +229,11 @@ TEST_F(REQUEST_TESTS, SELECT_TEST_4) {
 TEST_F(REQUEST_TESTS, SELECT_TEST_5) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
-    CHECK_REQUEST_ST_CLIENT("select *, c, a, f from a;", 0, "");
+    CHECK_REQUEST_ST_CLIENT(
+        "select *, c, a, f from a;",
+        exc::ExceptionType ::access_column_nonexistent,
+        "~~Exception 702:\n column f in table a nonexistent.\n~~Exception in "
+        "command:\"select *, c, a, f from a;\"\n");
 }
 
 TEST_F(REQUEST_TESTS, SELECT_TEST_6) {
@@ -556,7 +560,7 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_6) {
     CHECK_REQUEST_ST_CLIENT("insert into a values (0, 0, '1');", 0, "");
     CHECK_REQUEST_ST_CLIENT("delete from a where b = a or a = 1;", 0, "");
     CHECK_REQUEST_ST_CLIENT("select a from a;", 0,
-                            get_select_answer({"a"}, {{"0"}}));
+                            get_select_answer({"a.a"}, {{"0"}}));
 }
 
 TEST_F(REQUEST_TESTS, UPDATE_TEST_1) {
@@ -707,25 +711,27 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_1) {
 TEST_F(REQUEST_TESTS, WHERE_TEST_2) {
     CHECK_REQUEST_ST_CLIENT("create table a (a int, b int);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-3, 3);", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a where 1;", 0, "a: -3\nb: 3\n");
+    CHECK_REQUEST_ST_CLIENT("select * from a where 1;", 0,
+                            get_select_answer({"a"}, {{"-3", "3"}}));
     CHECK_REQUEST_ST_CLIENT("select * from a where 0;", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-1, -1);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-1, -10);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-1, 10);", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a where a < b;", 0,
-                            "a: -3\nb: 3\na: -1\nb: 10\n");
+                            get_select_answer({"a", "b"}, {{"-3", "3"}}));
     CHECK_REQUEST_ST_CLIENT("select * from a where a <= b;", 0,
-                            "a: -3\nb: 3\na: -1\nb: -1\na: -1\nb: 10\n");
+                            get_select_answer({"a", "b"}, {{"-3", "3"}}));
     CHECK_REQUEST_ST_CLIENT(  // TODO
         "select * from a where (12 + (4.5 * 2 / 3) + 2.0 * 2 - a * (-1)) / "
         "2 = "
         "b + a;",
-        0, "a: -1\nb: 10\n");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a + 2 >= -0.567;", 0,
-                            "a: -1\nb: -1\na: -1\nb: -10\na: -1\nb: 10\n");
+        0, get_select_answer({"a"}, {{"-1", "10"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a + 2 >= -0.567;", 0,
+        "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where b != a and b != 10 and b != -10;", 0,
-        "a: -3\nb: 3\n");
+        get_select_answer({"a", "b"}, {{"-3", "3"}}));
 }
 
 TEST_F(REQUEST_TESTS, WHERE_TEST_3) {
@@ -830,7 +836,7 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_4) {
 
 TEST_F(REQUEST_TESTS, INNER_JOIN_TEST_1) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-        "create table a(a int, b varchar[100]);"
+        "create table a(a int, b varchar(100));"
         "insert into a values(1, 'Viktor');\n"
         "insert into a values(1, 'Danila');\n"
         "insert into a values(0, 'Danila');\n"
@@ -840,7 +846,7 @@ TEST_F(REQUEST_TESTS, INNER_JOIN_TEST_1) {
         "insert into b values(0, 2);\n"
         "insert into b values(3, 0.2);");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-        "create table c(a varchar[100], b varchar[100]);\n"
+        "create table c(a varchar(100), b varchar(100));\n"
         "insert into c values('Danila', 'Write this test.');\n"
         "insert into c values('Ivan', 'Save this data.');\n"
         "insert into c values('Viktor', 'Parsed this request.');\n"
@@ -885,8 +891,9 @@ TEST_F(REQUEST_TESTS, INNER_JOIN_TEST_1) {
 }
 
 TEST_F(REQUEST_TESTS, NESTED_JOIN_TEST_1) {
-    //TODO: большой вложенности
+    // TODO: большой вложенности
 }
 
 // TODO: разнве название полей, несуществующие поля/таблицы, сравнение
-// несравнимого, большой запрос без скобочек, сам с сабой ошибка, два поля с одинаковым именем обращение ошибка, select in select without ()
+// несравнимого, большой запрос без скобочек, сам с сабой ошибка, два поля с
+// одинаковым именем обращение ошибка, select in select without ()
