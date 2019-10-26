@@ -1,5 +1,3 @@
-#define CREATE_SERVER
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -29,7 +27,7 @@ void REQUEST_TESTS::TearDownTestCase() {
 #endif
 }
 
-Client REQUEST_TESTS::client("localhost", 11234);
+Client REQUEST_TESTS::client(TEST_SERVER_HOST, TEST_SERVER_PORT);
 
 TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("create table a (b int);", 0, "");
@@ -898,10 +896,34 @@ TEST_F(REQUEST_TESTS, INNER_JOIN_TEST_1) {
              {"3", "Ivan", "Save this data.", "3", to_string(0.2), "Ivan"}}));
 }
 
-TEST_F(REQUEST_TESTS, NESTED_JOIN_TEST_1) {
-    // TODO: большой вложенности
-}
-
 // TODO: разнве название полей, несуществующие поля/таблицы, сравнение
 // несравнимого, большой запрос без скобочек, сам с сабой ошибка, два поля с
 // одинаковым именем обращение ошибка, select in select without ()
+
+class DROP_TESTS : public ::testing::Test {
+   public:
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void TearDown() override { clearDB(); }
+
+    static Client client;
+};
+
+void DROP_TESTS::SetUpTestCase() {
+    clearDB();
+#if defined(CREATE_SERVER)
+    Server::get()->run();
+#endif
+    client.connect();
+}
+void DROP_TESTS::TearDownTestCase() {
+#if defined(CREATE_SERVER)
+    Server::get()->stop();
+#endif
+}
+
+Client DROP_TESTS::client(TEST_SERVER_HOST, TEST_SERVER_PORT);
+
+TEST_F(DROP_TESTS, CREATE_TEST_1) {
+    CHECK_DROP_RECUEST("create table a (b int);", "show create table a;", 0, "CREATE TABLE a(\n    b int\n);\n", "a a_meta");
+}
