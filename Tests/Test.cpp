@@ -26,6 +26,7 @@ void clearDB() {
 }
 
 void Server::run() {
+    stop();
     std::string command;
 #if defined(WIN32) || defined(_WIN32) || \
     defined(__WIN32) && !defined(__CYGWIN__)
@@ -73,7 +74,6 @@ std::string get_select_answer(
         assert(column.size() == i.size());
     }
     for (const auto& i : data) {
-        ans += "=======\n";
         for (unsigned int j = 0; j < i.size(); j++) {
             ans += column[j] + ": " + i[j] + "\n";
         }

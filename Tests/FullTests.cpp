@@ -174,6 +174,14 @@ TEST_F(REQUEST_TESTS, SYNTAX_TEST_4) {
     CHECK_REQUEST_ST_CLIENT("insert into a values ('\'' ;');", 0, "");
 }
 
+TEST_F(REQUEST_TESTS, SYNTAX_TEST_5) {
+    CHECK_REQUEST_ST_CLIENT("create # table a(b varchar(100));", 0, "");
+}
+
+TEST_F(REQUEST_TESTS, SYNTAX_TEST_6) {
+    CHECK_REQUEST_ST_CLIENT("create table table(b varchar(100));", 0, "");
+}
+
 TEST_F(REQUEST_TESTS, DROP_TABLE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "drop table tr;",
@@ -560,7 +568,7 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_6) {
     CHECK_REQUEST_ST_CLIENT("insert into a values (0, 0, '1');", 0, "");
     CHECK_REQUEST_ST_CLIENT("delete from a where b = a or a = 1;", 0, "");
     CHECK_REQUEST_ST_CLIENT("select a from a;", 0,
-                            get_select_answer({"a.a"}, {{"0"}}));
+                            get_select_answer({"a"}, {{"0"}}));
 }
 
 TEST_F(REQUEST_TESTS, UPDATE_TEST_1) {
