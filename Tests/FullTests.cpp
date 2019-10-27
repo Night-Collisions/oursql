@@ -749,14 +749,18 @@ TEST_F(WHERE_TESTS, TEST_2) {
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a < b;", 0,
         get_select_answer({"a.a", "a.b"}, {{"-3", "3"}, {"-1", "10"}}));
-    CHECK_REQUEST_ST_CLIENT("select * from a where a <= b;", 0,
-                            get_select_answer({"a.a", "a.b"}, {{"-3", "3"}, {"-1", "-1"}, {"-1", "10"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a <= b;", 0,
+        get_select_answer({"a.a", "a.b"},
+                          {{"-3", "3"}, {"-1", "-1"}, {"-1", "10"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where (12 + (4.5 * 2 / 3) + 2.0 * 2 - a * (-1)) / "
         "2 = "
         "b + a;",
         0, get_select_answer({"a.a", "a.b"}, {{"-1", "10"}}));
-    CHECK_REQUEST_ST_CLIENT("select a from a where a + 2 >= -0.567;", 0, get_select_answer({"a.a"}, {{"-1"}, {"-1"}, {"-1"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select a from a where a + 2 >= -0.567;", 0,
+        get_select_answer({"a.a"}, {{"-1"}, {"-1"}, {"-1"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where b != a and b != 10 and b != -10;", 0,
         get_select_answer({"a.a", "a.b"}, {{"-3", "3"}}));
@@ -830,8 +834,8 @@ TEST_F(WHERE_TESTS, TEST_4) {
         get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where (a = 1) / 0;", exc::ExceptionType::div_by_zero,
-        "~~Exception 7:\n division by zero '1/0'.\n~~Exception in "
-        "command:\"select * from a where (a = 1) / 0;\"\n");
+        "~~Exception 9:\n division by zero '1.000000/0.000000'.\n~~Exception "
+        "in command:\"select * from a where (a = 1) / 0;\"\n");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where (a = 1) - (3 != 3);", 0,
         get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));

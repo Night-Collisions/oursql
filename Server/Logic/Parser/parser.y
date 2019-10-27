@@ -171,14 +171,6 @@ constraint:
 // --- select
 
 select:
-    SELECT select_decl FROM id where_expr {
-        std::map<NodeType, Node*> children;
-        children[NodeType::ident] = $4;
-        children[NodeType::select_list] = new SelectList(selectList);
-        children[NodeType::expression] = $5;
-
-        parseTree = new Query(children, CommandType::select);
-    } |
     SELECT select_decl FROM relational_expr where_expr {
          std::map<NodeType, Node*> children;
          children[NodeType::select_list] = new SelectList(selectList);
@@ -186,7 +178,15 @@ select:
          children[NodeType::expression] = $5;
 
          parseTree = new Query(children, CommandType::select);
-     };
+    } |
+    SELECT select_decl FROM id where_expr {
+        std::map<NodeType, Node*> children;
+        children[NodeType::ident] = $4;
+        children[NodeType::select_list] = new SelectList(selectList);
+        children[NodeType::expression] = $5;
+
+        parseTree = new Query(children, CommandType::select);
+    };
 
 select_decl:
     asterisk | 
@@ -445,6 +445,8 @@ id:
 
 sub_rel_expr:
     id { $$ = new RelExpr($1, ""); } |
+    id AS id { $$ = new RelExpr($3, ""); } |
+    LPAREN id AS id RPAREN { $$ = new RelExpr($4, ""); } |
     LPAREN relational_expr RPAREN AS id { 
         $2->setAlias($5->getName());
         $$ = $2;
