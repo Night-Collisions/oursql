@@ -750,16 +750,16 @@ TEST_F(WHERE_TESTS, TEST_2) {
         "select * from a where a < b;", 0,
         get_select_answer({"a.a", "a.b"}, {{"-3", "3"}, {"-1", "10"}}));
     CHECK_REQUEST_ST_CLIENT("select * from a where a <= b;", 0,
-                            get_select_answer({"a.a", "a.b"}, {{"-3", "3"}, {"-1", "-1"}}));
+                            get_select_answer({"a.a", "a.b"}, {{"-3", "3"}, {"-1", "-1"}, {"-1", "10"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where (12 + (4.5 * 2 / 3) + 2.0 * 2 - a * (-1)) / "
         "2 = "
         "b + a;",
-        0, get_select_answer({"a"}, {{"-1"}}));
-    CHECK_REQUEST_ST_CLIENT("select * from a where a + 2 >= -0.567;", 0, "");
+        0, get_select_answer({"a.a", "a.b"}, {{"-1", "10"}}));
+    CHECK_REQUEST_ST_CLIENT("select a from a where a + 2 >= -0.567;", 0, get_select_answer({"a.a"}, {{"-1"}, {"-1"}, {"-1"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where b != a and b != 10 and b != -10;", 0,
-        get_select_answer({"a", "b"}, {{"-3", "3"}}));
+        get_select_answer({"a.a", "a.b"}, {{"-3", "3"}}));
 }
 
 TEST_F(WHERE_TESTS, TEST_3) {
