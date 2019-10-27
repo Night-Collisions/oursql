@@ -584,7 +584,7 @@ TEST_F(REQUEST_TESTS, UPDATE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("update a set b = 3.45, c = 'H';", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"2", "3.450000", "H"},
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"2", "3.450000", "H"},
                                             {"2", "3.450000", "H"},
                                             {"2", "3.450000", "H"}}));
 }
@@ -669,7 +669,7 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', '');", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a < b;", 0,
-        get_select_answer({"a", "b"},
+        get_select_answer({"a.a", "a.b"},
                           {{"ab", "abc"}, {"ab", "b"}, {"ab", "bb"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a <= b;", 0,
