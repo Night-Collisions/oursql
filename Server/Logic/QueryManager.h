@@ -10,7 +10,8 @@
 
 typedef Table (*rel_func)(const Table& table1, const Table& table2,
                           Expression* on_expr,
-                          std::unique_ptr<exc::Exception>& e);
+                          std::unique_ptr<exc::Exception>& e,
+                          RelOperNodeType join_type);
 
 class QueryManager {
    public:

@@ -106,7 +106,6 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "inner"                    { return INNER; }
 "outer"                    { return OUTER; }
 "full"                     { return FULL; }
-"cross"                    { return CROSS; }
 "join"                     { return JOIN; }
 "union"                    { return UNION; }
 "intersect"                { return INTERSECT; }

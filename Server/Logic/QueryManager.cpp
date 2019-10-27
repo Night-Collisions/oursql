@@ -16,7 +16,7 @@
 #include "Parser/RelationalOperationsParser/Join.h"
 
 std::array<rel_func, static_cast<unsigned int>(RelOperNodeType::Count)>
-    QueryManager::relational_oper_ = {Join::makeJoin, Join::makeInnerJoin};
+    QueryManager::relational_oper_ = {Join::makeJoin, Join::makeJoin};
 
 void QueryManager::execute(const Query& query,
                            std::unique_ptr<exc::Exception>& e,
@@ -111,7 +111,8 @@ void printSelect(const Table& table, t_column_infos column_infos,
             (table.getName().empty()) ? ("") : (table.getName() + ".");
         if (expr->getConstant()->getName() == "*") {
             for (auto& k : table.getColumns()) {
-                out << prefix + k.getName() + ": " + record[table.getName()][k.getName()]
+                out << prefix + k.getName() + ": " +
+                           record[table.getName()][k.getName()]
                     << std::endl;
             }
             continue;

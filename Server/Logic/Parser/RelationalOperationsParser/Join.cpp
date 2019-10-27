@@ -4,9 +4,19 @@
 #include "../ExpressionParser/Resolver.h"
 
 Table Join::makeJoin(const Table& table1, const Table& table2,
-                     Expression* on_expr, std::unique_ptr<exc::Exception>& e) {
+                     Expression* on_expr, std::unique_ptr<exc::Exception>& e,
+                     RelOperNodeType join_type) {
     if (e) {
         return Table();
+    }
+
+    if (join_type == RelOperNodeType::right_join) {
+        auto res =
+            makeJoin(table2, table1, on_expr, e, RelOperNodeType::left_join);
+        if (e) {
+            return Table();
+        }
+        return res;
     }
 
     std::map<std::string, std::map<std::string, Column>> column_info;
@@ -61,12 +71,10 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             record_to_hash = records2;
             record_to_run = records1;
             key_col = col2;
-            pos_right =
-                std::distance(column_info[table2.getName()].find(col1),
-                              column_info[table2.getName()].begin());
-            pos_left =
-                std::distance(column_info[table1.getName()].find(col2),
-                              column_info[table1.getName()].begin());
+            pos_right = std::distance(column_info[table2.getName()].find(col1),
+                                      column_info[table2.getName()].begin());
+            pos_left = std::distance(column_info[table1.getName()].find(col2),
+                                     column_info[table1.getName()].begin());
             tablename_to_run = table1.getName();
             tablename_to_hash = table2.getName();
             table_to_run = table1;
@@ -75,12 +83,10 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             record_to_hash = records1;
             record_to_run = records2;
             key_col = col1;
-            pos_right =
-                std::distance(column_info[table1.getName()].find(col2),
-                              column_info[table1.getName()].begin()) ;
-            pos_left =
-                std::distance(column_info[table2.getName()].find(col1),
-                              column_info[table2.getName()].begin()) ;
+            pos_right = std::distance(column_info[table1.getName()].find(col2),
+                                      column_info[table1.getName()].begin());
+            pos_left = std::distance(column_info[table2.getName()].find(col1),
+                                     column_info[table2.getName()].begin());
             tablename_to_run = table2.getName();
             tablename_to_hash = table1.getName();
             table_to_run = table2;

@@ -9,13 +9,8 @@ class Join {
    public:
     static Table makeJoin(const Table& table1, const Table& table2,
                           Expression* on_expr,
-                          std::unique_ptr<exc::Exception>& e);
-
-    static Table makeInnerJoin(const Table& table1, const Table& table2,
-                               Expression* on_expr,
-                               std::unique_ptr<exc::Exception>& e) {
-        return makeJoin(table1, table2, on_expr, e);
-    }
+                          std::unique_ptr<exc::Exception>& e,
+                          RelOperNodeType join_type = RelOperNodeType::join);
 
    private:
     static bool isHashJoinOk(

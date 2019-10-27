@@ -463,8 +463,6 @@ join_opers:
     JOIN { $$ = RelOperNodeType::join; } |
     LEFT JOIN { $$ = RelOperNodeType::left_join; } |
     RIGHT JOIN { $$ = RelOperNodeType::right_join; } |
-    OUTER JOIN { $$ = RelOperNodeType::outer_join; } |
-    CROSS JOIN { $$ = RelOperNodeType::cross_join; } |
     INNER JOIN { $$ = RelOperNodeType::inner_join; } |
     FULL JOIN { $$ = RelOperNodeType::full_join; };
 

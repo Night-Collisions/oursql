@@ -5,12 +5,11 @@
 #include "Expression.h"
 #include "Ident.h"
 #include "Node.h"
+
 enum class RelOperNodeType : unsigned int {
     join,
     inner_join,
-    outer_join,
     full_join,
-    cross_join,
     left_join,
     right_join,
     union_,

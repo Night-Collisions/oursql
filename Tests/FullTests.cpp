@@ -261,7 +261,7 @@ TEST_F(REQUEST_TESTS, SELECT_TEST_7) {
     CHECK_REQUEST_ST_CLIENT("insert into a values (0, 1, '1');", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a = 0;", 0,
-        get_select_answer({"a", "b", "c"}, {{"0", "1.000000", "1"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"0", "1.000000", "1"}}));
 }
 
 TEST_F(REQUEST_TESTS, SELECT_TEST_8) {
@@ -280,7 +280,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("insert into a values (3, 2.2, 'Hello');", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"3", "2.200000", "Hello"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"3", "2.200000", "Hello"}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_2) {
@@ -290,7 +290,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_2) {
                             0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"3", "2.200000", "Hello"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"3", "2.200000", "Hello"}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_3) {
@@ -310,7 +310,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_4) {
     CHECK_REQUEST_ST_CLIENT("insert into a values (-2, -1, '');", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"-2", "-1.000000", ""}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"-2", "-1.000000", ""}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_5) {
@@ -383,7 +383,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_11) {
     CHECK_REQUEST_ST_CLIENT("insert into a(a) values (-2);", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"-2", "null", ""}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"-2", "null", ""}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_12) {
@@ -392,7 +392,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_12) {
     CHECK_REQUEST_ST_CLIENT("insert into a(a) values (8);", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"8", "null", ""}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"8", "null", ""}}));
 }
 
 TEST_F(REQUEST_TESTS, INSERT_TEST_13) {
@@ -404,7 +404,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_13) {
                             0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a", "b", "c"},
+        get_select_answer({"a.a", "a.b", "a.c"},
                           {{"-2", "0.100000", "Hello world!"}}));
 }
 
@@ -474,7 +474,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_18) {
         "insert into a(a, b) values (12, 1);"
         "select * from a;",
         0,
-        get_select_answer({"a", "b", "c"},
+        get_select_answer({"a.a", "a.b", "a.c"},
                           {{"1", "0.000000", "H!"}, {"12", "1.000000", ""}}));
 }
 
@@ -520,7 +520,7 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("delete from a where a = 0;", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a", "b", "c"},
+        get_select_answer({"a.a", "a.b", "a.c"},
                           {{"1", "0.000000", "1"}, {"1", "1.000000", "0"}}));
     CHECK_REQUEST_ST_CLIENT("delete from a where b = 0;", 0, "");
     CHECK_REQUEST_ST_CLIENT(
@@ -566,7 +566,7 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_6) {
     CHECK_REQUEST_ST_CLIENT("insert into a values (0, 0, '1');", 0, "");
     CHECK_REQUEST_ST_CLIENT("delete from a where b = a or a = 1;", 0, "");
     CHECK_REQUEST_ST_CLIENT("select a from a;", 0,
-                            get_select_answer({"a"}, {{"0"}}));
+                            get_select_answer({"a.a"}, {{"0"}}));
 }
 
 TEST_F(REQUEST_TESTS, UPDATE_TEST_1) {
@@ -578,7 +578,7 @@ TEST_F(REQUEST_TESTS, UPDATE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("update a set a = 2;", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"2", "1.000000", "1"},
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"2", "1.000000", "1"},
                                             {"2", "1.000000", "1"},
                                             {"2", "1.000000", "1"}}));
     CHECK_REQUEST_ST_CLIENT("update a set b = 3.45, c = 'H';", 0, "");
@@ -660,7 +660,7 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_1) {
                             0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', 'ab');", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a where '1';", 0,
-                            get_select_answer({"a", "b"}, {{"ab", "ab"}}));
+                            get_select_answer({"a.a", "a.b"}, {{"ab", "ab"}}));
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', 'abc');", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', 'b');", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', 'bb');", 0, "");
