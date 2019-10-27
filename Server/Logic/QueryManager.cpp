@@ -630,7 +630,7 @@ Table QueryManager::getFilledTable(const std::string& name,
         return Table();
     }
     table.setName(name);
-    auto cursor = Cursor(name);
+    Cursor cursor(name);
 
     while (cursor.next()) {
         table.addRecord(cursor.fetch(), e);

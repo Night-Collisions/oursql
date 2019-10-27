@@ -29,24 +29,26 @@ void REQUEST_TESTS::TearDownTestCase() {
 
 Client REQUEST_TESTS::client(TEST_SERVER_HOST, TEST_SERVER_PORT);
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_1) {
+class CREATE_TABLE_TESTS : public REQUEST_TESTS {};
+
+TEST_F(CREATE_TABLE_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("create table a (b int);", 0, "");
     CHECK_REQUEST_ST_CLIENT("show create table a;", 0,
                             "CREATE TABLE a(\n    b int\n);\n");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_2) {
+TEST_F(CREATE_TABLE_TESTS, TEST_2) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a (b int)", EXCEPTION2NUMB(exc::ExceptionType::syntax),
         "~~Exception 1:\n wrong syntax!\n~~Exception in command:\"create "
         "table a (b int)\"\n");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_3) {
+TEST_F(CREATE_TABLE_TESTS, TEST_3) {
     CHECK_REQUEST_ST_CLIENT("create table a(b int not null);", 0, "");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_4) {
+TEST_F(CREATE_TABLE_TESTS, TEST_4) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(b int not null not null);",
         EXCEPTION2NUMB(exc::ExceptionType::redundant_constraints),
@@ -55,7 +57,7 @@ TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_4) {
         "null);\"\n");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_5) {
+TEST_F(CREATE_TABLE_TESTS, TEST_5) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(b int not null, c real unique, d "
         "varchar(100) primary key);",
@@ -67,14 +69,14 @@ TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_5) {
                             "    d varchar(100) primary key\n);\n");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_6) {
+TEST_F(CREATE_TABLE_TESTS, TEST_6) {
     CHECK_REQUEST_ST_CLIENT("create table sfs;",
                             EXCEPTION2NUMB(exc::ExceptionType::syntax),
                             "~~Exception 1:\n wrong syntax!\n"
                             "~~Exception in command:\"create table sfs;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_7) {
+TEST_F(CREATE_TABLE_TESTS, TEST_7) {
     CHECK_REQUEST_ST_CLIENT("create table a(i int);", 0, "");
     CHECK_REQUEST_ST_CLIENT("create table b(i int);", 0, "");
     CHECK_REQUEST_ST_CLIENT("create table c(i int);", 0, "");
@@ -86,7 +88,7 @@ TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_7) {
                             "CREATE TABLE c(\n    i int\n);\n");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_8) {
+TEST_F(CREATE_TABLE_TESTS, TEST_8) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(MyColumn int, mycolumn varchar(100));",
         EXCEPTION2NUMB(exc::ExceptionType::repeat_column_in_table),
@@ -95,7 +97,7 @@ TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_8) {
         "mycolumn varchar(100));\"\n");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_9) {
+TEST_F(CREATE_TABLE_TESTS, TEST_9) {
     CHECK_REQUEST_ST_CLIENT("create table a(MyColumn int, q varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT(
@@ -105,21 +107,21 @@ TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_9) {
         "repeated!\n~~Exception in command:\"create table a(f int);\"\n");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_10) {
+TEST_F(CREATE_TABLE_TESTS, TEST_10) {
     CHECK_REQUEST_ST_CLIENT(
         "create table 1a(f int);", EXCEPTION2NUMB(exc::ExceptionType::syntax),
         "~~Exception 1:\n wrong syntax!\n"
         "~~Exception in command:\"create table 1a(f int);\"\n");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_11) {
+TEST_F(CREATE_TABLE_TESTS, TEST_11) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(1f int);", EXCEPTION2NUMB(exc::ExceptionType::syntax),
         "~~Exception 1:\n wrong syntax!\n"
         "~~Exception in command:\"create table a(1f int);\"\n");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_12) {
+TEST_F(CREATE_TABLE_TESTS, TEST_12) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(b varchar(100) not null unique primary key);", 0, "");
     CHECK_REQUEST_ST_CLIENT(
@@ -128,7 +130,7 @@ TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_12) {
         "unique\n);\n");
 }
 
-TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_13) {
+TEST_F(CREATE_TABLE_TESTS, TEST_13) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(b int primary key, c int primary key);",
         EXCEPTION2NUMB(exc::ExceptionType::duplicated_primary_key_in_column),
@@ -138,14 +140,16 @@ TEST_F(REQUEST_TESTS, CREATE_TABLE_TEST_13) {
         "primary key);\"\n");
 }
 
-TEST_F(REQUEST_TESTS, SHOW_CREATE_TABLE_TEST_1) {
+class SHOW_CREATE_TABLE_TESTS : public REQUEST_TESTS {};
+
+TEST_F(SHOW_CREATE_TABLE_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("show ghgh;",
                             EXCEPTION2NUMB(exc::ExceptionType::syntax),
                             "~~Exception 1:\n wrong syntax!\n"
                             "~~Exception in command:\"show ghgh;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, SHOW_CREATE_TABLE_TEST_2) {
+TEST_F(SHOW_CREATE_TABLE_TESTS, TEST_2) {
     CHECK_REQUEST_ST_CLIENT(
         "show create table e;",
         EXCEPTION2NUMB(exc::ExceptionType::access_table_nonexistent),
@@ -153,37 +157,41 @@ TEST_F(REQUEST_TESTS, SHOW_CREATE_TABLE_TEST_2) {
         "command:\"show create table e;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, SYNTAX_TEST_1) {
+class SYNTAX_TESTS : public REQUEST_TESTS {};
+
+TEST_F(SYNTAX_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("CreAte    \n  TablE   NamE \n ( A ReAl);", 0, "");
 }
 
-TEST_F(REQUEST_TESTS, SYNTAX_TEST_2) {
+TEST_F(SYNTAX_TESTS, TEST_2) {
     CHECK_REQUEST_ST_CLIENT("fdgd;", EXCEPTION2NUMB(exc::ExceptionType::syntax),
                             "~~Exception 1:\n wrong syntax!\n~~Exception in "
                             "command:\"fdgd;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, SYNTAX_TEST_3) {
+TEST_F(SYNTAX_TESTS, TEST_3) {
     CHECK_REQUEST_ST_CLIENT("CREATE TABLE TAB(F VARCHAR(100));", 0, "");
 }
 
-TEST_F(REQUEST_TESTS, SYNTAX_TEST_4) {
+TEST_F(SYNTAX_TESTS, TEST_4) {
     CHECK_REQUEST_ST_CLIENT("create table a(b varchar(100));", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values ('\'' ;');", 0, "");
 }
 
-TEST_F(REQUEST_TESTS, SYNTAX_TEST_5) {
+TEST_F(SYNTAX_TESTS, TEST_5) {
     CHECK_REQUEST_ST_CLIENT("create # table a(b varchar(100));", 0, "");
 }
 
-TEST_F(REQUEST_TESTS, SYNTAX_TEST_6) {
+TEST_F(SYNTAX_TESTS, TEST_6) {
     CHECK_REQUEST_ST_CLIENT(
         "create table table(b varchar(100));", 1,
         "~~Exception 1:\n wrong syntax!\n~~Exception in command:\"create table "
         "table(b varchar(100));\"\n");
 }
 
-TEST_F(REQUEST_TESTS, DROP_TABLE_TEST_1) {
+class DROP_TABLE_TESTS : public REQUEST_TESTS {};
+
+TEST_F(DROP_TABLE_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "drop table tr;",
         EXCEPTION2NUMB(exc::ExceptionType::access_table_nonexistent),
@@ -191,7 +199,7 @@ TEST_F(REQUEST_TESTS, DROP_TABLE_TEST_1) {
         "\n~~Exception in command:\"drop table tr;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, DROP_TABLE_TEST_2) {
+TEST_F(DROP_TABLE_TESTS, TEST_2) {
     CHECK_REQUEST_ST_CLIENT("create table a(b int);", 0, "");
     CHECK_REQUEST_ST_CLIENT("create table b(c real);", 0, "");
     CHECK_REQUEST_ST_CLIENT("drop table a;", 0, "");
@@ -200,25 +208,27 @@ TEST_F(REQUEST_TESTS, DROP_TABLE_TEST_2) {
                             "CREATE TABLE b(\n    c real\n);\n");
 }
 
-TEST_F(REQUEST_TESTS, DROP_TABLE_TEST_3) {
+TEST_F(DROP_TABLE_TESTS, TEST_3) {
     CHECK_REQUEST_ST_CLIENT("drop table;",
                             EXCEPTION2NUMB(exc::ExceptionType::syntax),
                             "~~Exception 1:\n wrong syntax!\n"
                             "~~Exception in command:\"drop table;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, SELECT_TEST_1) {
+class SELECT_TESTS : public REQUEST_TESTS {};
+
+TEST_F(SELECT_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("select * from a;", 0, "");
 }
 
-TEST_F(REQUEST_TESTS, SELECT_TEST_2) {
+TEST_F(SELECT_TESTS, TEST_2) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b int, c int);", 0, "");
     CHECK_REQUEST_ST_CLIENT("select *, c, a from a;", 0, "");
 }
 
-TEST_F(REQUEST_TESTS, SELECT_TEST_3) {
+TEST_F(SELECT_TESTS, TEST_3) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("select c, * from a;",
@@ -227,7 +237,7 @@ TEST_F(REQUEST_TESTS, SELECT_TEST_3) {
                             "~~Exception in command:\"select c, * from a;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, SELECT_TEST_4) {
+TEST_F(SELECT_TESTS, TEST_4) {
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;",
         EXCEPTION2NUMB(exc::ExceptionType::access_table_nonexistent),
@@ -235,7 +245,7 @@ TEST_F(REQUEST_TESTS, SELECT_TEST_4) {
         "~~Exception in command:\"select * from a;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, SELECT_TEST_5) {
+TEST_F(SELECT_TESTS, TEST_5) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT(
@@ -245,7 +255,7 @@ TEST_F(REQUEST_TESTS, SELECT_TEST_5) {
         "command:\"select *, c, a, f from a;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, SELECT_TEST_6) {
+TEST_F(SELECT_TESTS, TEST_6) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("drop table a;", 0, "");
@@ -256,7 +266,7 @@ TEST_F(REQUEST_TESTS, SELECT_TEST_6) {
         "~~Exception in command:\"select * from a;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, SELECT_TEST_7) {
+TEST_F(SELECT_TESTS, TEST_7) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (1, 0, '1');", 0, "");
@@ -267,7 +277,7 @@ TEST_F(REQUEST_TESTS, SELECT_TEST_7) {
         get_select_answer({"a.a", "a.b", "a.c"}, {{"0", "1.000000", "1"}}));
 }
 
-TEST_F(REQUEST_TESTS, SELECT_TEST_8) {
+TEST_F(SELECT_TESTS, TEST_8) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (1);", 0, "");
     CHECK_REQUEST_ST_CLIENT(
@@ -277,7 +287,9 @@ TEST_F(REQUEST_TESTS, SELECT_TEST_8) {
         "command:\"select * from a where a = '1';\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_1) {
+class INSERT_TESTS : public REQUEST_TESTS {};
+
+TEST_F(INSERT_TESTS, INSERT_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (3, 2.2, 'Hello');", 0, "");
@@ -286,7 +298,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_1) {
         get_select_answer({"a.a", "a.b", "a.c"}, {{"3", "2.200000", "Hello"}}));
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_2) {
+TEST_F(INSERT_TESTS, INSERT_TEST_2) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a (c, a, b) values ('Hello', 3, 2.2);",
@@ -296,7 +308,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_2) {
         get_select_answer({"a.a", "a.b", "a.c"}, {{"3", "2.200000", "Hello"}}));
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_3) {
+TEST_F(INSERT_TESTS, INSERT_TEST_3) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT(
@@ -307,7 +319,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_3) {
         "'Hello');\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_4) {
+TEST_F(INSERT_TESTS, INSERT_TEST_4) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (-2, -1, '');", 0, "");
@@ -316,7 +328,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_4) {
         get_select_answer({"a.a", "a.b", "a.c"}, {{"-2", "-1.000000", ""}}));
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_5) {
+TEST_F(INSERT_TESTS, TEST_5) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT(
@@ -327,7 +339,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_5) {
         "'Hello');\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_6) {
+TEST_F(INSERT_TESTS, TEST_6) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT(
@@ -338,7 +350,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_6) {
         "'Hello');\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_7) {
+TEST_F(INSERT_TESTS, TEST_7) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT(
@@ -349,7 +361,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_7) {
         "values (2, 3.3, 4);\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_8) {
+TEST_F(INSERT_TESTS, TEST_8) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT(
@@ -361,7 +373,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_8) {
         "'Hello');\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_9) {
+TEST_F(INSERT_TESTS, TEST_9) {
     CHECK_REQUEST_ST_CLIENT(
         "insert into a values (2, 3.3, 'Hello');",
         EXCEPTION2NUMB(exc::ExceptionType::access_table_nonexistent),
@@ -369,7 +381,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_9) {
         "command:\"insert into a values (2, 3.3, 'Hello');\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_10) {
+TEST_F(INSERT_TESTS, TEST_10) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT(
@@ -380,7 +392,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_10) {
         "'Hello');\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_11) {
+TEST_F(INSERT_TESTS, TEST_11) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a(a) values (-2);", 0, "");
@@ -389,7 +401,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_11) {
         get_select_answer({"a.a", "a.b", "a.c"}, {{"-2", "null", ""}}));
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_12) {
+TEST_F(INSERT_TESTS, TEST_12) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a(a) values (8);", 0, "");
@@ -398,7 +410,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_12) {
         get_select_answer({"a.a", "a.b", "a.c"}, {{"8", "null", ""}}));
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_13) {
+TEST_F(INSERT_TESTS, TEST_13) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(a int not null, b real primary key, c varchar(100) "
         "unique);",
@@ -411,7 +423,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_13) {
                           {{"-2", "0.100000", "Hello world!"}}));
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_14) {
+TEST_F(INSERT_TESTS, TEST_14) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(a int not null, b real primary key, c varchar(100) "
         "unique);",
@@ -424,7 +436,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_14) {
         "M!');\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_15) {
+TEST_F(INSERT_TESTS, TEST_15) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(a int not null, b real primary key, c varchar(100) "
         "unique);",
@@ -439,7 +451,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_15) {
         "'H!');\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_16) {
+TEST_F(INSERT_TESTS, TEST_16) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(a int not null, b real primary key, c "
         "varchar(100) unique);",
@@ -453,7 +465,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_16) {
         "values (12, 1, 'H!');\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_17) {
+TEST_F(INSERT_TESTS, TEST_17) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(a int not null, b real primary key, c varchar(100) "
         "unique);",
@@ -467,7 +479,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_17) {
         "1);\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_18) {
+TEST_F(INSERT_TESTS, TEST_18) {
     CHECK_REQUEST_ST_CLIENT(
         "create table a(a int not null, b real primary key, c "
         "varchar(100) unique);",
@@ -481,7 +493,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_18) {
                           {{"1", "0.000000", "H!"}, {"12", "1.000000", ""}}));
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_19) {
+TEST_F(INSERT_TESTS, TEST_19) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a(a, a) values (12, 1);",
@@ -491,7 +503,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_19) {
                             "into a(a, a) values (12, 1);\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_20) {
+TEST_F(INSERT_TESTS, TEST_20) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT(
@@ -502,7 +514,7 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_20) {
         "~~Exception in command:\"insert into a(a) values (12, 1);\"\n");
 }
 
-TEST_F(REQUEST_TESTS, INSERT_TEST_21) {
+TEST_F(INSERT_TESTS, TEST_21) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT(
@@ -514,7 +526,9 @@ TEST_F(REQUEST_TESTS, INSERT_TEST_21) {
         "2 + 1;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, DELETE_TEST_1) {
+class DELETE_TESTS : public REQUEST_TESTS {};
+
+TEST_F(DELETE_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (1, 0, '1');", 0, "");
@@ -533,14 +547,14 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("select * from a;", 0, "");
 }
 
-TEST_F(REQUEST_TESTS, DELETE_TEST_2) {
+TEST_F(DELETE_TESTS, TEST_2) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("delete from a where c = '0';", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a;", 0, "");
 }
 
-TEST_F(REQUEST_TESTS, DELETE_TEST_3) {
+TEST_F(DELETE_TESTS, TEST_3) {
     CHECK_REQUEST_ST_CLIENT(
         "delete from a where c = '0';",
         EXCEPTION2NUMB(exc::ExceptionType::access_table_nonexistent),
@@ -548,19 +562,19 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_3) {
         "command:\"delete from a where c = '0';\"\n");
 }
 
-TEST_F(REQUEST_TESTS, DELETE_TEST_4) {
+TEST_F(DELETE_TESTS, TEST_4) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("delete from a where f = '0';", 0, "");
 }
 
-TEST_F(REQUEST_TESTS, DELETE_TEST_5) {
+TEST_F(DELETE_TESTS, TEST_5) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("delete from a where b = '0';", 0, "");
 }
 
-TEST_F(REQUEST_TESTS, DELETE_TEST_6) {
+TEST_F(DELETE_TESTS, TEST_6) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (1, 0, '1');", 0, "");
@@ -572,7 +586,9 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_6) {
                             get_select_answer({"a.a"}, {{"0"}}));
 }
 
-TEST_F(REQUEST_TESTS, UPDATE_TEST_1) {
+class UPDATE_TESTS : public REQUEST_TESTS {};
+
+TEST_F(UPDATE_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (1, 0, '1');", 0, "");
@@ -592,7 +608,7 @@ TEST_F(REQUEST_TESTS, UPDATE_TEST_1) {
                                                   {"2", "3.450000", "H"}}));
 }
 
-TEST_F(REQUEST_TESTS, UPDATE_TEST_2) {
+TEST_F(UPDATE_TESTS, TEST_2) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int, b real, c varchar(100));", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (1, 0, '1');", 0, "");
@@ -606,7 +622,7 @@ TEST_F(REQUEST_TESTS, UPDATE_TEST_2) {
         "command:\"update a set f = 2;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, UPDATE_TEST_3) {
+TEST_F(UPDATE_TESTS, TEST_3) {
     CHECK_REQUEST_ST_CLIENT(
         "update a set f = 2;",
         EXCEPTION2NUMB(exc::ExceptionType::access_table_nonexistent),
@@ -614,7 +630,7 @@ TEST_F(REQUEST_TESTS, UPDATE_TEST_3) {
         "command:\"update a set f = 2;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, UPDATE_TEST_4) {
+TEST_F(UPDATE_TESTS, TEST_4) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int unique);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (1);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (2);", 0, "");
@@ -625,7 +641,7 @@ TEST_F(REQUEST_TESTS, UPDATE_TEST_4) {
         "a.\n~~Exception in command:\"update a set a = 2;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, UPDATE_TEST_5) {
+TEST_F(UPDATE_TESTS, TEST_5) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int not null);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (1);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (2);", 0, "");
@@ -636,7 +652,7 @@ TEST_F(REQUEST_TESTS, UPDATE_TEST_5) {
         "values.\n~~Exception in command:\"update a set a = null;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, UPDATE_TEST_6) {
+TEST_F(UPDATE_TESTS, TEST_6) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int primary key);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (1);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (2);", 0, "");
@@ -647,7 +663,7 @@ TEST_F(REQUEST_TESTS, UPDATE_TEST_6) {
         "a.\n~~Exception in command:\"update a set a = 2;\"\n");
 }
 
-TEST_F(REQUEST_TESTS, UPDATE_TEST_7) {
+TEST_F(UPDATE_TESTS, TEST_7) {
     CHECK_REQUEST_ST_CLIENT("create table a(a int primary key);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (1);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values (2);", 0, "");
@@ -658,7 +674,9 @@ TEST_F(REQUEST_TESTS, UPDATE_TEST_7) {
         "int.\n~~Exception in command:\"update a set a = '2';\"\n");
 }
 
-TEST_F(REQUEST_TESTS, WHERE_TEST_1) {
+class WHERE_TESTS : public REQUEST_TESTS {};
+
+TEST_F(WHERE_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("create table a (a varchar(100), b varchar(100));",
                             0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values('ab', 'ab');", 0, "");
@@ -684,10 +702,12 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a >= b;", 0,
         get_select_answer(
-            {"a.a", "a.b"}, {{"ab", "ab"}, {"ab", "a"}, {"ab", "aa"}, {"ab", ""}}));
+            {"a.a", "a.b"},
+            {{"ab", "ab"}, {"ab", "a"}, {"ab", "aa"}, {"ab", ""}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a > b;", 0,
-        get_select_answer({"a.a", "a.b"}, {{"ab", "a"}, {"ab", "aa"}, {"ab", ""}}));
+        get_select_answer({"a.a", "a.b"},
+                          {{"ab", "a"}, {"ab", "aa"}, {"ab", ""}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a >= b and b > 'aa' or b = 'b';", 0,
         get_select_answer({"a.a", "a.b"}, {{"ab", "ab"}, {"ab", "b"}}));
@@ -717,31 +737,32 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_1) {
                             "from a where a / 'b' = 'abb';\"\n");
 }
 
-TEST_F(REQUEST_TESTS, WHERE_TEST_2) {
+TEST_F(WHERE_TESTS, TEST_2) {
     CHECK_REQUEST_ST_CLIENT("create table a (a int, b int);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-3, 3);", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a where 1;", 0,
-                            get_select_answer({"a.a"}, {{"-3", "3"}}));
+                            get_select_answer({"a.a", "a.b"}, {{"-3", "3"}}));
     CHECK_REQUEST_ST_CLIENT("select * from a where 0;", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-1, -1);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-1, -10);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-1, 10);", 0, "");
-    CHECK_REQUEST_ST_CLIENT("select * from a where a < b;", 0,
-                            get_select_answer({"a.a", "a.b"}, {{"-3", "3"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a where a < b;", 0,
+        get_select_answer({"a.a", "a.b"}, {{"-3", "3"}, {"-1", "10"}}));
     CHECK_REQUEST_ST_CLIENT("select * from a where a <= b;", 0,
-                            get_select_answer({"a.a", "a.b"}, {{"-3", "3"}}));
-    CHECK_REQUEST_ST_CLIENT(  // TODO
+                            get_select_answer({"a.a", "a.b"}, {{"-3", "3"}, {"-1", "-1"}}));
+    CHECK_REQUEST_ST_CLIENT(
         "select * from a where (12 + (4.5 * 2 / 3) + 2.0 * 2 - a * (-1)) / "
         "2 = "
         "b + a;",
-        0, get_select_answer({"a"}, {{"-1", "10"}}));
+        0, get_select_answer({"a"}, {{"-1"}}));
     CHECK_REQUEST_ST_CLIENT("select * from a where a + 2 >= -0.567;", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where b != a and b != 10 and b != -10;", 0,
         get_select_answer({"a", "b"}, {{"-3", "3"}}));
 }
 
-TEST_F(REQUEST_TESTS, WHERE_TEST_3) {
+TEST_F(WHERE_TESTS, TEST_3) {
     CHECK_REQUEST_ST_CLIENT("create table a (a real, b real);", 0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(-3.25, 3);", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a where 0.0;", 0, "");
@@ -754,31 +775,31 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_3) {
         "select * from a where a + b < (-1.234 * (-1) + 2.05 * 3 - 1.2 / "
         "2.1) / (-3.7);",
         0,
-        get_select_answer({"a", "b"}, {{"-1.000000", "-1.000000"},
-                                       {"0.123000", "-10.000000"}}));
+        get_select_answer({"a.a", "a.b"}, {{"-1.000000", "-1.000000"},
+                                           {"0.123000", "-10.000000"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a  <= b;", 0,
-        get_select_answer({"a", "b"}, {{"-3.250000", "3.000000"},
-                                       {"-1.000000", "-1.000000"}}));
+        get_select_answer({"a.a", "a.b"}, {{"-3.250000", "3.000000"},
+                                           {"-1.000000", "-1.000000"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a / 3.25 * 3 = b * -1;", 0,
-        get_select_answer({"a", "b"}, {{"-3.250000", "3.000000"}}));
+        get_select_answer({"a.a", "a.b"}, {{"-3.250000", "3.000000"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a >= b;", 0,
-        get_select_answer({"a", "b"}, {{"-1.000000", "-1.000000"},
-                                       {"0.123000", "-10.000000"}}));
+        get_select_answer({"a.a", "a.b"}, {{"-1.000000", "-1.000000"},
+                                           {"0.123000", "-10.000000"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a > 0;", 0,
-        get_select_answer({"a", "b"}, {{"0.123000", "-10.000000"}}));
+        get_select_answer({"a.a", "a.b"}, {{"0.123000", "-10.000000"}}));
 }
 
-TEST_F(REQUEST_TESTS, WHERE_TEST_4) {
+TEST_F(WHERE_TESTS, TEST_4) {
     CHECK_REQUEST_ST_CLIENT("create table a (a int, b real, c varchar(100));",
                             0, "");
     CHECK_REQUEST_ST_CLIENT("insert into a values(1, 2.35, '67 89');", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a = b - 1.35;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a <= c;",
         exc::ExceptionType::compare_data_type_mismatch,
@@ -791,29 +812,29 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_4) {
                             "command:\"select * from a where b = c;\"\n");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where not not a = a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where not a != a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where (a = 1) < 3;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where (a = 1) > (3 != 3);", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) <= (3 != 3);", 0,
                             "");
     CHECK_REQUEST_ST_CLIENT("select * from a where (a = 1) * (3 != 3);", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where (a = 1) + (3 != 3);", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where (a = 1) / 0;", exc::ExceptionType::div_by_zero,
         "~~Exception 7:\n division by zero '1/0'.\n~~Exception in "
         "command:\"select * from a where (a = 1) / 0;\"\n");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where (a = 1) - (3 != 3);", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT("insert into a values(3, 0, '');", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a where c =;",
                             exc::ExceptionType::syntax,
@@ -821,27 +842,29 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_4) {
                             "command:\"select * from a where c =;\"\n");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where not a < 1 or b < 2 and c = '';", 0,
-        get_select_answer({"a", "b", "c"},
+        get_select_answer({"a.a", "a.b", "a.c"},
                           {{"1", "2.350000", "67 89"}, {"3", "0.000000", ""}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where not a < 1 or b > 2 and c = '';", 0,
-        get_select_answer({"a", "b", "c"},
+        get_select_answer({"a.a", "a.b", "a.c"},
                           {{"1", "2.350000", "67 89"}, {"3", "0.000000", ""}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a >= 1 and (b = 2 or c = '');", 0,
-        get_select_answer({"a", "b", "c"}, {{"3", "0.000000", ""}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"3", "0.000000", ""}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a - 3 = b = 0;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where (a - 3 = 0) * 3 = 0;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a - 3 = b * 1 = 0;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", "2.350000", "67 89"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
 }
 
-TEST_F(REQUEST_TESTS, INNER_JOIN_TEST_1) {
+class JOIN_TESTS : public REQUEST_TESTS {};
+
+TEST_F(JOIN_TESTS, TEST_1) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a(a int, b varchar(100));"
         "insert into a values(1, 'Viktor');\n"
