@@ -185,18 +185,15 @@ void QueryManager::select(const Query& query,
         auto node = expr->getConstant();
         if (node->getNodeType() == NodeType::ident) {
             auto id = static_cast<Ident*>(node);
-            /*            tablename = (id->getTableName().empty()) ?
-               (resolvedTable.getName()) : (id->getTableName());*/
             tablename = resolvedTable.getName();
-            colname = node->getName();
+            colname = id->getName();
             if (tablename.empty()) {
-                /*                tablename = (id->getTableName().empty())
-                                                ? (resolvedTable.getName())
-                                                : (id->getTableName());*/
                 colname = (id->getTableName().empty())
-                              ? (node->getName())
-                              : (id->getTableName() + "." + node->getName());
-            }
+                              ? (id->getName())
+                              : (id->getTableName() + "." + id->getName());
+            } /*else if (!id->getTableName().empty()) {
+                colname = id->getTableName() + "." + id->getName();
+            }*/
 
             id->setTableName(tablename);
             id->setName(colname);

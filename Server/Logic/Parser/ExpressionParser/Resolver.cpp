@@ -230,7 +230,7 @@ void Resolver::setStringValue(Expression* root, t_record_infos record,
 
     if (constant1->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(constant1);
-        a = record[table1_][id->getName()];
+        a = record[id->getTableName()][id->getName()];
     } else {
         std::string val = static_cast<Constant*>(constant1)->getValue();
         if (static_cast<Constant*>(constant1)->getDataType() !=
@@ -243,7 +243,7 @@ void Resolver::setStringValue(Expression* root, t_record_infos record,
 
     if (constant2->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(constant2);
-        b = record[table2_][id->getName()];
+        b = record[id->getTableName()][id->getName()];
     } else {
         std::string val = static_cast<Constant*>(constant2)->getValue();
         if (static_cast<Constant*>(constant2)->getDataType() !=
@@ -570,7 +570,7 @@ void Resolver::logicNot(Expression* root, t_record_infos record,
 
     if (child2->getConstant()->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(child2->getConstant());
-        value = record[table2_][id->getName()];
+        value = record[id->getTableName()][id->getName()];
     } else {
         value = static_cast<Constant*>(child2->getConstant())->getValue();
     }
