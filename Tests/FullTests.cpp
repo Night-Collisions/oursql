@@ -862,25 +862,29 @@ TEST_F(WHERE_TESTS, TEST_4) {
         get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "2.350000", "67 89"}}));
 }
 
-class JOIN_TESTS : public REQUEST_TESTS {};
+class JOIN_TESTS : public REQUEST_TESTS {
+   public:
+    void SetUp() override {
+        CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+            "create table a(a int, b varchar(100));"
+            "insert into a values(1, 'Viktor');\n"
+            "insert into a values(1, 'Danila');\n"
+            "insert into a values(0, 'Danila');\n"
+            "insert into a values(3, 'Ivan');");
+        CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+            "create table b(a int, b real);\n"
+            "insert into b values(0, 2);\n"
+            "insert into b values(3, 0.2);");
+        CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+            "create table c(a varchar(100), b varchar(100));\n"
+            "insert into c values('Danila', 'Write this test.');\n"
+            "insert into c values('Ivan', 'Save this data.');\n"
+            "insert into c values('Viktor', 'Parsed this request.');\n"
+            "insert into c values('Vadik', 'Do nothing.');");
+    }
+};
 
-TEST_F(JOIN_TESTS, TEST_1) {
-    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-        "create table a(a int, b varchar(100));"
-        "insert into a values(1, 'Viktor');\n"
-        "insert into a values(1, 'Danila');\n"
-        "insert into a values(0, 'Danila');\n"
-        "insert into a values(3, 'Ivan');");
-    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-        "create table b(a int, b real);\n"
-        "insert into b values(0, 2);\n"
-        "insert into b values(3, 0.2);");
-    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-        "create table c(a varchar(100), b varchar(100));\n"
-        "insert into c values('Danila', 'Write this test.');\n"
-        "insert into c values('Ivan', 'Save this data.');\n"
-        "insert into c values('Viktor', 'Parsed this request.');\n"
-        "insert into c values('Vadik', 'Do nothing.');");
+TEST_F(JOIN_TESTS, INNER_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "select a.a, b.b, a.b from a INNER JOIN b on a.a = b.a;", 0,
         get_select_answer(
@@ -894,35 +898,42 @@ TEST_F(JOIN_TESTS, TEST_1) {
                            {"0", "Danila", "Danila", "Write this test."},
                            {"3", "Ivan", "Ivan", "Save this data."}}));
     CHECK_REQUEST_ST_CLIENT(
-        "select a.a as 'Number', b.a from a INNER JOIN b on a.a >= b.a;", 0,
+        "select a.a, b.a from a JOIN b on a.a <= b.a;", 0,
         get_select_answer(
-            {"Number", "b.a"},
-            {{"1", "0"}, {"1", "0"}, {"0", "0"}, {"3", "0"}, {"3", "3"}}));
-    CHECK_REQUEST_ST_CLIENT(
-        "select N.aa, c.b from c INNER JOIN (select b.b as 'aa', a.b as 'bb' "
-        "from a INNER JOIN b on a.a = b.a) as 'N' on N.bb == c.a;",
-        0,
-        get_select_answer({"N.aa", "c.b"},
-                          {{to_string(2), "Write this test."},
-                           {to_string(0.2), "Save this data."}}));
-    CHECK_REQUEST_ST_CLIENT(
-        "sselect * from \n"
-        "(select a.a as 'Meshur', a.b as 'Name', c.b 'Prof' from c INNER JOIN "
-        "a on a.b = c.a) as 'First' \n"
-        "INNER JOIN \n"
-        "(select a.a as 'M', b.b as 'B', a.b as 'Name' from a INNER JOIN b on "
-        "a.a = b.a) as 'Second'\n"
-        "on M == First.Meshur;",
-        0,
-        get_select_answer(
-            {"Meshur", "First.Name", "Prof", "M", "B", "Second.Name"},
-            {{"0", "Danila", "Write this test.", "0", to_string(2), "Danila"},
-             {"3", "Ivan", "Save this data.", "3", to_string(0.2), "Ivan"}}));
+            {"a.a", "b.a"},
+            {{"1", "3"}, {"1", "3"}, {"0", "0"}, {"0", "3"}, {"3", "3"}}));
 }
 
-// TODO: разнве название полей, несуществующие поля/таблицы, сравнение
-// несравнимого, большой запрос без скобочек, сам с сабой ошибка, два поля с
-// одинаковым именем обращение ошибка, select in select without ()
+TEST_F(JOIN_TESTS, AS_TEST_1) {
+    CHECK_REQUEST_ST_CLIENT(
+        "select Second.a.a, Second.b.a from (a INNER JOIN b on a.a >= b.a) as Second;", 0,
+        get_select_answer(
+            {"Second.a.a", "Second.b.a"},
+            {{"1", "0"}, {"1", "0"}, {"0", "0"}, {"3", "0"}, {"3", "3"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select Second.a.a, Second.a.b from (a INNER JOIN a on a.a = a.a) as Second;", -1, "");
+    CHECK_REQUEST_ST_CLIENT(
+        "select Second.a.a, Second.b.a.b from (a as b INNER JOIN a on a.a = b.a.a) as Second;", 0,
+        get_select_answer(
+            {"Second.a.a", "Second.b.a.b"},
+            {{"1", "Viktor"}, {"1", "Danila"}, {"0", "Danila"}, {"3", "Ivan"}}));
+    CHECK_REQUEST_ST_CLIENT(
+        "select Second.b.a.a, Second.b.a.b from (a as b INNER JOIN a as b on b.a.a = b.a.a) as Second;", -1, "");
+    CHECK_REQUEST_ST_CLIENT(
+        "select Second.a.a, Second.b.a from (a as c INNER JOIN b on a.a >= b.a) as Second;", -1, "");
+    //TODO: вложенные JOIn
+}
+
+TEST_F(JOIN_TESTS, TEST_1) {
+    CHECK_REQUEST_ST_CLIENT(
+        "select a.a, f.b from a INNER JOIN f on a.a = f.a;", -1, ""); //неправильное имя таблицы
+    CHECK_REQUEST_ST_CLIENT(
+        "select a.a, b.b from a INNER JOIN b on a.a = b.add;", -1, ""); //неправильное имя поля
+    CHECK_REQUEST_ST_CLIENT(
+        "select a.a, b.b from a INNER JOIN b on a.b = b.a;", 0, ""); //неправильное сравнение
+    // TODO: большой запрос разных типов со скобочками и без скобочек
+}
+
 
 class DROP_TESTS : public ::testing::Test {
    public:
