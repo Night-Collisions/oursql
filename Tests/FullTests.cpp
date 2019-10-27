@@ -177,7 +177,10 @@ TEST_F(REQUEST_TESTS, SYNTAX_TEST_5) {
 }
 
 TEST_F(REQUEST_TESTS, SYNTAX_TEST_6) {
-    CHECK_REQUEST_ST_CLIENT("create table table(b varchar(100));", 0, "");
+    CHECK_REQUEST_ST_CLIENT(
+        "create table table(b varchar(100));", 1,
+        "~~Exception 1:\n wrong syntax!\n~~Exception in command:\"create table "
+        "table(b varchar(100));\"\n");
 }
 
 TEST_F(REQUEST_TESTS, DROP_TABLE_TEST_1) {
@@ -525,7 +528,7 @@ TEST_F(REQUEST_TESTS, DELETE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT("delete from a where b = 0;", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", "1.000000", "0"}}));
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", "1.000000", "0"}}));
     CHECK_REQUEST_ST_CLIENT("delete from a where c = '0';", 0, "");
     CHECK_REQUEST_ST_CLIENT("select * from a;", 0, "");
 }
@@ -579,14 +582,14 @@ TEST_F(REQUEST_TESTS, UPDATE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
         get_select_answer({"a.a", "a.b", "a.c"}, {{"2", "1.000000", "1"},
-                                            {"2", "1.000000", "1"},
-                                            {"2", "1.000000", "1"}}));
+                                                  {"2", "1.000000", "1"},
+                                                  {"2", "1.000000", "1"}}));
     CHECK_REQUEST_ST_CLIENT("update a set b = 3.45, c = 'H';", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
         get_select_answer({"a.a", "a.b", "a.c"}, {{"2", "3.450000", "H"},
-                                            {"2", "3.450000", "H"},
-                                            {"2", "3.450000", "H"}}));
+                                                  {"2", "3.450000", "H"},
+                                                  {"2", "3.450000", "H"}}));
 }
 
 TEST_F(REQUEST_TESTS, UPDATE_TEST_2) {
@@ -674,7 +677,7 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where a <= b;", 0,
         get_select_answer(
-            {"a", "b"},
+            {"a.a", "a.b"},
             {{"ab", "ab"}, {"ab", "abc"}, {"ab", "b"}, {"ab", "bb"}}));
     CHECK_REQUEST_ST_CLIENT("select * from a where a = b;", 0,
                             get_select_answer({"a", "b"}, {{"ab", "ab"}}));
@@ -732,9 +735,7 @@ TEST_F(REQUEST_TESTS, WHERE_TEST_2) {
         "2 = "
         "b + a;",
         0, get_select_answer({"a"}, {{"-1", "10"}}));
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from a where a + 2 >= -0.567;", 0,
-        "");
+    CHECK_REQUEST_ST_CLIENT("select * from a where a + 2 >= -0.567;", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a where b != a and b != 10 and b != -10;", 0,
         get_select_answer({"a", "b"}, {{"-3", "3"}}));
@@ -925,5 +926,6 @@ void DROP_TESTS::TearDownTestCase() {
 Client DROP_TESTS::client(TEST_SERVER_HOST, TEST_SERVER_PORT);
 
 TEST_F(DROP_TESTS, CREATE_TEST_1) {
-    CHECK_DROP_RECUEST("create table a (b int);", "show create table a;", 0, "CREATE TABLE a(\n    b int\n);\n", "a a_meta");
+    CHECK_DROP_RECUEST("create table a (b int);", "show create table a;", 0,
+                       "CREATE TABLE a(\n    b int\n);\n", "a a_meta");
 }
