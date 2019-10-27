@@ -611,7 +611,7 @@ Table QueryManager::resolveRelationalOperTree(
 
         Table res_table =
             relational_oper_[static_cast<unsigned int>(root->getRelOperType())](
-                table1, table2, root->getOnExpr(), e);
+                table1, table2, root->getOnExpr(), e, root->getRelOperType());
 
         res_table.setName(root->getAlias());
 
