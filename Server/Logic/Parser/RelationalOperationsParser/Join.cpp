@@ -52,10 +52,6 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
         return Table();
     }
 
-    /*    checkColumns(table1, table2, on_expr, e);
-        if (e) {
-            return Table();
-        }*/
 
     if ((siz1 * siz2 > siz1 + siz2) && use_hash) {
         std::string col1 = on_expr->childs()[0]->getConstant()->getName();
@@ -77,10 +73,10 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             record_to_hash = records2;
             record_to_run = records1;
             key_col = col2;
-            pos_right = std::distance(column_info[table2.getName()].find(col1),
-                                      column_info[table2.getName()].begin());
-            pos_left = std::distance(column_info[table1.getName()].find(col2),
-                                     column_info[table1.getName()].begin());
+            pos_right = std::distance(column_info[table2.getName()].begin(),
+                                      column_info[table2.getName()].find(key_col));
+            pos_left = std::distance(column_info[table1.getName()].begin(),
+                                     column_info[table1.getName()].find(col1));
             tablename_to_run = table1.getName();
             tablename_to_hash = table2.getName();
             table_to_run = table1;
@@ -89,10 +85,10 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             record_to_hash = records1;
             record_to_run = records2;
             key_col = col1;
-            pos_right = std::distance(column_info[table1.getName()].find(col2),
-                                      column_info[table1.getName()].begin());
-            pos_left = std::distance(column_info[table2.getName()].find(col1),
-                                     column_info[table2.getName()].begin());
+            pos_right = std::distance(column_info[table1.getName()].begin(),
+                                      column_info[table1.getName()].find(key_col));
+            pos_left = std::distance(column_info[table2.getName()].begin(),
+                                     column_info[table2.getName()].find(col2));
             tablename_to_run = table2.getName();
             tablename_to_hash = table1.getName();
             table_to_run = table2;
@@ -116,9 +112,9 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
         for (auto& r : record_to_run) {
             std::string key;
             if (type_left == DataType::integer) {
-                key = std::to_string(std::stof(r[pos_right].data));
+                key = std::to_string(std::stof(r[pos_left].data));
             } else {
-                key = r[pos_right].data;
+                key = r[pos_left].data;
             }
             if (hashed_records.find(key) != hashed_records.end()) {
                 for (auto& v : hashed_records[key]) {
