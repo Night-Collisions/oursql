@@ -21,8 +21,8 @@ std::string Resolver::resolve(const std::string& table1,
     table2_ = table2;
     column_infos_ = column_infos;
 
-
-    if (!e && root && root->getConstant() && root->getConstant()->getNodeType() == NodeType::ident) {
+    if (!e && root && root->getConstant() &&
+        root->getConstant()->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(root->getConstant());
         return record[id->getTableName()][id->getName()];
     }
