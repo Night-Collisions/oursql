@@ -32,6 +32,7 @@ class RelExpr : public Node {
     RelExpr(Node* table_name, const std::string& alias_name)
         : Node(NodeType::relational_oper_expr),
           table_id_(static_cast<Ident*>(table_name)),
+          alias_name_(alias_name),
           rel_oper_type_(RelOperNodeType::table_ident) {
         childs_.push_back(nullptr);
         childs_.push_back(nullptr);
@@ -53,7 +54,7 @@ class RelExpr : public Node {
     std::vector<RelExpr*> childs() { return childs_; }
 
     std::string getName() override {
-        return (alias_name_.empty()) ? (table_id_->getName()) : (alias_name_);
+        return table_id_->getName();
     }
     std::string getAlias() { return alias_name_; }
 

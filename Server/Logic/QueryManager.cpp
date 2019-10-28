@@ -584,6 +584,9 @@ Table QueryManager::resolveRelationalOperTree(
 
         if (child1->getRelOperType() == RelOperNodeType::table_ident) {
             table1 = getFilledTable(child1->getName(), e);
+            if (!child1->getAlias().empty()) {
+                table1.setName(child1->getAlias());
+            }
             if (e) {
                 return Table();
             }
@@ -596,6 +599,9 @@ Table QueryManager::resolveRelationalOperTree(
 
         if (child2->getRelOperType() == RelOperNodeType::table_ident) {
             table2 = getFilledTable(child2->getName(), e);
+            if (!child2->getAlias().empty()) {
+                table2.setName(child2->getAlias());
+            }
             if (e) {
                 return Table();
             }
@@ -623,7 +629,7 @@ Table QueryManager::resolveRelationalOperTree(
 Table QueryManager::getFilledTable(const std::string& name,
                                    std::unique_ptr<exc::Exception>& e) {
     auto table = Engine::show(name, e);
-    if (e) {
+    if (e || table.getName().empty()) {
         return Table();
     }
     table.setName(name);

@@ -968,12 +968,21 @@ TEST_F(JOIN_TESTS, TEST_1) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into e values(5);");
     CHECK_REQUEST_ST_CLIENT("select * from e join a on a.a = e.a;", 0, "");
     CHECK_REQUEST_ST_CLIENT("select a.a, f.b from a INNER JOIN f on a.a = f.a;",
-                            -1, "");  //неправильное имя таблицы
+                            exc::ExceptionType ::access_table_nonexistent,
+                            "~~Exception 701:\n table f "
+                            "nonexistent.\n~~Exception in "
+                            "command:\"select a.a, f.b from a INNER JOIN f on "
+                            "a.a = f.a;\"\n");
     CHECK_REQUEST_ST_CLIENT(
-        "select a.a, b.b from a INNER JOIN b on a.a = b.add;", -1,
-        "");  //неправильное имя поля
+        "select a.a, b.b from a INNER JOIN b on a.a = b.add;",
+        exc::ExceptionType ::access_column_nonexistent,
+        "~~Exception 702:\n column add in table b nonexistent.\n~~Exception in "
+        "command:\"select a.a, b.b from a INNER JOIN b on a.a = b.add;\"\n");
     CHECK_REQUEST_ST_CLIENT("select a.a, b.b from a INNER JOIN b on a.b = b.a;",
-                            -1, "");  //неправильное сравнение
+                            exc::ExceptionType::compare_data_type_mismatch,
+                            "~~Exception 605:\n can't compare varchar and "
+                            "int.\n~~Exception in command:\"select a.a, b.b "
+                            "from a INNER JOIN b on a.b = b.a;\"\n");
     CHECK_REQUEST_ST_CLIENT(
         "select a.b, b.b, c.b from (a join c on a.b = c.a) LEFT JOIN b on a.a "
         "= b.a;",
@@ -1005,7 +1014,8 @@ TEST_F(JOIN_TESTS, TEST_1) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into b_filter values(-1);");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a_filter join b_filter on  a_filter.a != b_filter.a;", 0,
-        get_select_answer({"a_filter.a", "b_filter.a"},
+        get_select_answer(
+            {"a_filter.a", "b_filter.a"},
             {{"1", "3"}, {"1", "0"}, {"1", "-1"}, {"0", "3"}, {"0", "-1"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a_filter join b_filter on  a_filter.a <= b_filter.a;", 0,

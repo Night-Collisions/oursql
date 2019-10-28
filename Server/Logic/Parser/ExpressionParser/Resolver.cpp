@@ -21,8 +21,8 @@ std::string Resolver::resolve(const std::string& table1,
     table2_ = table2;
     column_infos_ = column_infos;
 
-
-    if (!e && root && root->getConstant() && root->getConstant()->getNodeType() == NodeType::ident) {
+    if (!e && root && root->getConstant() &&
+        root->getConstant()->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(root->getConstant());
         return record[id->getTableName()][id->getName()];
     }
@@ -567,6 +567,7 @@ void Resolver::logicNot(Expression* root, t_record_infos record,
                         std::unique_ptr<exc::Exception>& e) {
     auto child2 = root->childs()[1];
     std::string value;
+    bindColumnToTable(root->childs()[1]->getConstant(), e);
 
     if (child2->getConstant()->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(child2->getConstant());
@@ -576,8 +577,8 @@ void Resolver::logicNot(Expression* root, t_record_infos record,
     }
 
     DataType type2 = DataType::Count;
-    setDataType(root->childs()[1]->getConstant(), type2, table1_,
-                column_infos_[table1_], e);
+    setDataType(root->childs()[1]->getConstant(), type2, table2_,
+                column_infos_[table2_], e);
     if (e) {
         return;
     }
@@ -796,9 +797,9 @@ void Resolver::bindColumnToTable(Node* nod,
     }
 
     auto id = static_cast<Ident*>(nod);
-    if (!id->getTableName().empty()) {
+/*    if (!id->getTableName().empty()) {
         return;
-    }
+    }*/
 
     if (column_infos_[table1_].find(id->getName()) !=
         column_infos_[table1_].end()) {
@@ -812,9 +813,8 @@ void Resolver::bindColumnToTable(Node* nod,
                 e.reset(new exc::AmbiguousColumnName("ambiguous column name " +
                                                      id->getName()));
                 return;
-            } else {
-                id->setTableName(table2_);
             }
+            id->setTableName(table2_);
         }
     }
 }

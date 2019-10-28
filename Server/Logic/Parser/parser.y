@@ -445,8 +445,8 @@ id:
 
 sub_rel_expr:
     id { $$ = new RelExpr($1, ""); } |
-    id AS id { $$ = new RelExpr($3, ""); } |
-    LPAREN id AS id RPAREN { $$ = new RelExpr($4, ""); } |
+    id AS id { $$ = new RelExpr($1, $3->getName()); } |
+    LPAREN id AS id RPAREN { $$ = new RelExpr($2, $4->getName()); } |
     LPAREN relational_expr RPAREN AS id { 
         $2->setAlias($5->getName());
         $$ = $2;
