@@ -17,6 +17,10 @@ class Join {
         const std::string& name1, const std::string& name2,
         std::map<std::string, std::map<std::string, Column>> column_info,
         Expression* expr, std::unique_ptr<exc::Exception>& e);
+
+    static void checkColumns(const Table& table1, const Table& table2,
+                             Expression* on_expr,
+                             std::unique_ptr<exc::Exception>& e);
 };
 
 #endif  // OURSQL_SERVER_LOGIC_RELATIONALOPERATIONS_JOIN_H_

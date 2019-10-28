@@ -214,7 +214,10 @@ void QueryManager::select(const Query& query,
     t_record_infos record_info;
     for (int i = 0; i < records.size(); ++i) {
         record_info[resolvedTable.getName()] =
-            Resolver::getRecord(resolvedTable.getColumns(), records[i]);
+            Resolver::getRecordMap(resolvedTable.getColumns(), records[i], e);
+        if (e) {
+            return;
+        }
 
         auto root = static_cast<Expression*>(children[NodeType::expression]);
         std::string response =
@@ -515,7 +518,10 @@ void QueryManager::update(const Query& query,
                 std::map<std::string, std::map<std::string, std::string>>
                     record;
                 std::map<std::string, std::string> m =
-                    Resolver::getRecord(table.getColumns(), f);
+                    Resolver::getRecordMap(table.getColumns(), f, e);
+                if (e) {
+                    return;
+                }
                 record[name] = m;
 
                 auto root = static_cast<Expression*>(
@@ -554,7 +560,10 @@ void QueryManager::remove(const Query& query,
         auto ftch = cursor.fetch();
         std::map<std::string, std::map<std::string, std::string>> record;
         std::map<std::string, std::string> m =
-            Resolver::getRecord(table.getColumns(), ftch);
+            Resolver::getRecordMap(table.getColumns(), ftch, e);
+        if (e) {
+            return;
+        }
         record[name] = m;
         auto root =
             static_cast<Expression*>(query.getChildren()[NodeType::expression]);

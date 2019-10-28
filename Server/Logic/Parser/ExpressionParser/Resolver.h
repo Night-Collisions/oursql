@@ -24,8 +24,9 @@ enum class CompareCondition : unsigned int {
 
 class Resolver {
    public:
-    static std::map<std::string, std::string> getRecord(
-        const std::vector<Column>& cols, std::vector<Value> record);
+    static std::map<std::string, std::string> getRecordMap(
+        const std::vector<Column>& cols, std::vector<Value> record,
+        std::unique_ptr<exc::Exception>& e);
 
     static std::string resolve(const std::string& table1,
                                const std::string& table2,
