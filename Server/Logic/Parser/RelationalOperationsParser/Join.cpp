@@ -51,6 +51,12 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
     if (e) {
         return Table();
     }
+
+    /*    checkColumns(table1, table2, on_expr, e);
+        if (e) {
+            return Table();
+        }*/
+
     if ((siz1 * siz2 > siz1 + siz2) && use_hash) {
         std::string col1 = on_expr->childs()[0]->getConstant()->getName();
         std::string col2 = on_expr->childs()[1]->getConstant()->getName();
@@ -72,7 +78,7 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             record_to_run = records1;
             key_col = col2;
             pos_right = std::distance(column_info[table2.getName()].find(col1),
-                                      column_info[table2.getName()].begin()) ;
+                                      column_info[table2.getName()].begin());
             pos_left = std::distance(column_info[table1.getName()].find(col2),
                                      column_info[table1.getName()].begin());
             tablename_to_run = table1.getName();
@@ -134,9 +140,15 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             for (int j = 0; j < siz2; ++j) {
                 auto rec2 = records2[j];
                 record_info[table1.getName()] =
-                    Resolver::getRecord(table1.getColumns(), rec1);
+                    Resolver::getRecordMap(table1.getColumns(), rec1, e);
+                if (e) {
+                    return Table();
+                }
                 record_info[table2.getName()] =
-                    Resolver::getRecord(table2.getColumns(), rec2);
+                    Resolver::getRecordMap(table2.getColumns(), rec2, e);
+                if (e) {
+                    return Table();
+                }
 
                 auto res =
                     Resolver::resolve(table1.getName(), table2.getName(),
@@ -205,6 +217,19 @@ bool Join::isHashJoinOk(
         return false;
     }
 
+    /*    if (name1 == name2 &&
+            child1->getConstant()->getNodeType() == NodeType::ident &&
+            child2->getConstant()->getNodeType() == NodeType::ident &&
+            static_cast<Ident*>(child1->getConstant())->getTableName() ==
+                static_cast<Ident*>(child2->getConstant())->getTableName() &&
+            static_cast<Ident*>(child1->getConstant())->getName() ==
+                static_cast<Ident*>(child2->getConstant())->getName()) {
+            e.reset(new exc::AmbiguousColumnName(
+                "ambiguous column name " +
+                static_cast<Ident*>(child1->getConstant())->getName()));
+            return false;
+        }*/
+
     if (column_info[name1].find(child1->getConstant()->getName()) !=
             column_info[name1].end() ||
         column_info[name2].find(child1->getConstant()->getName()) !=
@@ -224,4 +249,11 @@ bool Join::isHashJoinOk(
     }
 
     return false;
+}
+
+void Join::checkColumns(const Table& table1, const Table& table2,
+                        Expression* on_expr,
+                        std::unique_ptr<exc::Exception>& e) {
+    if (table1.getName() == table2.getName()) {
+    }
 }

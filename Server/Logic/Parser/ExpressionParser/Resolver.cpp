@@ -797,9 +797,9 @@ void Resolver::bindColumnToTable(Node* nod,
     }
 
     auto id = static_cast<Ident*>(nod);
-/*    if (!id->getTableName().empty()) {
-        return;
-    }*/
+    /*    if (!id->getTableName().empty()) {
+            return;
+        }*/
 
     if (column_infos_[table1_].find(id->getName()) !=
         column_infos_[table1_].end()) {
@@ -813,18 +813,24 @@ void Resolver::bindColumnToTable(Node* nod,
                 e.reset(new exc::AmbiguousColumnName("ambiguous column name " +
                                                      id->getName()));
                 return;
+            } else {
+                id->setTableName(table2_);
             }
-            id->setTableName(table2_);
         }
     }
 }
 
-std::map<std::string, std::string> Resolver::getRecord(
-    const std::vector<Column>& cols, std::vector<Value> record) {
+std::map<std::string, std::string> Resolver::getRecordMap(
+    const std::vector<Column>& cols, std::vector<Value> record,
+    std::unique_ptr<exc::Exception>& e) {
     std::map<std::string, std::string> m;
     int counter = 0;
     for (auto& k : cols) {
         auto c = k.getName();
+        if (m.find(c) != m.end()) {
+            e.reset(new exc::AmbiguousColumnName("ambiguous column name " + c));
+            return m;
+        }
         if (record[counter].is_null) {
             if (k.getType() == DataType::varchar) {
                 m[c] = "";
