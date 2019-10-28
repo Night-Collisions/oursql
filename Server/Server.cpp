@@ -3,6 +3,9 @@
 #include <ctime>
 #include <iomanip>
 
+namespace ourSQL {
+namespace server {
+
 void LogOut::write(const std::string& s) {
     auto time = std::time(nullptr);
     auto local_time = *std::localtime(&time);
@@ -47,7 +50,8 @@ void Session::read() {
                 std::string ans = std::string(self->data_.data(), length) +
                                   std::string(a.data(), a.size());
 
-                self->out_.write(self->getSocketName() + ". Get: \"" + ans + "\".");
+                self->out_.write(self->getSocketName() + ". Get: \"" + ans +
+                                 "\".");
 
                 self->executer_->add({ans, self});
             }
@@ -106,3 +110,6 @@ void run_server(const short port, std::ostream& log) {
         out.write("Server error: " + std::string(e.what()));
     }
 }
+
+}  // namespace server
+}  // namespace ourSQL

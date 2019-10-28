@@ -12,6 +12,9 @@
 
 #include "Our.h"
 
+namespace ourSQL {
+namespace server {
+
 class Executer;
 
 class LogOut {
@@ -31,9 +34,7 @@ class Session : public std::enable_shared_from_this<Session> {
         : tcp_socket_(std::move(socket)), executer_(executer), out_(out) {
         out_.write("Start of session: " + getSocketName());
     }
-    ~Session() {
-        out_.write("End of session: " + getSocketName());
-    }
+    ~Session() { out_.write("End of session: " + getSocketName()); }
     void start() { read(); }
     void write(const std::string& response);
 
@@ -91,5 +92,8 @@ class Executer : public std::enable_shared_from_this<Executer> {
 };
 
 void run_server(const short port, std::ostream& log = std::cout);
+
+}  // namespace server
+}  // namespace ourSQL
 
 #endif  // OURSQL_SERVER_H

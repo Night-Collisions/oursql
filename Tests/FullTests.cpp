@@ -11,7 +11,7 @@ class REQUEST_TESTS : public ::testing::Test {
     static void TearDownTestCase();
     void TearDown() override { clearDB(); }
 
-    static Client client;
+    static ourSQL::client::Client client;
 };
 
 void REQUEST_TESTS::SetUpTestCase() {
@@ -27,7 +27,7 @@ void REQUEST_TESTS::TearDownTestCase() {
 #endif
 }
 
-Client REQUEST_TESTS::client(TEST_SERVER_HOST, TEST_SERVER_PORT);
+ourSQL::client::Client REQUEST_TESTS::client(TEST_SERVER_HOST, TEST_SERVER_PORT);
 
 class CREATE_TABLE_TESTS : public REQUEST_TESTS {};
 
@@ -1072,7 +1072,7 @@ class DROP_TESTS : public ::testing::Test {
     static void TearDownTestCase();
     void TearDown() override { clearDB(); }
 
-    static Client client;
+    static ourSQL::client::Client client;
 };
 
 void DROP_TESTS::SetUpTestCase() {
@@ -1088,7 +1088,7 @@ void DROP_TESTS::TearDownTestCase() {
 #endif
 }
 
-Client DROP_TESTS::client(TEST_SERVER_HOST, TEST_SERVER_PORT);
+ourSQL::client::Client DROP_TESTS::client(TEST_SERVER_HOST, TEST_SERVER_PORT);
 
 TEST_F(DROP_TESTS, CREATE_TEST_1) {
     CHECK_DROP_REQUEST_ST_CLIENT(
