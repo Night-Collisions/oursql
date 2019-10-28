@@ -919,7 +919,7 @@ TEST_F(JOIN_TESTS, AS_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "select Second.a.a, Second.a.b from (a INNER JOIN a on a.a = a.a) as "
         "Second;",
-        0, "");
+        -1, "");
     CHECK_REQUEST_ST_CLIENT(
         "select Second.a.a, Second.b.a.b from (a as b INNER JOIN a on a.a = "
         "b.a.a) as Second;",

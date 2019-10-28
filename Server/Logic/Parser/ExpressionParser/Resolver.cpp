@@ -797,9 +797,9 @@ void Resolver::bindColumnToTable(Node* nod,
     }
 
     auto id = static_cast<Ident*>(nod);
-    if (!id->getTableName().empty()) {
+/*    if (!id->getTableName().empty()) {
         return;
-    }
+    }*/
 
     if (column_infos_[table1_].find(id->getName()) !=
         column_infos_[table1_].end()) {
@@ -813,9 +813,8 @@ void Resolver::bindColumnToTable(Node* nod,
                 e.reset(new exc::AmbiguousColumnName("ambiguous column name " +
                                                      id->getName()));
                 return;
-            } else {
-                id->setTableName(table2_);
             }
+            id->setTableName(table2_);
         }
     }
 }
