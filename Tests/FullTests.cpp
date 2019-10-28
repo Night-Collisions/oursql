@@ -910,34 +910,56 @@ TEST_F(JOIN_TESTS, INNER_TEST_1) {
 
 TEST_F(JOIN_TESTS, AS_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
-        "select Second.a.a, Second.b.a from (a INNER JOIN b on a.a >= b.a) as Second;", 0,
+        "select Second.a.a, Second.b.a from (a INNER JOIN b on a.a >= b.a) as "
+        "Second;",
+        0,
         get_select_answer(
             {"Second.a.a", "Second.b.a"},
             {{"1", "0"}, {"1", "0"}, {"0", "0"}, {"3", "0"}, {"3", "3"}}));
     CHECK_REQUEST_ST_CLIENT(
-        "select Second.a.a, Second.a.b from (a INNER JOIN a on a.a = a.a) as Second;", -1, "");
+        "select Second.a.a, Second.a.b from (a INNER JOIN a on a.a = a.a) as "
+        "Second;",
+        0, "");
     CHECK_REQUEST_ST_CLIENT(
-        "select Second.a.a, Second.b.a.b from (a as b INNER JOIN a on a.a = b.a.a) as Second;", 0,
-        get_select_answer(
-            {"Second.a.a", "Second.b.a.b"},
-            {{"1", "Viktor"}, {"1", "Danila"}, {"0", "Danila"}, {"3", "Ivan"}}));
+        "select Second.a.a, Second.b.a.b from (a as b INNER JOIN a on a.a = "
+        "b.a.a) as Second;",
+        0,
+        get_select_answer({"Second.a.a", "Second.b.a.b"}, {{"1", "Viktor"},
+                                                           {"1", "Danila"},
+                                                           {"0", "Danila"},
+                                                           {"3", "Ivan"}}));
     CHECK_REQUEST_ST_CLIENT(
-        "select Second.b.a.a, Second.b.a.b from (a as b INNER JOIN a as b on b.a.a = b.a.a) as Second;", -1, "");
+        "select Second.b.a.a, Second.b.a.b from (a as b INNER JOIN a as b on "
+        "b.a.a = b.a.a) as Second;",
+        -1, "");
     CHECK_REQUEST_ST_CLIENT(
-        "select Second.a.a, Second.b.a from (a as c INNER JOIN b on a.a >= b.a) as Second;", -1, "");
-    //TODO: вложенные JOIn
+        "select Second.a.a, Second.b.a from (a as c INNER JOIN b on a.a >= "
+        "b.a) as Second;",
+        -1, "");
+    // TODO: вложенные JOIn
 }
 
 TEST_F(JOIN_TESTS, TEST_1) {
+    CHECK_REQUEST_ST_CLIENT("select a.a, f.b from a INNER JOIN f on a.a = f.a;",
+                            exc::ExceptionType ::access_table_nonexistent,
+                            "~~Exception 701:\n table f "
+                            "nonexistent.\n~~Exception in "
+                            "command:\"select a.a, f.b from a INNER JOIN f on "
+                            "a.a = f.a;\"\n");  //неправильное имя таблицы
     CHECK_REQUEST_ST_CLIENT(
-        "select a.a, f.b from a INNER JOIN f on a.a = f.a;", -1, ""); //неправильное имя таблицы
+        "select a.a, b.b from a INNER JOIN b on a.a = b.add;",
+        exc::ExceptionType ::access_column_nonexistent,
+        "~~Exception 702:\n column add in table b nonexistent.\n~~Exception in "
+        "command:\"select a.a, b.b from a INNER JOIN b on a.a = b.add;\"\n");  //неправильное имя поля
     CHECK_REQUEST_ST_CLIENT(
-        "select a.a, b.b from a INNER JOIN b on a.a = b.add;", -1, ""); //неправильное имя поля
-    CHECK_REQUEST_ST_CLIENT(
-        "select a.a, b.b from a INNER JOIN b on a.b = b.a;", 0, ""); //неправильное сравнение
+        "select a.a, b.b from a INNER JOIN b on a.b = b.a;",
+        exc::ExceptionType::compare_data_type_mismatch,
+        "~~Exception 605:\n can't compare varchar and "
+        "int.\n~~Exception in command:\"select a.a, b.b "
+        "from a INNER JOIN b on a.b = b.a;\"\n");  //неправильное
+                                                   //сравнение
     // TODO: большой запрос разных типов со скобочками и без скобочек
 }
-
 
 class DROP_TESTS : public ::testing::Test {
    public:

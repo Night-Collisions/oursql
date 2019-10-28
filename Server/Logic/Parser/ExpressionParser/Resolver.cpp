@@ -567,6 +567,7 @@ void Resolver::logicNot(Expression* root, t_record_infos record,
                         std::unique_ptr<exc::Exception>& e) {
     auto child2 = root->childs()[1];
     std::string value;
+    bindColumnToTable(root->childs()[1]->getConstant(), e);
 
     if (child2->getConstant()->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(child2->getConstant());
@@ -576,8 +577,8 @@ void Resolver::logicNot(Expression* root, t_record_infos record,
     }
 
     DataType type2 = DataType::Count;
-    setDataType(root->childs()[1]->getConstant(), type2, table1_,
-                column_infos_[table1_], e);
+    setDataType(root->childs()[1]->getConstant(), type2, table2_,
+                column_infos_[table2_], e);
     if (e) {
         return;
     }
