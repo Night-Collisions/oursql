@@ -896,7 +896,7 @@ TEST_F(JOIN_TESTS, INNER_TEST_1) {
             {{"0", to_string(2), "Danila"}, {"3", to_string(0.2), "Ivan"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select * from a INNER JOIN c on a.b = c.a;", 0,
-        get_select_answer({"a.a", "a.b", "b.a", "b.b"},
+        get_select_answer({"a.a", "a.b", "c.a", "c.b"},
                           {{"1", "Viktor", "Viktor", "Parsed this request."},
                            {"1", "Danila", "Danila", "Write this test."},
                            {"0", "Danila", "Danila", "Write this test."},
