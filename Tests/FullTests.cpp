@@ -1040,6 +1040,8 @@ TEST_F(JOIN_TESTS, AS_TEST_1) {
         "Second;",
         -1, "");
     CHECK_REQUEST_ST_CLIENT(
+        "select a.a, t.a.b from a INNER JOIN a as t on a.a = t.a.a;", -1, "");
+    CHECK_REQUEST_ST_CLIENT(
         "select Second.a.a, Second.b.a.b from (a as b INNER JOIN a on a.a = "
         "b.a.a) as Second;",
         0,
