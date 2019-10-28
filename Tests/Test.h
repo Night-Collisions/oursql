@@ -12,7 +12,7 @@
 
 #include "../Client/Client.h"
 
-#define CREATE_SERVER
+//#define CREATE_SERVER
 
 #define TEST_SERVER_HOST ("localhost")
 #define TEST_SERVER_PORT (11234)

@@ -27,7 +27,8 @@ void REQUEST_TESTS::TearDownTestCase() {
 #endif
 }
 
-ourSQL::client::Client REQUEST_TESTS::client(TEST_SERVER_HOST, TEST_SERVER_PORT);
+ourSQL::client::Client REQUEST_TESTS::client(TEST_SERVER_HOST,
+                                             TEST_SERVER_PORT);
 
 class CREATE_TABLE_TESTS : public REQUEST_TESTS {};
 
@@ -897,10 +898,10 @@ TEST_F(JOIN_TESTS, INNER_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "select * from a INNER JOIN c on a.b = c.a;", 0,
         get_select_answer({"a.a", "a.b", "c.a", "c.b"},
-                          {{"1", "Viktor", "Viktor", "Parsed this request."},
-                           {"1", "Danila", "Danila", "Write this test."},
+                          {{"1", "Danila", "Danila", "Write this test."},
                            {"0", "Danila", "Danila", "Write this test."},
-                           {"3", "Ivan", "Ivan", "Save this data."}}));
+                           {"3", "Ivan", "Ivan", "Save this data."},
+                           {"1", "Viktor", "Viktor", "Parsed this request."}}));
     CHECK_REQUEST_ST_CLIENT(
         "select a.a, b.a from a JOIN b on a.a <= b.a;", 0,
         get_select_answer(
@@ -1094,4 +1095,45 @@ TEST_F(DROP_TESTS, CREATE_TEST_1) {
     CHECK_DROP_REQUEST_ST_CLIENT(
         "create table a (b int);", "show create table a;", 0,
         "CREATE TABLE a(\n    b int\n);\n", "a a_meta");
+}
+
+TEST_F(DROP_TESTS, DROP_TEST_1) {
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table a (b int);");
+    CHECK_DROP_REQUEST_ST_CLIENT(
+        "drop table a;", "show create table a;",
+        EXCEPTION2NUMB(exc::ExceptionType::access_table_nonexistent),
+        "\n~~Exception 701:\n table a nonexistent.\n~~Exception in "
+        "command:\"show create table a;\"\n",
+        "a a_meta");
+}
+
+TEST_F(DROP_TESTS, INSERT_TEST_1) {
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a(a int, b real, c varchar(100));");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (1, 0, '1');");
+    CHECK_DROP_REQUEST_ST_CLIENT(
+        "insert into a values (1, 0, '1');", "select * from a;", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", to_string(0.0), "1"}}),
+        "a a_meta");
+}
+
+TEST_F(DROP_TESTS, DELETE_TEST_1) {
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a(a int, b real, c varchar(100));");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (1, 1, '1');");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 2, '2');");
+    CHECK_DROP_REQUEST_ST_CLIENT(
+        "delete from a where a = 2", "select * from a;", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", to_string(1.0), "1"}}),
+        "a a_meta");
+}
+
+TEST_F(DROP_TESTS, UPDATE_TEST_1) {
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a(a int, b real, c varchar(100));");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 2, '2');");
+    CHECK_DROP_REQUEST_ST_CLIENT(
+        "update a set a = 1, b = 1, c = '1';", "select * from a;", 0,
+        get_select_answer({"a", "b", "c"}, {{"1", to_string(1.0), "1"}}),
+        "a a_meta");
 }
