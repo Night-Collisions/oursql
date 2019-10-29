@@ -17,6 +17,10 @@ Cursor::~Cursor() {
 }
 
 void Cursor::reset() {
+    if (was_block_changed_) {
+        was_block_changed_ = false;
+        saveBlock(block_, current_block_);
+    }
     fstream_.seekg(0, std::ios::beg);
     fstream_.seekp(0, std::ios::beg);
     char delimiter;
