@@ -8,6 +8,9 @@
 
 #include "asio.hpp"
 
+namespace ourSQL {
+namespace client {
+
 class Client {
    public:
     Client(const std::string& host, const short port,
@@ -25,7 +28,9 @@ class Client {
     void connect();
 
     void setRpConnection(bool f) { is_repeat_server_connection_ = f; }
-    void setExceptionReconnect(bool f) { is_reconnect_on_server_exception_ = f; }
+    void setExceptionReconnect(bool f) {
+        is_reconnect_on_server_exception_ = f;
+    }
 
    protected:
     void serverException();
@@ -40,5 +45,8 @@ class Client {
 };
 
 void run_client(const std::string& host, const short port);
+
+}  // namespace client
+}  // namespace ourSQL
 
 #endif  // OURSQL_CLIENT_H

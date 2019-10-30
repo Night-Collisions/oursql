@@ -1,11 +1,23 @@
 #include "Server.h"
 
+#include <ctime>
+#include <iomanip>
+
+namespace ourSQL {
+namespace server {
+
+void LogOut::write(const std::string& s) {
+    auto time = std::time(nullptr);
+    auto local_time = *std::localtime(&time);
+    lock_.lock();
+    str_ << std::put_time(&local_time, "%d-%m-%Y_%H-%M-%S::") << s << std::endl;
+    lock_.unlock();
+}
+
 void Session::write(const std::string& response) {
     auto self(shared_from_this());
 
-    out_lock_->lock();
-    out_ << getSocketName() << ". Write:\n" << response << std::endl;
-    out_lock_->unlock();
+    out_.write(getSocketName() + ". Write: \"" + response + "\".");
 
     tcp_socket_.async_write_some(
         asio::buffer(response.data(), response.length()),
@@ -38,10 +50,8 @@ void Session::read() {
                 std::string ans = std::string(self->data_.data(), length) +
                                   std::string(a.data(), a.size());
 
-                self->out_lock_->lock();
-                self->out_ << self->getSocketName() << ". Get: " << ans
-                           << std::endl;
-                self->out_lock_->unlock();
+                self->out_.write(self->getSocketName() + ". Get: \"" + ans +
+                                 "\".");
 
                 self->executer_->add({ans, self});
             }
@@ -49,16 +59,14 @@ void Session::read() {
 }
 
 Server::Server(asio::io_service& context, const short port,
-               std::shared_ptr<Executer> executer, std::ostream& out)
+               std::shared_ptr<Executer> executer, LogOut& out)
     : tcp_acceptor_(context,
                     asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
       tcp_socket_(context),
       executer_(executer),
-      out_(out), out_lock_(std::make_shared<std::mutex>()) {
-    out_lock_->lock();
-    out_ << "Start of server!." << std::endl;
-    out_lock_->unlock();
+      out_(out) {
     executer_->run();
+    out_.write("Start of server!");
     accept();
 }
 
@@ -79,7 +87,10 @@ void Executer::run() {
 
                 std::stringstream in(i.first);
                 std::stringstream out;
+                self->out_.write("Start execute \"" + i.first + "\".");
                 std::string ans = std::to_string(ourSQL::perform(in, out));
+                self->out_.write("Was executed: \"" + i.first +
+                                 "\". Answer: \"" + out.str() + "\".");
 
                 i.second->write(ans + " " + out.str());
             }
@@ -87,14 +98,18 @@ void Executer::run() {
     });
 }
 
-void run_server(const short port) {
+void run_server(const short port, std::ostream& log) {
+    LogOut out(log);
     try {
         asio::io_context context;
 
-        Server srv(context, port, std::make_shared<Executer>(), std::cout);
+        Server srv(context, port, std::make_shared<Executer>(out), out);
 
         context.run();
     } catch (std::exception& e) {
-        std::cout << e.what() << std::endl;
+        out.write("Server error: " + std::string(e.what()));
     }
 }
+
+}  // namespace server
+}  // namespace ourSQL

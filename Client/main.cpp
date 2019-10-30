@@ -3,7 +3,7 @@
 #include "Client.h"
 
 int main() {
-    Client client("localhost", 11234);
+    ourSQL::client::Client client("localhost", 11234);
     client.connect();
     while (1) {
         std::string s;

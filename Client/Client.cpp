@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+namespace ourSQL {
+namespace client {
+
 size_t number_digit(unsigned int n) {
     size_t k;
     n /= 10;
@@ -45,8 +48,7 @@ long Client::getAnswer(std::string& ans) {
 
         std::istringstream(ans) >> code_exception;
         if (code_exception >= 0) {
-            ans.erase(0,
-                      number_digit(code_exception) + 1);
+            ans.erase(0, number_digit(code_exception) + 1);
         } else {
             assert("Server response failed.");
         }
@@ -77,3 +79,6 @@ void Client::serverException() {
         connect();
     }
 }
+
+}  // namespace client
+}  // namespace ourSQL
