@@ -71,7 +71,7 @@ set(DEFINITIONS
         Logic/Parser/ExpressionParser/Resolver.cpp
         Core/DataType.cpp
         Logic/QueryManager.cpp
-        )
+        Logic/Parser/RelationalOperationsParser/Helper.cpp Logic/Parser/RelationalOperationsParser/Helper.h)
 
 assemble_parser(Logic/Parser/)
 

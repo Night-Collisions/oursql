@@ -13,7 +13,9 @@
 #include "Parser/Nodes/IdentList.h"
 #include "Parser/Nodes/RelExpr.h"
 #include "Parser/Nodes/SelectList.h"
+#include "Parser/RelationalOperationsParser/Intersect.h"
 #include "Parser/RelationalOperationsParser/Join.h"
+#include "Parser/RelationalOperationsParser/Union.h"
 
 std::array<rel_func, static_cast<unsigned int>(RelOperNodeType::Count)>
     QueryManager::relational_oper_ = {Join::makeJoin, Join::makeJoin};
@@ -621,9 +623,19 @@ Table QueryManager::resolveRelationalOperTree(
             }
         }
 
-        Table res_table =
-            relational_oper_[static_cast<unsigned int>(root->getRelOperType())](
-                table1, table2, root->getOnExpr(), e, root->getRelOperType());
+        Table res_table;
+        if (root->getRelOperType() == RelOperNodeType::union_) {
+            res_table = Union::makeUnion(table1, table2, e);
+        } else if (root->getRelOperType() == RelOperNodeType::intersect) {
+            res_table = Intersect::makeIntersect(table1, table2, e);
+        } else {
+            res_table = Join::makeJoin(table1, table2, root->getOnExpr(), e,
+                                       root->getRelOperType());
+        }
+
+        if (e) {
+            return Table();
+        }
 
         res_table.setName(root->getAlias());
 
