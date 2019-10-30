@@ -5,18 +5,9 @@
 
 Table Join::makeJoin(const Table& table1, const Table& table2,
                      Expression* on_expr, std::unique_ptr<exc::Exception>& e,
-                     RelOperNodeType join_type) {
+                     RelOperNodeType type) {
     if (e) {
         return Table();
-    }
-
-    if (join_type == RelOperNodeType::right_join) {
-        auto res =
-            makeJoin(table2, table1, on_expr, e, RelOperNodeType::left_join);
-        if (e) {
-            return Table();
-        }
-        return res;
     }
 
     std::map<std::string, std::map<std::string, Column>> column_info;
@@ -35,13 +26,7 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
     auto siz2 = records2.size();
     Table table;
     std::vector<std::string> col_names;
-    for (auto& c : table1.getColumns()) {
-        col_names.push_back(table1.getName() + "." + c.getName());
-    }
-    for (auto& c : table2.getColumns()) {
-        col_names.push_back(table2.getName() + "." + c.getName());
-    }
-    table.renameColumns(col_names, e);
+
     if (e) {
         return Table();
     }
@@ -52,14 +37,17 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
         return Table();
     }
 
-
-    if ((siz1 * siz2 > siz1 + siz2) && use_hash) {
+    if ((siz1 * siz2 > siz1 + siz2) && use_hash &&
+        (type == RelOperNodeType::join ||
+         type == RelOperNodeType::inner_join)) {
         std::string col1 = on_expr->childs()[0]->getConstant()->getName();
         std::string col2 = on_expr->childs()[1]->getConstant()->getName();
-        if (column_info[table1.getName()].find(col1) ==
-            column_info[table1.getName()].end()) {
+        if (table1.getName() !=
+            static_cast<Ident*>(on_expr->childs()[0]->getConstant())
+                ->getTableName()) {
             std::swap(col1, col2);
         }
+
         std::vector<std::vector<Value>> record_to_hash;
         std::vector<std::vector<Value>> record_to_run;
         std::string key_col;
@@ -73,8 +61,9 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             record_to_hash = records2;
             record_to_run = records1;
             key_col = col2;
-            pos_right = std::distance(column_info[table2.getName()].begin(),
-                                      column_info[table2.getName()].find(key_col));
+            pos_right =
+                std::distance(column_info[table2.getName()].begin(),
+                              column_info[table2.getName()].find(key_col));
             pos_left = std::distance(column_info[table1.getName()].begin(),
                                      column_info[table1.getName()].find(col1));
             tablename_to_run = table1.getName();
@@ -85,8 +74,9 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             record_to_hash = records1;
             record_to_run = records2;
             key_col = col1;
-            pos_right = std::distance(column_info[table1.getName()].begin(),
-                                      column_info[table1.getName()].find(key_col));
+            pos_right =
+                std::distance(column_info[table1.getName()].begin(),
+                              column_info[table1.getName()].find(key_col));
             pos_left = std::distance(column_info[table2.getName()].begin(),
                                      column_info[table2.getName()].find(col2));
             tablename_to_run = table2.getName();
@@ -108,7 +98,31 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             }
             hashed_records[key].push_back(r);
         }
+        std::vector<DataType> types;
+        std::vector<int> varchar_lengths;
+        std::vector<std::set<ColumnConstraint>> constraints;
+        for (auto& c : table_to_run.getColumns()) {
+            col_names.push_back(table_to_run.getName() + "." + c.getName());
+            types.push_back(c.getType());
+            varchar_lengths.push_back(c.getN());
+            constraints.push_back(c.getConstraints());
+        }
+        for (auto& c : table_to_hash.getColumns()) {
+            col_names.push_back(table_to_hash.getName() + "." + c.getName());
+            types.push_back(c.getType());
+            varchar_lengths.push_back(c.getN());
+            constraints.push_back(c.getConstraints());
+        }
+        for (auto s : constraints) {
+            s.insert(ColumnConstraint::not_null);
+        }
 
+        table.renameColumns(col_names, e);
+        for (int i = 0; i < table.getColSize(); ++i) {
+            table.setType(types[i], i);
+            table.setN(varchar_lengths[i], i);
+            table.setConstraints(constraints[i], i);
+        }
         for (auto& r : record_to_run) {
             std::string key;
             if (type_left == DataType::integer) {
@@ -131,6 +145,57 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
 
     } else {
         std::vector<std::vector<Value>> record_arr;
+        std::vector<DataType> types;
+        std::vector<Value> null_vector_left;
+        std::vector<Value> null_vector_right;
+        std::vector<int> varchar_lengths;
+        std::vector<std::set<ColumnConstraint>> constraints;
+        for (auto& c : table1.getColumns()) {
+            col_names.push_back(table1.getName() + "." + c.getName());
+            types.push_back(c.getType());
+            varchar_lengths.push_back(c.getN());
+            constraints.push_back(c.getConstraints());
+            Value v;
+            if (c.getType() == DataType::varchar) {
+                v.data = "";
+                v.is_null = true;
+            } else {
+                v.data = "null";
+                v.is_null = true;
+            }
+            null_vector_left.push_back(v);
+        }
+        for (auto& c : table2.getColumns()) {
+            col_names.push_back(table2.getName() + "." + c.getName());
+            types.push_back(c.getType());
+            varchar_lengths.push_back(c.getN());
+            constraints.push_back(c.getConstraints());
+
+            Value v;
+            if (c.getType() == DataType::varchar) {
+                v.data = "";
+                v.is_null = true;
+            } else {
+                v.data = "null";
+                v.is_null = true;
+            }
+            null_vector_right.push_back(v);
+        }
+        if (type == RelOperNodeType::join ||
+            type == RelOperNodeType::inner_join) {
+            for (auto s : constraints) {
+                s.insert(ColumnConstraint::not_null);
+            }
+        }
+        table.renameColumns(col_names, e);
+        for (int i = 0; i < table.getColSize(); ++i) {
+            table.setType(types[i], i);
+            table.setN(varchar_lengths[i], i);
+            table.setConstraints(constraints[i], i);
+        }
+        std::vector<std::set<int>> used;
+        used.resize(2);
+
         for (int i = 0; i < siz1; ++i) {
             auto rec1 = records1[i];
             for (int j = 0; j < siz2; ++j) {
@@ -154,6 +219,8 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
                 }
 
                 if (res != "0") {
+                    used[0].insert(i);
+                    used[1].insert(j);
                     std::vector<Value> new_rec;
                     std::copy(rec1.begin(), rec1.end(),
                               std::back_inserter(new_rec));
@@ -163,8 +230,39 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
                     if (e) {
                         return Table();
                     }
-                } else {
-                    continue;
+                }
+            }
+        }
+        if (type == RelOperNodeType::left_join ||
+            type == RelOperNodeType::full_join) {
+            for (int i = 0; i < records1.size(); ++i) {
+                if (used[0].find(i) == used[0].end()) {
+                    std::vector<Value> new_rec;
+                    std::copy(records1[i].begin(), records1[i].end(),
+                              std::back_inserter(new_rec));
+                    std::copy(null_vector_right.begin(), null_vector_right.end(),
+                              std::back_inserter(new_rec));
+                    table.addRecord(new_rec, e);
+                    if (e) {
+                        return Table();
+                    }
+                }
+            }
+        }
+        if (type == RelOperNodeType::right_join ||
+            type == RelOperNodeType::full_join) {
+            for (int i = 0; i < records2.size(); ++i) {
+                if (used[1].find(i) == used[1].end()) {
+                    std::vector<Value> new_rec;
+                    std::copy(null_vector_left.begin(),
+                              null_vector_left.end(),
+                              std::back_inserter(new_rec));
+                    std::copy(records2[i].begin(), records2[i].end(),
+                              std::back_inserter(new_rec));
+                    table.addRecord(new_rec, e);
+                    if (e) {
+                        return Table();
+                    }
                 }
             }
         }
@@ -207,36 +305,26 @@ bool Join::isHashJoinOk(
         }
     }
 
-    if (!Resolver::compareTypes(name1, name2, column_info,
+    auto tbl_name1 = static_cast<Ident*>(child1->getConstant())->getTableName();
+    auto tbl_name2 = static_cast<Ident*>(child2->getConstant())->getTableName();
+
+    if (!Resolver::compareTypes(tbl_name1, tbl_name2, column_info,
                                 child1->getConstant(), child2->getConstant(), e,
                                 CompareCondition::compare, "=")) {
         return false;
     }
 
-    /*    if (name1 == name2 &&
-            child1->getConstant()->getNodeType() == NodeType::ident &&
-            child2->getConstant()->getNodeType() == NodeType::ident &&
-            static_cast<Ident*>(child1->getConstant())->getTableName() ==
-                static_cast<Ident*>(child2->getConstant())->getTableName() &&
-            static_cast<Ident*>(child1->getConstant())->getName() ==
-                static_cast<Ident*>(child2->getConstant())->getName()) {
-            e.reset(new exc::AmbiguousColumnName(
-                "ambiguous column name " +
-                static_cast<Ident*>(child1->getConstant())->getName()));
-            return false;
-        }*/
-
-    if (column_info[name1].find(child1->getConstant()->getName()) !=
-            column_info[name1].end() ||
-        column_info[name2].find(child1->getConstant()->getName()) !=
-            column_info[name2].end()) {
+    if (column_info[tbl_name1].find(child1->getConstant()->getName()) !=
+            column_info[tbl_name1].end() ||
+        column_info[tbl_name2].find(child1->getConstant()->getName()) !=
+            column_info[tbl_name2].end()) {
         ok1 = true;
     }
 
-    if (column_info[name1].find(child2->getConstant()->getName()) !=
-            column_info[name1].end() ||
-        column_info[name2].find(child2->getConstant()->getName()) !=
-            column_info[name2].end()) {
+    if (column_info[tbl_name1].find(child2->getConstant()->getName()) !=
+            column_info[tbl_name1].end() ||
+        column_info[tbl_name2].find(child2->getConstant()->getName()) !=
+            column_info[tbl_name2].end()) {
         ok2 = true;
     }
 
@@ -245,11 +333,4 @@ bool Join::isHashJoinOk(
     }
 
     return false;
-}
-
-void Join::checkColumns(const Table& table1, const Table& table2,
-                        Expression* on_expr,
-                        std::unique_ptr<exc::Exception>& e) {
-    if (table1.getName() == table2.getName()) {
-    }
 }

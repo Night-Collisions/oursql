@@ -18,6 +18,20 @@ class Table {
         }
     }
 
+    void setType(DataType type, int ind) {
+        columns_[ind].setType(type);
+    }
+
+    void setConstraints(std::set<ColumnConstraint> constraints, int ind) {
+        columns_[ind].setConstraints(std::move(constraints));
+    }
+    
+    void setN(int n, int ind) {
+        columns_[ind].setN(n);
+    }
+
+    int getColSize() { return columns_.size(); }
+
     void setName(const std::string& name) { name_ = name; }
 
     [[nodiscard]] std::string getName() const { return name_; }
@@ -37,7 +51,7 @@ class Table {
             return;
         }
 
-        for (int i = 0; i < columns_.size(); ++i) {
+        for (unsigned int i = 0; i < columns_.size(); ++i) {
             columns_[i].setName(names[i]);
         }
     }
@@ -51,7 +65,7 @@ class Table {
             return;
         }
 
-        for (int i = 0; i < columns_.size(); ++i) {
+        for (unsigned int i = 0; i < columns_.size(); ++i) {
             columns_[i].addValue(record[i]);
         }
     }
@@ -59,7 +73,7 @@ class Table {
     std::vector<std::vector<Value>> getRecords() const {
         std::vector<std::vector<Value>> res;
         std::vector<Value> rec;
-        for (int i = 0; i < columns_[0].getValues().size(); ++i) {
+        for (unsigned int i = 0; i < columns_[0].getValues().size(); ++i) {
             rec.clear();
             for (auto& column : columns_) {
                 rec.push_back(column.getValues()[i]);

@@ -896,12 +896,14 @@ TEST_F(JOIN_TESTS, INNER_TEST_1) {
             {"a.a", "b.b", "a.b"},
             {{"0", to_string(2), "Danila"}, {"3", to_string(0.2), "Ivan"}}));
     CHECK_REQUEST_ST_CLIENT(
-        "select * from a INNER JOIN c on a.b = c.a;", 0,
+        "select * from c INNER JOIN a on c.a = a.b;", 0,
         get_select_answer({"a.a", "a.b", "c.a", "c.b"},
-                          {{"1", "Danila", "Danila", "Write this test."},
-                           {"0", "Danila", "Danila", "Write this test."},
-                           {"3", "Ivan", "Ivan", "Save this data."},
-                           {"1", "Viktor", "Viktor", "Parsed this request."}}));
+                          {
+                              {"1", "Viktor", "Viktor", "Parsed this request."},
+                              {"1", "Danila", "Danila", "Write this test."},
+                              {"0", "Danila", "Danila", "Write this test."},
+                              {"3", "Ivan", "Ivan", "Save this data."},
+                          }));
     CHECK_REQUEST_ST_CLIENT(
         "select a.a, b.a from a JOIN b on a.a <= b.a;", 0,
         get_select_answer(
@@ -911,15 +913,12 @@ TEST_F(JOIN_TESTS, INNER_TEST_1) {
 
 TEST_F(JOIN_TESTS, FULL_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
-        "select a.a, c.a from c FULL JOIN a on a.b = c.a;", 0,
-        get_select_answer({"a.b", "b.a"}, {{"Viktor", "Parsed this request."},
-                                           {"Danila", "Write this test."},
+        "select a.b, c.b from c FULL JOIN a on a.b = c.a;", 0,
+        get_select_answer({"a.b", "c.b"}, {{"Danila", "Write this test."},
                                            {"Danila", "Write this test."},
                                            {"Ivan", "Save this data."},
+                                           {"Viktor", "Parsed this request."},
                                            {"", "Do nothing."}}));
-    CHECK_REQUEST_ST_CLIENT(
-        "select a.b, b.b from a FULL JOIN b on a.a != b.a;", 0,
-        "");  // TODO: доделаю сам, как остальное будет работать!!!
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into b values(5, 20);");
     CHECK_REQUEST_ST_CLIENT(
         "select a.b, b.b from a FULL JOIN b on a.a = b.a;", 0,
@@ -964,7 +963,14 @@ TEST_F(JOIN_TESTS, RIGHT_TEST_1) {
 }
 
 TEST_F(JOIN_TESTS, TEST_1) {
-    CHECK_UNREQUITED_REQUEST_ST_CLIENT("crate table e(a int);");
+    CHECK_REQUEST_ST_CLIENT(
+        "select k.b.b, c.b from (a join b on a.a = b.a) as k join c on k.a.b = "
+        "c.a;",
+        0,
+        get_select_answer({"k.b.b", "c.b"},
+                          {{to_string(2.0), "Write this test."},
+                           {to_string(0.2), "Save this data."}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table e(a int);");
     CHECK_REQUEST_ST_CLIENT("select * from e join a on a.a = e.a;", 0, "");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into e values(5);");
     CHECK_REQUEST_ST_CLIENT("select * from e join a on a.a = e.a;", 0, "");
@@ -985,16 +991,17 @@ TEST_F(JOIN_TESTS, TEST_1) {
                             "int.\n~~Exception in command:\"select a.a, b.b "
                             "from a INNER JOIN b on a.b = b.a;\"\n");
     CHECK_REQUEST_ST_CLIENT(
-        "select a.b, b.b, c.b from (a join c on a.b = c.a) LEFT JOIN b on a.a "
+        "select t.a.b, b.b, t.c.b from (a join c on a.b = c.a) as t LEFT JOIN "
+        "b on t.a.a "
         "= b.a;",
         0,
-        get_select_answer({"a.a", "b.b", "c.b"},
-                          {{"Viktor", "", "Parsed this request."},
-                           {"Danila", "", "Write this test."},
-                           {"Danila", to_string(2.0), "Write this test."},
-                           {"Ivan", to_string(0.2), "Save this data."}}));
+        get_select_answer({"t.a.b", "b.b", "t.c.b"},
+                          {{"Danila", to_string(2.0), "Write this test."},
+                           {"Ivan", to_string(0.2), "Save this data."},
+                           {"Danila", "null", "Write this test."},
+                           {"Viktor", "null", "Parsed this request."}}));
     CHECK_REQUEST_ST_CLIENT(
-        "select a.b, b.b, c.b from (a join c on a.b = c.a) LEFT JOIN b on a.a "
+        "select t.a.a, b.b, t.c.b from (a join c on a.b = c.a) as t LEFT JOIN b on t.a.a "
         "= b.a;",
         0, "");  // TODO: фиг его знает что выдаст.
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
@@ -1065,6 +1072,139 @@ TEST_F(JOIN_TESTS, AS_TEST_1) {
         get_select_answer({"M.a.a", "b.b", "M.c.b"},
                           {{"Danila", to_string(2.0), "Write this test."},
                            {"Ivan", to_string(0.2), "Save this data."}}));
+}
+
+class UNION_TESTS : public REQUEST_TESTS {
+   public:
+    void SetUp() override {
+        CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+            "create table a (a int, b varchar(100));\n"
+            "insert into a values(0, 'Vitia');\n"
+            "insert into a values(0, 'Viktor');\n"
+            "insert into a values(1, 'Viktor');\n"
+            "insert into a values(1, 'Vitichka');");
+        CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+            "create table b (a int, b varchar(100));\n"
+            "insert into b values(0, 'Lera');\n"
+            "insert into b values(1, 'Valeria');\n"
+            "insert into b values(2, 'Lerochka');");
+    }
+};
+
+TEST_F(UNION_TESTS, TEST_1) {
+    CHECK_REQUEST_ST_CLIENT("a union b;", 0,  // Да, именно так
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"},
+                                                           {"0", "Lera"},
+                                                           {"1", "Valeria"},
+                                                           {"2", "Lerochka"}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a_a (a int, b varchar(100));");
+    CHECK_REQUEST_ST_CLIENT("a_a union a;", 0,
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a_a values(100, 'Poni');");
+    CHECK_REQUEST_ST_CLIENT("a union b union a_a;", 0,
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"},
+                                                           {"0", "Lera"},
+                                                           {"1", "Valeria"},
+                                                           {"2", "Lerochka"},
+                                                           {"100", "Poni"}}));
+    CHECK_REQUEST_ST_CLIENT("(a union b) union (a_a);", 0,
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"},
+                                                           {"0", "Lera"},
+                                                           {"1", "Valeria"},
+                                                           {"2", "Lerochka"},
+                                                           {"100", "Poni"}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into b values(0, 'Vitia');");
+    CHECK_REQUEST_ST_CLIENT("a union b;", 0,
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"},
+                                                           {"0", "Lera"},
+                                                           {"1", "Valeria"},
+                                                           {"2", "Lerochka"},
+                                                           {"0", "Vitia"}}));
+}
+
+TEST_F(UNION_TESTS, EXCEPTION_TEST_1) {
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a union select * from b;", -1,
+        "");  // Это даёт ошибку, т. к. вложенные селекты ещё не задовали.
+    CHECK_REQUEST_ST_CLIENT("a union f;",
+                            exc::ExceptionType::access_table_nonexistent,
+                            "");  // TODO: не существует
+    CHECK_REQUEST_ST_CLIENT(
+        "a union a;", -1,
+        "");  // TODO: если это риализованно и нормально работает, то перемести
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a_a (a unique int, b varchar(100));");
+    CHECK_REQUEST_ST_CLIENT("a_a union a;", -1,
+                            "");  // TODO: работа с уникальными
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a_b (a int, b  primary key varchar(100));");
+    CHECK_REQUEST_ST_CLIENT("a union a_b;", -1,
+                            "");  // TODO: работа с уникальными
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table long_a (a int, b varchar(100), c varchar(100));");
+    CHECK_REQUEST_ST_CLIENT("a union long_a;", -1,
+                            "");  // TODO: не совпадает количество колонок
+}
+
+class INTERSECT_TESTS : public REQUEST_TESTS {
+   public:
+    void SetUp() override {
+        CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+            "create table a (a int);\n"
+            "insert into a values(0);\n"
+            "insert into a values(0);\n"
+            "insert into a values(1);\n"
+            "insert into a values(4);");
+        CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+            "create table b (a int,);\n"
+            "insert into b values(1);\n"
+            "insert into b values(1);\n"
+            "insert into b values(2);");
+    }
+};
+
+TEST_F(INTERSECT_TESTS, TEST_1) {
+    CHECK_REQUEST_ST_CLIENT("a intersect b;", 0,
+                            get_select_answer({"a"}, {{"0"}, {"1"}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table a_a (a int);");
+    CHECK_REQUEST_ST_CLIENT("a_a intersect b;", 0, "");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a_a (a unique int); insert into a_a values(2);");
+    CHECK_REQUEST_ST_CLIENT("a_a intersect a;", 0,
+                            get_select_answer({"a"}, {{"2"}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a_a values(0);");
+    CHECK_REQUEST_ST_CLIENT("a_a intersect a intersect b;", 0,
+                            get_select_answer({"a"}, {{"0"}}));
+    CHECK_REQUEST_ST_CLIENT("(a_a intersect a) intersect (b);", 0,
+                            get_select_answer({"a"}, {{"0"}}));
+}
+
+TEST_F(INTERSECT_TESTS, EXCEPTION_TEST_1) {
+    CHECK_REQUEST_ST_CLIENT("select * from a intersect select * from b;", -1,
+                            "");
+    CHECK_REQUEST_ST_CLIENT("a_a intersect b;",
+                            exc::ExceptionType::access_table_nonexistent, "");
+    CHECK_REQUEST_ST_CLIENT("b intersect b;", -1, "0");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table long_a (a int, b varchar(100), c varchar(100));");
+    CHECK_REQUEST_ST_CLIENT("a intersect long_a;", -1,
+                            "");  // TODO: не совпадает количество колонок
 }
 
 class DROP_TESTS : public ::testing::Test {

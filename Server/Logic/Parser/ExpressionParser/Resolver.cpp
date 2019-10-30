@@ -749,12 +749,23 @@ void Resolver::setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
                             const std::string& table2,
                             t_column_infos column_infos,
                             std::unique_ptr<exc::Exception>& e) {
+    std::string table_name1 = table1;
+    std::string table_name2 = table2;
+    if (left->getNodeType() == NodeType::ident &&
+        right->getNodeType() == NodeType::ident) {
+        auto name1 = static_cast<Ident*>(left)->getTableName();
+        auto name2 = static_cast<Ident*>(right)->getTableName();
+        if (table1 == name2 && table2 == name1) {
+            std::swap(table_name1, table_name2);
+        }
+    }
+
     if (left->getNodeType() == NodeType::ident) {
         auto col_name = static_cast<Ident*>(left)->getName();
-        if (column_infos[table1].find(col_name) != column_infos[table1].end()) {
-            a = column_infos[table1][col_name].getType();
+        if (column_infos[table_name1].find(col_name) != column_infos[table_name1].end()) {
+            a = column_infos[table_name1][col_name].getType();
         } else {
-            e.reset(new exc::acc::ColumnNonexistent(col_name, table1));
+            e.reset(new exc::acc::ColumnNonexistent(col_name, table_name1));
             return;
         }
     } else {
@@ -763,10 +774,10 @@ void Resolver::setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
 
     if (right->getNodeType() == NodeType::ident) {
         auto col_name = static_cast<Ident*>(right)->getName();
-        if (column_infos[table2].find(col_name) != column_infos[table2].end()) {
-            b = column_infos[table2][col_name].getType();
+        if (column_infos[table_name2].find(col_name) != column_infos[table_name2].end()) {
+            b = column_infos[table_name2][col_name].getType();
         } else {
-            e.reset(new exc::acc::ColumnNonexistent(col_name, table2));
+            e.reset(new exc::acc::ColumnNonexistent(col_name, table_name2));
             return;
         };
     } else {
@@ -797,9 +808,9 @@ void Resolver::bindColumnToTable(Node* nod,
     }
 
     auto id = static_cast<Ident*>(nod);
-        if (!id->getTableName().empty()) {
-            return;
-        }
+    if (!id->getTableName().empty()) {
+        return;
+    }
 
     bool flag = false;
     if (column_infos_[table1_].find(id->getName()) !=

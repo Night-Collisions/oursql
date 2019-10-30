@@ -385,7 +385,6 @@ mul_div:
 val_or_var:
     constant { $$ = $1; } |
     col_ident { $$ = $1; };
-    // id DOT id { $$ = new Ident($1->getName(), $3->getName()); };
 
 logic_or:
         OR { $$ = ExprUnit::or_; };

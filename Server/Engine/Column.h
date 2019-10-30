@@ -49,9 +49,13 @@ class Column {
     [[nodiscard]] DataType getType() const { return type_; };
     [[nodiscard]] std::string getName() const { return name_; };
     void setName(const std::string& name) { name_ = name; }
-    [[depricated]] const std::set<ColumnConstraint>& getConstraints() const {
+    const std::set<ColumnConstraint>& getConstraints() const {
         return constraint_;
     };
+
+    void setConstraints(std::set<ColumnConstraint> constraints) {
+        constraint_ = std::move(constraints);
+    }
 
     unsigned char getBitConstraint() const {
         unsigned char res = 0;
@@ -88,6 +92,10 @@ class Column {
 
     void setN(int n) { n_ = n; }
     int getN() const { return n_; }
+
+    void setType(DataType type) {
+        type_ = type;
+    }
 
    private:
     static bool checkConstraint(const std::set<ColumnConstraint>&,
