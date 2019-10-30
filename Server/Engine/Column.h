@@ -93,7 +93,9 @@ class Column {
     void setN(int n) { n_ = n; }
     int getN() const { return n_; }
 
-    void setType(DataType type) { type_ = type; }
+    void setType(DataType type) {
+        type_ = type;
+    }
 
    private:
     static bool checkConstraint(const std::set<ColumnConstraint>&,

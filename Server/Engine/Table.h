@@ -18,6 +18,20 @@ class Table {
         }
     }
 
+    void setType(DataType type, int ind) {
+        columns_[ind].setType(type);
+    }
+
+    void setConstraints(std::set<ColumnConstraint> constraints, int ind) {
+        columns_[ind].setConstraints(std::move(constraints));
+    }
+    
+    void setN(int n, int ind) {
+        columns_[ind].setN(n);
+    }
+
+    int getColSize() { return columns_.size(); }
+
     void setName(const std::string& name) { name_ = name; }
 
     [[nodiscard]] std::string getName() const { return name_; }
