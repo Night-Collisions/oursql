@@ -30,7 +30,13 @@ enum class ExceptionType : unsigned int {
     null_not_null,
     create_table_name_column = 1001,
     create_table_repeat_table_name,
-    insert_constants_more_columns = 1101
+    insert_constants_more_columns = 1101,
+    column_datatype_mismatch_union,
+    column_sizes_union,
+    null_column_in_union,
+    column_datatype_mismatch_intersect,
+    column_sizes_intersect,
+    null_column_in_intersect
 };
 
 class Exception {
@@ -76,6 +82,18 @@ class WasNotLoaded : public Exception {
     WasNotLoaded(const std::string& table_name)
         : Exception(ExceptionType::was_not_loaded,
                     table_name + "was not loaded!") {}
+};
+
+class UnionException : public Exception {
+   public:
+    UnionException(const std::string& msg, ExceptionType type)
+        : Exception(type, msg) {}
+};
+
+class IntersectException : public Exception {
+   public:
+    IntersectException(const std::string& msg, ExceptionType type)
+        : Exception(type, msg) {}
 };
 
 class RepeatColumnNameInTable : public Exception {
