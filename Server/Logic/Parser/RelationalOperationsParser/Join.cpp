@@ -192,8 +192,8 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             table.getColumns()[i].setN(varchar_lengths[i]);
             table.getColumns()[i].setConstraints(constraints[i]);
         }
-        std::vector<std::set<int>> unused_indexes;
-        unused_indexes.resize(2);
+        std::vector<std::set<int>> used;
+        used.resize(2);
 
         for (int i = 0; i < siz1; ++i) {
             auto rec1 = records1[i];
@@ -218,6 +218,8 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
                 }
 
                 if (res != "0") {
+                    used[0].insert(i);
+                    used[1].insert(j);
                     std::vector<Value> new_rec;
                     std::copy(rec1.begin(), rec1.end(),
                               std::back_inserter(new_rec));
@@ -227,38 +229,40 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
                     if (e) {
                         return Table();
                     }
-                } else {
-                    unused_indexes[0].insert(i);
-                    unused_indexes[1].insert(j);
-                    continue;
                 }
             }
         }
         if (type == RelOperNodeType::left_join ||
             type == RelOperNodeType::full_join) {
-            for (auto& ind : unused_indexes[0]) {
-                std::vector<Value> new_rec;
-                std::copy(records1[ind].begin(), records1[ind].end(),
-                          std::back_inserter(new_rec));
-                std::copy(null_vector_right.begin(), null_vector_right.end(),
-                          std::back_inserter(new_rec));
-                table.addRecord(new_rec, e);
-                if (e) {
-                    return Table();
+            for (int i = 0; i < records1.size(); ++i) {
+                if (used[0].find(i) == used[0].end()) {
+                    std::vector<Value> new_rec;
+                    std::copy(records1[i].begin(), records1[i].end(),
+                              std::back_inserter(new_rec));
+                    std::copy(null_vector_right.begin(),
+                              null_vector_right.end(),
+                              std::back_inserter(new_rec));
+                    table.addRecord(new_rec, e);
+                    if (e) {
+                        return Table();
+                    }
                 }
             }
         }
         if (type == RelOperNodeType::right_join ||
             type == RelOperNodeType::full_join) {
-            for (auto& ind : unused_indexes[1]) {
-                std::vector<Value> new_rec;
-                std::copy(null_vector_left.begin(), null_vector_left.end(),
-                          std::back_inserter(new_rec));
-                std::copy(records2[ind].begin(), records2[ind].end(),
-                          std::back_inserter(new_rec));
-                table.addRecord(new_rec, e);
-                if (e) {
-                    return Table();
+            for (int i = 0; i < records2.size(); ++i) {
+                if (used[1].find(i) == used[1].end()) {
+                    std::vector<Value> new_rec;
+                    std::copy(null_vector_left.begin(),
+                              null_vector_left.end(),
+                              std::back_inserter(new_rec));
+                    std::copy(records2[i].begin(), records2[i].end(),
+                              std::back_inserter(new_rec));
+                    table.addRecord(new_rec, e);
+                    if (e) {
+                        return Table();
+                    }
                 }
             }
         }

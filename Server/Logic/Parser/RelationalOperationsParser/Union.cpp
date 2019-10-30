@@ -1,14 +1,6 @@
 #include "Union.h"
 #include <map>
-
-std::string Union::recordToConcat(const std::vector<Value>& r) {
-    std::string res;
-    for (auto& c : r) {
-        res += c.data;
-    }
-
-    return res;
-}
+#include "Helper.h"
 
 Table Union::makeUnion(const Table& table1, const Table& table2,
                        std::unique_ptr<exc::Exception>& e) {
@@ -24,7 +16,8 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
     if (siz1 == siz2) {
         for (int i = 0; i < siz1; ++i) {
             col_names.push_back(columns1[i].getName());
-            if (columns1[i].getType() != columns2[i].getType() ||
+            if (Helper::checkTypes(columns1[i].getType(),
+                                   columns2[i].getType()) ||
                 (columns1[i].getN() != columns2[i].getN())) {
                 e.reset(new exc::UnionException(
                     "Columns must have the same type order.",
@@ -32,7 +25,7 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
                 return Table();
             }
             if (columns1[i].getConstraints().find(ColumnConstraint::not_null) ==
-                columns1[i].getConstraints().end() ||
+                    columns1[i].getConstraints().end() ||
                 columns2[i].getConstraints().find(ColumnConstraint::not_null) ==
                     columns2[i].getConstraints().end()) {
                 e.reset(new exc::UnionException(
@@ -55,7 +48,7 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
     std::vector<std::vector<Value>> unioned;
 
     for (auto& r : records1) {
-        auto key = recordToConcat(r);
+        auto key = Helper::recordToConcat(r);
         repeated_records[key] = r;
     }
 
@@ -65,7 +58,7 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
         return Table();
     }
     for (auto& r : records2) {
-        auto key = recordToConcat(r);
+        auto key = Helper::recordToConcat(r);
         if (repeated_records.find(key) == repeated_records.end()) {
             unioned.push_back(r);
         }

@@ -1,5 +1,6 @@
 #include "Intersect.h"
 #include <map>
+#include "Helper.h"
 #include "Union.h"
 
 Table Intersect::makeIntersect(const Table& table1, const Table& table2,
@@ -16,7 +17,8 @@ Table Intersect::makeIntersect(const Table& table1, const Table& table2,
     if (siz1 == siz2) {
         for (int i = 0; i < siz1; ++i) {
             col_names.push_back(columns1[i].getName());
-            if (columns1[i].getType() != columns2[i].getType() ||
+            if (Helper::checkTypes(columns1[i].getType(),
+                                   columns2[i].getType()) ||
                 (columns1[i].getN() != columns2[i].getN())) {
                 e.reset(new exc::IntersectException(
                     "Columns must have the same type order.",
@@ -47,7 +49,7 @@ Table Intersect::makeIntersect(const Table& table1, const Table& table2,
     std::vector<std::vector<Value>> intersected;
 
     for (auto& r : records1) {
-        auto key = Union::recordToConcat(r);
+        auto key = Helper::recordToConcat(r);
         repeated_records[key] = r;
     }
 
@@ -57,7 +59,7 @@ Table Intersect::makeIntersect(const Table& table1, const Table& table2,
         return Table();
     }
     for (auto& r : records2) {
-        auto key = Union::recordToConcat(r);
+        auto key = Helper::recordToConcat(r);
         if (repeated_records.find(key) != repeated_records.end()) {
             intersected.push_back(r);
         }
