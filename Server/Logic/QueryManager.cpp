@@ -193,9 +193,7 @@ void QueryManager::select(const Query& query,
                 colname = (id->getTableName().empty())
                               ? (id->getName())
                               : (id->getTableName() + "." + id->getName());
-            } /*else if (!id->getTableName().empty()) {
-                colname = id->getTableName() + "." + id->getName();
-            }*/
+            }
 
             id->setTableName(tablename);
             id->setName(colname);

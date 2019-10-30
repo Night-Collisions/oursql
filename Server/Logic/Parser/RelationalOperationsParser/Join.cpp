@@ -118,10 +118,10 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
         }
 
         table.renameColumns(col_names, e);
-        for (int i = 0; i < table.getColumns().size(); ++i) {
-            table.getColumns()[i].setType(types[i]);
-            table.getColumns()[i].setN(varchar_lengths[i]);
-            table.getColumns()[i].setConstraints(constraints[i]);
+        for (int i = 0; i < table.getColSize(); ++i) {
+            table.setType(types[i], i);
+            table.setN(varchar_lengths[i], i);
+            table.setConstraints(constraints[i], i);
         }
         for (auto& r : record_to_run) {
             std::string key;
@@ -181,16 +181,17 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             }
             null_vector_right.push_back(v);
         }
-        if (type == RelOperNodeType::join || type == RelOperNodeType::inner_join) {
+        if (type == RelOperNodeType::join ||
+            type == RelOperNodeType::inner_join) {
             for (auto s : constraints) {
                 s.insert(ColumnConstraint::not_null);
             }
         }
         table.renameColumns(col_names, e);
-        for (int i = 0; i < table.getColumns().size(); ++i) {
-            table.getColumns()[i].setType(types[i]);
-            table.getColumns()[i].setN(varchar_lengths[i]);
-            table.getColumns()[i].setConstraints(constraints[i]);
+        for (int i = 0; i < table.getColSize(); ++i) {
+            table.setType(types[i], i);
+            table.setN(varchar_lengths[i], i);
+            table.setConstraints(constraints[i], i);
         }
         std::vector<std::set<int>> used;
         used.resize(2);
@@ -239,8 +240,7 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
                     std::vector<Value> new_rec;
                     std::copy(records1[i].begin(), records1[i].end(),
                               std::back_inserter(new_rec));
-                    std::copy(null_vector_right.begin(),
-                              null_vector_right.end(),
+                    std::copy(null_vector_right.begin(), null_vector_right.end(),
                               std::back_inserter(new_rec));
                     table.addRecord(new_rec, e);
                     if (e) {

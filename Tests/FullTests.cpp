@@ -918,7 +918,7 @@ TEST_F(JOIN_TESTS, FULL_TEST_1) {
                                            {"Danila", "Write this test."},
                                            {"Ivan", "Save this data."},
                                            {"Viktor", "Parsed this request."},
-                                           {"null", "Do nothing."}}));
+                                           {"", "Do nothing."}}));
 /*    CHECK_REQUEST_ST_CLIENT(
         "select a.b, b.b from a FULL JOIN b on a.a != b.a;", 0,
         ""); */ // TODO: доделаю сам, как остальное будет работать!!!
@@ -929,7 +929,7 @@ TEST_F(JOIN_TESTS, FULL_TEST_1) {
                                            {"Ivan", to_string(0.2)},
                                            {"Viktor", "null"},
                                            {"Danila", "null"},
-                                           {"null", to_string(20)}}));
+                                           {"", to_string(20)}}));
     CHECK_REQUEST_ST_CLIENT(
         "select a.b, b.b from b FULL JOIN a on a.a = b.a;", 0,
         get_select_answer(
