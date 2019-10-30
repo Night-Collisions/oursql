@@ -118,7 +118,7 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
         }
 
         table.renameColumns(col_names, e);
-        for (int i = 0; i < table.getColumns().size(); ++i) {
+        for (unsigned int i = 0; i < table.getColumns().size(); ++i) {
             table.getColumns()[i].setType(types[i]);
             table.getColumns()[i].setN(varchar_lengths[i]);
             table.getColumns()[i].setConstraints(constraints[i]);
@@ -187,7 +187,7 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             }
         }
         table.renameColumns(col_names, e);
-        for (int i = 0; i < table.getColumns().size(); ++i) {
+        for (unsigned int i = 0; i < table.getColumns().size(); ++i) {
             table.getColumns()[i].setType(types[i]);
             table.getColumns()[i].setN(varchar_lengths[i]);
             table.getColumns()[i].setConstraints(constraints[i]);
