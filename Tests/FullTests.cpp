@@ -919,9 +919,6 @@ TEST_F(JOIN_TESTS, FULL_TEST_1) {
                                            {"Ivan", "Save this data."},
                                            {"Viktor", "Parsed this request."},
                                            {"", "Do nothing."}}));
-    /*    CHECK_REQUEST_ST_CLIENT(
-            "select a.b, b.b from a FULL JOIN b on a.a != b.a;", 0,
-            ""); */ // TODO: доделаю сам, как остальное будет работать!!!
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into b values(5, 20);");
     CHECK_REQUEST_ST_CLIENT(
         "select a.b, b.b from a FULL JOIN b on a.a = b.a;", 0,
