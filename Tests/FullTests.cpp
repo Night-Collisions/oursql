@@ -1069,6 +1069,139 @@ TEST_F(JOIN_TESTS, AS_TEST_1) {
                            {"Ivan", to_string(0.2), "Save this data."}}));
 }
 
+class UNION_TESTS : public REQUEST_TESTS {
+   public:
+    void SetUp() override {
+        CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+            "create table a (a int, b varchar(100));\n"
+            "insert into a values(0, 'Vitia');\n"
+            "insert into a values(0, 'Viktor');\n"
+            "insert into a values(1, 'Viktor');\n"
+            "insert into a values(1, 'Vitichka');");
+        CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+            "create table b (a int, b varchar(100));\n"
+            "insert into b values(0, 'Lera');\n"
+            "insert into b values(1, 'Valeria');\n"
+            "insert into b values(2, 'Lerochka');");
+    }
+};
+
+TEST_F(UNION_TESTS, TEST_1) {
+    CHECK_REQUEST_ST_CLIENT("a union b;", 0,  // Да, именно так
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"},
+                                                           {"0", "Lera"},
+                                                           {"1", "Valeria"},
+                                                           {"2", "Lerochka"}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a_a (a int, b varchar(100));");
+    CHECK_REQUEST_ST_CLIENT("a_a union a;", 0,
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a_a values(100, 'Poni');");
+    CHECK_REQUEST_ST_CLIENT("a union b union a_a;", 0,
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"},
+                                                           {"0", "Lera"},
+                                                           {"1", "Valeria"},
+                                                           {"2", "Lerochka"},
+                                                           {"100", "Poni"}}));
+    CHECK_REQUEST_ST_CLIENT("(a union b) union (a_a);", 0,
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"},
+                                                           {"0", "Lera"},
+                                                           {"1", "Valeria"},
+                                                           {"2", "Lerochka"},
+                                                           {"100", "Poni"}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into b values(0, 'Vitia');");
+    CHECK_REQUEST_ST_CLIENT("a union b;", 0,
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"},
+                                                           {"0", "Lera"},
+                                                           {"1", "Valeria"},
+                                                           {"2", "Lerochka"},
+                                                           {"0", "Vitia"}}));
+}
+
+TEST_F(UNION_TESTS, EXCEPTION_TEST_1) {
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a union select * from b;", -1,
+        "");  // Это даёт ошибку, т. к. вложенные селекты ещё не задовали.
+    CHECK_REQUEST_ST_CLIENT("a union f;",
+                            exc::ExceptionType::access_table_nonexistent,
+                            "");  // TODO: не существует
+    CHECK_REQUEST_ST_CLIENT(
+        "a union a;", -1,
+        "");  // TODO: если это риализованно и нормально работает, то перемести
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a_a (a unique int, b varchar(100));");
+    CHECK_REQUEST_ST_CLIENT("a_a union a;", -1,
+                            "");  // TODO: работа с уникальными
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a_b (a int, b  primary key varchar(100));");
+    CHECK_REQUEST_ST_CLIENT("a union a_b;", -1,
+                            "");  // TODO: работа с уникальными
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table long_a (a int, b varchar(100), c varchar(100));");
+    CHECK_REQUEST_ST_CLIENT("a union long_a;", -1,
+                            "");  // TODO: не совпадает количество колонок
+}
+
+class INTERSECT_TESTS : public REQUEST_TESTS {
+   public:
+    void SetUp() override {
+        CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+            "create table a (a int);\n"
+            "insert into a values(0);\n"
+            "insert into a values(0);\n"
+            "insert into a values(1);\n"
+            "insert into a values(4);");
+        CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+            "create table b (a int,);\n"
+            "insert into b values(1);\n"
+            "insert into b values(1);\n"
+            "insert into b values(2);");
+    }
+};
+
+TEST_F(INTERSECT_TESTS, TEST_1) {
+    CHECK_REQUEST_ST_CLIENT("a intersect b;", 0,
+                            get_select_answer({"a"}, {{"0"}, {"1"}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table a_a (a int);");
+    CHECK_REQUEST_ST_CLIENT("a_a intersect b;", 0, "");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a_a (a unique int); insert into a_a values(2);");
+    CHECK_REQUEST_ST_CLIENT("a_a intersect a;", 0,
+                            get_select_answer({"a"}, {{"2"}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a_a values(0);");
+    CHECK_REQUEST_ST_CLIENT("a_a intersect a intersect b;", 0,
+                            get_select_answer({"a"}, {{"0"}}));
+    CHECK_REQUEST_ST_CLIENT("(a_a intersect a) intersect (b);", 0,
+                            get_select_answer({"a"}, {{"0"}}));
+}
+
+TEST_F(INTERSECT_TESTS, EXCEPTION_TEST_1) {
+    CHECK_REQUEST_ST_CLIENT("select * from a intersect select * from b;", -1,
+                            "");
+    CHECK_REQUEST_ST_CLIENT("a_a intersect b;",
+                            exc::ExceptionType::access_table_nonexistent, "");
+    CHECK_REQUEST_ST_CLIENT("b intersect b;", -1, "0");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table long_a (a int, b varchar(100), c varchar(100));");
+    CHECK_REQUEST_ST_CLIENT("a intersect long_a;", -1,
+                            "");  // TODO: не совпадает количество колонок
+}
+
 class DROP_TESTS : public ::testing::Test {
    public:
     static void SetUpTestCase();
