@@ -919,9 +919,9 @@ TEST_F(JOIN_TESTS, FULL_TEST_1) {
                                            {"Ivan", "Save this data."},
                                            {"Viktor", "Parsed this request."},
                                            {"null", "Do nothing."}}));
-/*    CHECK_REQUEST_ST_CLIENT(
-        "select a.b, b.b from a FULL JOIN b on a.a != b.a;", 0,
-        ""); */ // TODO: доделаю сам, как остальное будет работать!!!
+    /*    CHECK_REQUEST_ST_CLIENT(
+            "select a.b, b.b from a FULL JOIN b on a.a != b.a;", 0,
+            ""); */ // TODO: доделаю сам, как остальное будет работать!!!
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into b values(5, 20);");
     CHECK_REQUEST_ST_CLIENT(
         "select a.b, b.b from a FULL JOIN b on a.a = b.a;", 0,
@@ -966,6 +966,10 @@ TEST_F(JOIN_TESTS, RIGHT_TEST_1) {
 }
 
 TEST_F(JOIN_TESTS, TEST_1) {
+    CHECK_REQUEST_ST_CLIENT(
+        "select b.b, c.b from a join b on a.a = b.a join c on a.b = c.a;", 0,
+        get_select_answer({"b.b", "c.b"}, {{to_string(2.0), "Write this test."},
+                                           {to_string(0.2), "Save this data."}}));
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("crate table e(a int);");
     CHECK_REQUEST_ST_CLIENT("select * from e join a on a.a = e.a;", 0, "");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into e values(5);");
