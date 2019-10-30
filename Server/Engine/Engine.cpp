@@ -7,12 +7,57 @@
 // columns count: 1 byte;
 // columns: reserved: 1 byte, n: 4 bytes, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
 
+Engine::Initializer Engine::initializer_;
+
 std::string Engine::getPathToTable(const std::string& table_name) {
     return "DataBD/" + table_name;
 }
 
 std::string Engine::getPathToTableMeta(const std::string& table_name) {
     return getPathToTable(table_name) + "_meta";
+}
+
+void Engine::initialize() {
+    if (!static_cast<bool>(std::ifstream(kStatusFile_))) {
+        setIds(0, 0);
+    }
+    if (getLastCompletedId() != getLastPerformingId()) {
+        std::ifstream tmp_file(kTmpTableFile);
+        char table_name_[kTableNameLength];
+        tmp_file.read(table_name_, kTableNameLength);
+        tmp_file.close();
+        Cursor cursor(table_name_);
+        cursor.commit();
+    }
+}
+
+int Engine::getLastCompletedId() {
+    int id;
+    std::ifstream statusFile(kStatusFile_);
+    statusFile >> id;
+    return id;
+}
+
+int Engine::getLastPerformingId() {
+    int id;
+    std::ifstream statusFile(kStatusFile_);
+    for (int i = 0; i < 2; ++i) {
+        statusFile >> id;
+    }
+    return id;
+}
+
+void Engine::setLastCompletedId(int id) {
+    setIds(id, getLastPerformingId());
+}
+
+void Engine::setLastPerformingId(int id) {
+    setIds(getLastCompletedId(), id);
+}
+
+void Engine::setIds(int lastCompletedId, int lastPerformingId) {
+    std::ofstream statusFile(kStatusFile_);
+    statusFile << lastCompletedId << lastPerformingId;
 }
 
 void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
@@ -25,9 +70,9 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
         std::ofstream metafile(getPathToTableMeta(table.getName()), std::ios::binary);
         unsigned char reserved = 0;
         metafile << reserved;
-        char table_name[kTableNameLength_] = {0};
+        char table_name[kTableNameLength] = {0};
         std::memcpy(table_name, table.getName().c_str(), table.getName().size());
-        metafile.write(table_name, kTableNameLength_);
+        metafile.write(table_name, kTableNameLength);
         unsigned char columns_count = table.getColumns().size();
         metafile << columns_count;
 
@@ -69,8 +114,8 @@ Table Engine::show(const std::string& table_name, std::unique_ptr<exc::Exception
 
     unsigned char reserved;
     metafile >> reserved;
-    char table_name_[kTableNameLength_];
-    metafile.read(table_name_, kTableNameLength_);
+    char table_name_[kTableNameLength];
+    metafile.read(table_name_, kTableNameLength);
     table.setName(table_name);
     unsigned char columns_count;
     metafile >> columns_count;
@@ -84,7 +129,7 @@ Table Engine::show(const std::string& table_name, std::unique_ptr<exc::Exception
         metafile >> type;
         unsigned char constraints;
         metafile >> constraints;
-        char column_name[kTableNameLength_];
+        char column_name[kTableNameLength];
         metafile.read(column_name, kColumnNameLength_);
         std::unique_ptr<exc::Exception> e;
         Column column(column_name, static_cast<DataType>(type), e, constraints);
