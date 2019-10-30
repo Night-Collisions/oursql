@@ -964,10 +964,13 @@ TEST_F(JOIN_TESTS, RIGHT_TEST_1) {
 
 TEST_F(JOIN_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
-        "select b.b, c.b from a join b on a.a = b.a join c on a.b = c.a;", 0,
-        get_select_answer({"b.b", "c.b"}, {{to_string(2.0), "Write this test."},
-                                           {to_string(0.2), "Save this data."}}));
-    CHECK_UNREQUITED_REQUEST_ST_CLIENT("crate table e(a int);");
+        "select k.b.b, c.b from (a join b on a.a = b.a) as k join c on k.a.b = "
+        "c.a;",
+        0,
+        get_select_answer({"k.b.b", "c.b"},
+                          {{to_string(2.0), "Write this test."},
+                           {to_string(0.2), "Save this data."}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table e(a int);");
     CHECK_REQUEST_ST_CLIENT("select * from e join a on a.a = e.a;", 0, "");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into e values(5);");
     CHECK_REQUEST_ST_CLIENT("select * from e join a on a.a = e.a;", 0, "");
@@ -988,16 +991,17 @@ TEST_F(JOIN_TESTS, TEST_1) {
                             "int.\n~~Exception in command:\"select a.a, b.b "
                             "from a INNER JOIN b on a.b = b.a;\"\n");
     CHECK_REQUEST_ST_CLIENT(
-        "select a.b, b.b, c.b from (a join c on a.b = c.a) LEFT JOIN b on a.a "
+        "select t.a.b, b.b, t.c.b from (a join c on a.b = c.a) as t LEFT JOIN "
+        "b on t.a.a "
         "= b.a;",
         0,
-        get_select_answer({"a.a", "b.b", "c.b"},
-                          {{"Viktor", "", "Parsed this request."},
-                           {"Danila", "", "Write this test."},
-                           {"Danila", to_string(2.0), "Write this test."},
-                           {"Ivan", to_string(0.2), "Save this data."}}));
+        get_select_answer({"t.a.b", "b.b", "t.c.b"},
+                          {{"Danila", to_string(2.0), "Write this test."},
+                           {"Ivan", to_string(0.2), "Save this data."},
+                           {"Danila", "null", "Write this test."},
+                           {"Viktor", "null", "Parsed this request."}}));
     CHECK_REQUEST_ST_CLIENT(
-        "select a.b, b.b, c.b from (a join c on a.b = c.a) LEFT JOIN b on a.a "
+        "select t.a.a, b.b, t.c.b from (a join c on a.b = c.a) as t LEFT JOIN b on t.a.a "
         "= b.a;",
         0, "");  // TODO: фиг его знает что выдаст.
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
