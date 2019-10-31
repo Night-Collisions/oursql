@@ -32,7 +32,7 @@ void Server::run() {
     defined(__WIN32) && !defined(__CYGWIN__)
     command = "start cmd.exe /c \"" + directory_ + name_ + ".exe\"";
 #else
-    assert(0);
+    command = "cd " + directory_ + " && ./" + name_ + " ; cd -";
 #endif
     std::system(command.c_str());
 }
@@ -43,7 +43,7 @@ void Server::stop() {
     defined(__WIN32) && !defined(__CYGWIN__)
     command = "taskkill /im " + name_ + ".exe /f";
 #else
-    assert(0);
+    command = "killall -KILL " + name_;
 #endif
     std::system(command.c_str());
 }
@@ -77,7 +77,7 @@ void test_sleep(size_t time) {
 #endif
 }
 
-void coppyDB() {
+void copyDB() {
     std::string delete_command;
     std::string copy_command;
     const std::string copy_dir = std::string(TEST_DIRECTORY_DB) + "_copy";
@@ -87,7 +87,8 @@ void coppyDB() {
     copy_command =
         std::string("xcopy /E /I /Q ") + TEST_DIRECTORY_DB + " " + copy_dir;
 #else
-    assert(0);
+    delete_command = "rm -rf " + copy_dir;
+    copy_command = std::string("cp -a ") + TEST_DIRECTORY_DB + " " + copy_dir;
 #endif
 
     std::system(delete_command.c_str());
@@ -126,7 +127,7 @@ std::string drop_test(const std::string& request,
                       const std::string& db_files, ourSQL::client::Client& client,
                       size_t start_time, size_t step_time, size_t max_time) {
     client.setExceptionReconnect(false);
-    coppyDB();
+    copyDB();
     auto files = split_string(db_files);
     for (unsigned int count = 0; 1; count++) {
         if (count * step_time >= max_time) {

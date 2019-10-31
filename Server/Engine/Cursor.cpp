@@ -1,27 +1,30 @@
 #include "Cursor.h"
 
+// Temporary file:
+// Table name
+// Blocks:
+// number: 4 bytes, status: 4 bytes, block
+
 Cursor::Cursor(const std::string& table_name) {
-    fstream_.open(Engine::getPathToTable(table_name), std::ios::binary | std::ios::in | std::ios::out);
+    file_.open(Engine::getPathToTable(table_name), std::ios::binary | std::ios::in | std::ios::out);
     std::unique_ptr<exc::Exception> e;
     table_ = Engine::show(table_name, e);
     char delimiter;
-    fstream_ >> delimiter;
+    file_ >> delimiter;
     block_.setTable(table_);
-    block_.load(fstream_);
-}
-
-Cursor::~Cursor() {
-    if (was_block_changed_) {
-        saveBlock(block_, current_block_);
-    }
+    block_.load(file_);
 }
 
 void Cursor::reset() {
-    fstream_.seekg(0, std::ios::beg);
-    fstream_.seekp(0, std::ios::beg);
+    if (was_block_changed_) {
+        was_block_changed_ = false;
+        saveBlock(block_, current_block_);
+    }
+    file_.seekg(0, std::ios::beg);
+    file_.seekp(0, std::ios::beg);
     char delimiter;
-    fstream_ >> delimiter;
-    block_.load(fstream_);
+    file_ >> delimiter;
+    block_.load(file_);
 }
 
 std::vector<Value> Cursor::fetch() {
@@ -37,31 +40,31 @@ bool Cursor::next() {
         saveBlock(block_, current_block_);
     }
     char delimiter;
-    while (fstream_ >> delimiter) {
-        block_.load(fstream_);
+    while (file_ >> delimiter) {
+        block_.load(file_);
         ++current_block_;
         if (block_.next()) {
             return true;
         }
     }
 
-    if (fstream_.fail()) {
-        fstream_.clear();
+    if (file_.fail()) {
+        file_.clear();
     }
 
     return false;
 }
 
 void Cursor::insert(const std::vector<Value>& values) {
-    int g = fstream_.tellg();
-    int p = fstream_.tellp();
+    int g = file_.tellg();
+    int p = file_.tellp();
 
     bool was_insert = false;
-    fstream_.seekg(0, std::ios::beg);
+    file_.seekg(0, std::ios::beg);
     int num = 0;
     char delimiter;
-    while (fstream_ >> delimiter && !was_insert) {
-        Block block(table_, fstream_);
+    while (file_ >> delimiter && !was_insert) {
+        Block block(table_, file_);
         if (block.insert(values)) {
             was_insert = true;
             saveBlock(block, num);
@@ -69,19 +72,25 @@ void Cursor::insert(const std::vector<Value>& values) {
         ++num;
     }
     if (!was_insert) {
-        char delimiter = 0;
         Block block(table_);
         block.insert(values);
-        fstream_.seekg(0, std::ios::end);
-        fstream_ << delimiter;
-        fstream_.write(block.getBuffer(), Block::kBlockSize);
+        if (!tmp_file_.is_open()) {
+            openTmpFile();
+        }
+        tmp_file_.seekg(0, std::ios::end);
+        int number = kNewBlockNumber_;
+        tmp_file_.write((char*) &number, sizeof(int));
+        int status = static_cast<int>(BlockStatus::new_block);
+        tmp_file_.write((char*) &status, sizeof(int));
+        tmp_file_.write(block.getBuffer(), Block::kBlockSize);
+        tmp_file_.flush();
     }
 
-    if (fstream_.fail()) {
-        fstream_.clear();
+    if (file_.fail()) {
+        file_.clear();
     }
-    fstream_.seekg(g);
-    fstream_.seekp(p);
+    file_.seekg(g);
+    file_.seekp(p);
 }
 
 void Cursor::update(const std::vector<Value>& values) {
@@ -94,10 +103,74 @@ void Cursor::remove() {
     block_.remove();
 }
 
+void Cursor::commit() {
+    if (was_block_changed_) {
+        was_block_changed_ = false;
+        saveBlock(block_, current_block_);
+    }
+
+    Engine::setLastPerformingId(Engine::getLastCompletedId() + 1);
+    tmp_file_.seekg(Engine::kTableNameLength);
+    int number;
+    int status;
+    while (tmp_file_.read((char*) &number, sizeof(int))) {
+        tmp_file_.read((char*) &status, sizeof(int));
+        auto blockStatus = static_cast<BlockStatus>(status);
+        int p = file_.tellp();
+        if (blockStatus == BlockStatus::updated_block) {
+            file_.seekp(number * (1 + Block::kBlockSize) + 1);
+        } else if (blockStatus == BlockStatus::new_block) {
+            file_.seekp(0, std::ios::end);
+            char delimiter = 0;
+            file_ << delimiter;
+        }
+        char* buffer = new char[Block::kBlockSize];
+        tmp_file_.read(buffer, Block::kBlockSize);
+        file_.write(buffer, Block::kBlockSize);
+        delete[] buffer;
+        file_.seekp(p);
+    }
+    tmp_file_.clear();
+    Engine::setLastCompletedId(Engine::getLastPerformingId());
+}
+
 void Cursor::saveBlock(Block& block, int num) {
-    int p = fstream_.tellp();
-    fstream_.seekp(num * (1 + Block::kBlockSize) + 1);
-    fstream_.write(block.getBuffer(), Block::kBlockSize);
-    fstream_.seekp(p);
+    if (!tmp_file_.is_open()) {
+        openTmpFile();
+    }
+
+    tmp_file_.seekg(Engine::kTableNameLength);
+    bool is_new_tmp_block = true;
+    int number;
+    int status;
+    while (tmp_file_.read((char*) &number, sizeof(int))) {
+        tmp_file_.read((char*) &status, sizeof(int));
+        if (number == num) {
+            is_new_tmp_block = false;
+            tmp_file_.seekp(tmp_file_.tellg());
+            tmp_file_.write(block.getBuffer(), Block::kBlockSize);
+        }
+    }
+    tmp_file_.clear();
+
+    if (is_new_tmp_block) {
+        tmp_file_.seekp(0, std::ios::end);
+        tmp_file_.write((char*) &num, sizeof(int));
+        int status = static_cast<int>(BlockStatus::updated_block);
+        tmp_file_.write((char*) &status, sizeof(int));
+        tmp_file_.write(block.getBuffer(), Block::kBlockSize);
+    }
+
+    tmp_file_.flush();
+}
+
+void Cursor::openTmpFile() {
+    tmp_file_.open(
+            Engine::kTmpTableFile,
+            std::ios::binary | std::fstream::in | std::fstream::out | std::fstream::trunc
+    );
+    char table_name[Engine::kTableNameLength] = {0};
+    std::memcpy(table_name, table_.getName().c_str(), table_.getName().size());
+    tmp_file_.write(table_name, Engine::kTableNameLength);
 }
 

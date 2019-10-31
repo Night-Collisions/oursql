@@ -385,6 +385,7 @@ void QueryManager::insert(const Query& query,
     if (!e) {
         cursor.insert(v_arr);
     }
+    cursor.commit();
 }
 
 void QueryManager::update(const Query& query,
@@ -538,6 +539,8 @@ void QueryManager::update(const Query& query,
             }
         }
     }
+
+    cursor.commit();
 }
 
 void QueryManager::remove(const Query& query,
@@ -576,6 +579,8 @@ void QueryManager::remove(const Query& query,
             cursor.remove();
         }
     }
+
+    cursor.commit();
 }
 
 Table QueryManager::resolveRelationalOperTree(
