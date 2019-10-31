@@ -78,8 +78,12 @@ void Cursor::insert(const std::vector<Value>& values) {
             openTmpFile();
         }
         tmp_file_.seekg(0, std::ios::end);
-        tmp_file_ << kNewBlockNumber_ << static_cast<int>(BlockStatus::new_block);
+        int number = kNewBlockNumber_;
+        tmp_file_.write((char*) &number, sizeof(int));
+        int status = static_cast<int>(BlockStatus::new_block);
+        tmp_file_.write((char*) &status, sizeof(int));
         tmp_file_.write(block.getBuffer(), Block::kBlockSize);
+        tmp_file_.flush();
     }
 
     if (file_.fail()) {
@@ -109,7 +113,8 @@ void Cursor::commit() {
     tmp_file_.seekg(Engine::kTableNameLength);
     int number;
     int status;
-    while (tmp_file_ >> number >> status) {
+    while (tmp_file_.read((char*) &number, sizeof(int))) {
+        tmp_file_.read((char*) &status, sizeof(int));
         auto blockStatus = static_cast<BlockStatus>(status);
         int p = file_.tellp();
         if (blockStatus == BlockStatus::updated_block) {
@@ -138,7 +143,8 @@ void Cursor::saveBlock(Block& block, int num) {
     bool is_new_tmp_block = true;
     int number;
     int status;
-    while (tmp_file_ >> number >> status) {
+    while (tmp_file_.read((char*) &number, sizeof(int))) {
+        tmp_file_.read((char*) &status, sizeof(int));
         if (number == num) {
             is_new_tmp_block = false;
             tmp_file_.seekp(tmp_file_.tellg());
@@ -149,9 +155,13 @@ void Cursor::saveBlock(Block& block, int num) {
 
     if (is_new_tmp_block) {
         tmp_file_.seekp(0, std::ios::end);
-        tmp_file_ << num << static_cast<int>(BlockStatus::updated_block);
+        tmp_file_.write((char*) &num, sizeof(int));
+        int status = static_cast<int>(BlockStatus::updated_block);
+        tmp_file_.write((char*) &status, sizeof(int));
         tmp_file_.write(block.getBuffer(), Block::kBlockSize);
     }
+
+    tmp_file_.flush();
 }
 
 void Cursor::openTmpFile() {
