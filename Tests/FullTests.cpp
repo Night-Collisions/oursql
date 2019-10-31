@@ -678,8 +678,7 @@ TEST_F(UPDATE_TESTS, TEST_7) {
 TEST_F(UPDATE_TESTS, TEST_8) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table a(a int primary key);");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2);");
-    CHECK_REQUEST_ST_CLIENT(
-        "update a set a = 2 where a = 2;", 0, "");
+    CHECK_REQUEST_ST_CLIENT("update a set a = 2 where a = 2;", 0, "");
 }
 
 class WHERE_TESTS : public REQUEST_TESTS {};
@@ -1170,19 +1169,20 @@ TEST_F(UNION_TESTS, EXCEPTION_TEST_1) {
         exc::ExceptionType::access_table_nonexistent,
         "~~Exception 701:\n table f nonexistent.\n~~Exception in "
         "command:\"select * from a union f;\"\n");  // TODO: не существует
+    /*    CHECK_REQUEST_ST_CLIENT(
+            "select * from a union a;", -1,
+            ""); */ // TODO: если это риализованно и нормально работает, то перемести
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
+        "create table a_a (a int not null, b varchar(100));");
     CHECK_REQUEST_ST_CLIENT(
-        "select * from a union a;", -1,
-        "");  // TODO: если это риализованно и нормально работает, то перемести
+        "select * from a_a union a;", exc::ExceptionType::null_column_in_union,
+        "~~Exception 1104:\n Union requires all columns to be not "
+        "null.\n~~Exception in command:\"select * from a_a union a;\"\n");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-        "create table a_a (a unique int, b varchar(100));");
-    CHECK_REQUEST_ST_CLIENT("a_a union a;", -1,
-                            "");  // TODO: работа с уникальными
+        "create table a_b (a int, b varchar(100) primary key);");
+    CHECK_REQUEST_ST_CLIENT("select * from a union a_b;", -1, "");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-        "create table a_b (a int, b  primary key varchar(100));");
-    CHECK_REQUEST_ST_CLIENT("a union a_b;", -1,
-                            "");  // TODO: работа с уникальными
-    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-        "create table long_a (a int, b varchar(100), c varchar(100));");
+        "create table long_a (a int not null, b varchar(100) not null, c varchar(100) not null);");
     CHECK_REQUEST_ST_CLIENT("a union long_a;", -1,
                             "");  // TODO: не совпадает количество колонок
 }
