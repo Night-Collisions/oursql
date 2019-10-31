@@ -137,7 +137,6 @@ std::string drop_test(const std::string& request,
         client.connect();
         client.sendRequest(request);
         test_sleep(start_time + count * step_time);
-        std::cout << "Time sleep: " << start_time + count * step_time << std::endl;
         Server::get()->stop();
         Server::get()->run();
         client.connect();

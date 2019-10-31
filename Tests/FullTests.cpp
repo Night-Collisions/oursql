@@ -678,7 +678,11 @@ TEST_F(UPDATE_TESTS, TEST_7) {
 TEST_F(UPDATE_TESTS, TEST_8) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table a(a int primary key);");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2);");
-    CHECK_REQUEST_ST_CLIENT("update a set a = 2 where a = 2;", 0, "");
+    CHECK_REQUEST_ST_CLIENT(
+        "update a set a = 2 where a = 2;",
+        exc::ExceptionType::duplicated_unique,
+        "~~Exception 804 in table a:\n 2 is not unique is in the column "
+        "a.\n~~Exception in command:\"update a set a = 2 where a = 2;\"\n");
 }
 
 class WHERE_TESTS : public REQUEST_TESTS {};
@@ -1067,13 +1071,13 @@ TEST_F(JOIN_TESTS, AS_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "select Second.a.a, Second.b.b from (a as b INNER JOIN a on a.a = "
         "b.a) as Second;",
-        0, get_select_answer(
-            {"Second.a.a", "Second.b.b"}, {{"1", "Viktor"},
-                                           {"1", "Danila"},
-                                           {"1", "Viktor"},
-                                           {"1", "Danila"},
-                                           {"0", "Danila"},
-                                           {"3", "Ivan"}}));
+        0,
+        get_select_answer({"Second.a.a", "Second.b.b"}, {{"1", "Viktor"},
+                                                         {"1", "Danila"},
+                                                         {"1", "Viktor"},
+                                                         {"1", "Danila"},
+                                                         {"0", "Danila"},
+                                                         {"3", "Ivan"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select Second.b.a.a, Second.b.a.b from (a as b INNER JOIN a as b on "
         "b.a.a = b.a.a) as Second;",
@@ -1164,16 +1168,19 @@ TEST_F(UNION_TESTS, EXCEPTION_TEST_1) {
     /*    CHECK_REQUEST_ST_CLIENT(
             "select * from a union select * from b;", -1,
             ""); */ // Это даёт ошибку, т. к. вложенные селекты ещё не задовали.
-//    CHECK_REQUEST_ST_CLIENT(
-//        "select * from a union b;",
-//        exc::ExceptionType::access_table_nonexistent,
-//        "");  // TODO: не существует
-        CHECK_REQUEST_ST_CLIENT(
-            "select * from a union a;", 0,
-            get_select_answer({"a", "b"}, {{"0", "Vitia"},
-                                   {"0", "Viktor"},
-                                   {"1", "Viktor"},
-                                   {"1", "Vitichka"}}));  // TODO: если это риализованно и нормально работает, то перемести
+    //    CHECK_REQUEST_ST_CLIENT(
+    //        "select * from a union b;",
+    //        exc::ExceptionType::access_table_nonexistent,
+    //        "");  // TODO: не существует
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a union a;", 0,
+        get_select_answer(
+            {"a", "b"},
+            {{"0", "Vitia"},
+             {"0", "Viktor"},
+             {"1", "Viktor"},
+             {"1", "Vitichka"}}));  // TODO: если это риализованно и нормально
+                                    // работает, то перемести
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a_a (a int not null, b varchar(100));");
     CHECK_REQUEST_ST_CLIENT(
