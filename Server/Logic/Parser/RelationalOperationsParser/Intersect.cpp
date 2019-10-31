@@ -58,10 +58,12 @@ Table Intersect::makeIntersect(const Table& table1, const Table& table2,
     if (e) {
         return Table();
     }
+    std::map<std::string, std::vector<Value>> repeated2;
     for (auto& r : records2) {
         auto key = Helper::recordToConcat(r);
-        if (repeated_records.find(key) != repeated_records.end()) {
+        if (repeated_records.find(key) != repeated_records.end() && repeated2.find(key) == repeated2.end()) {
             intersected.push_back(r);
+            repeated2[key] = r;
         }
     }
 

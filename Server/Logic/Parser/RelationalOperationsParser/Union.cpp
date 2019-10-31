@@ -69,6 +69,7 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
         auto key = Helper::recordToConcat(r);
         if (repeated_records.find(key) == repeated_records.end()) {
             unioned.push_back(r);
+            repeated_records[key] = r;
         }
     }
 

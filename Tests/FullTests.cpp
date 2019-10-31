@@ -1180,24 +1180,30 @@ TEST_F(UNION_TESTS, EXCEPTION_TEST_1) {
         "null.\n~~Exception in command:\"select * from a_a union a;\"\n");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a_b (a int, b varchar(100) primary key);");
-    CHECK_REQUEST_ST_CLIENT("select * from a union a_b;", -1, "");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a union a_b;", exc::ExceptionType::null_column_in_union,
+        "~~Exception 1104:\n Union requires all columns to be not "
+        "null.\n~~Exception in command:\"select * from a union a_b;\"\n");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-        "create table long_a (a int not null, b varchar(100) not null, c varchar(100) not null);");
-    CHECK_REQUEST_ST_CLIENT("a union long_a;", -1,
-                            "");  // TODO: не совпадает количество колонок
+        "create table long_a (a int not null, b varchar(100) not null, c "
+        "varchar(100) not null);");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a union long_a;", exc::ExceptionType::column_sizes_union,
+        "~~Exception 1103:\n Tables must have the same column "
+        "sizes.\n~~Exception in command:\"select * from a union long_a;\"\n");
 }
 
 class INTERSECT_TESTS : public REQUEST_TESTS {
    public:
     void SetUp() override {
         CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-            "create table a (a int);\n"
+            "create table a (a int not null);\n"
             "insert into a values(0);\n"
             "insert into a values(0);\n"
             "insert into a values(1);\n"
             "insert into a values(4);");
         CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-            "create table b (a int,);\n"
+            "create table b (a int not null);\n"
             "insert into b values(1);\n"
             "insert into b values(1);\n"
             "insert into b values(2);");
@@ -1205,31 +1211,37 @@ class INTERSECT_TESTS : public REQUEST_TESTS {
 };
 
 TEST_F(INTERSECT_TESTS, TEST_1) {
-    CHECK_REQUEST_ST_CLIENT("a intersect b;", 0,
-                            get_select_answer({"a"}, {{"0"}, {"1"}}));
-    CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table a_a (a int);");
-    CHECK_REQUEST_ST_CLIENT("a_a intersect b;", 0, "");
-    CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-        "create table a_a (a unique int); insert into a_a values(2);");
-    CHECK_REQUEST_ST_CLIENT("a_a intersect a;", 0,
-                            get_select_answer({"a"}, {{"2"}}));
-    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a_a values(0);");
-    CHECK_REQUEST_ST_CLIENT("a_a intersect a intersect b;", 0,
-                            get_select_answer({"a"}, {{"0"}}));
-    CHECK_REQUEST_ST_CLIENT("(a_a intersect a) intersect (b);", 0,
-                            get_select_answer({"a"}, {{"0"}}));
+    CHECK_REQUEST_ST_CLIENT("select * from a intersect b;", 0,
+                            get_select_answer({"a"}, {{"1"}}));
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table a_a (a int not null);");
+    CHECK_REQUEST_ST_CLIENT("select * from a_a intersect b;", 0, "");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a_a values(2);");
+    CHECK_REQUEST_ST_CLIENT("select * from a_a intersect a;", 0, "");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a_a values(1);");
+    CHECK_REQUEST_ST_CLIENT("select * from a_a intersect a intersect b;", 0,
+                            get_select_answer({"a"}, {{"1"}}));
+    CHECK_REQUEST_ST_CLIENT("select * from (a_a intersect a) as i intersect b;",
+                            0, get_select_answer({"a"}, {{"1"}}));
+    CHECK_REQUEST_ST_CLIENT("select * from b intersect b;", 0,
+                            get_select_answer({"a"}, {{"1"}, {"2"}}));
 }
 
 TEST_F(INTERSECT_TESTS, EXCEPTION_TEST_1) {
-    CHECK_REQUEST_ST_CLIENT("select * from a intersect select * from b;", -1,
-                            "");
-    CHECK_REQUEST_ST_CLIENT("a_a intersect b;",
-                            exc::ExceptionType::access_table_nonexistent, "");
-    CHECK_REQUEST_ST_CLIENT("b intersect b;", -1, "0");
+    /*    CHECK_REQUEST_ST_CLIENT("select * from a intersect select * from b;",
+       -1,
+                                "");*/
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from a_a intersect b;",
+        exc::ExceptionType::access_table_nonexistent,
+        "~~Exception 701:\n table a_a nonexistent.\n~~Exception in "
+        "command:\"select * from a_a intersect b;\"\n");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table long_a (a int, b varchar(100), c varchar(100));");
-    CHECK_REQUEST_ST_CLIENT("a intersect long_a;", -1,
-                            "");  // TODO: не совпадает количество колонок
+    CHECK_REQUEST_ST_CLIENT("select * from a intersect long_a;",
+                            exc::ExceptionType::column_sizes_intersect,
+                            "~~Exception 1106:\n Tables must have the same "
+                            "column sizes.\n~~Exception in command:\"select * "
+                            "from a intersect long_a;\"\n");
 }
 
 class DROP_TESTS : public ::testing::Test {
