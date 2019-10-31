@@ -1274,10 +1274,9 @@ TEST_F(DROP_TESTS, DROP_TEST_1) {
 TEST_F(DROP_TESTS, INSERT_TEST_1) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a(a int, b real, c varchar(100));");
-    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (1, 0, '1');");
     CHECK_DROP_REQUEST_ST_CLIENT(
         "insert into a values (1, 0, '1');", "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", to_string(0.0), "1"}}),
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", to_string(0.0), "1"}}),
         "a a_meta");
 }
 
@@ -1286,9 +1285,10 @@ TEST_F(DROP_TESTS, DELETE_TEST_1) {
         "create table a(a int, b real, c varchar(100));");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (1, 1, '1');");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 2, '2');");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 3, '2');");
     CHECK_DROP_REQUEST_ST_CLIENT(
-        "delete from a where a = 2", "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", to_string(1.0), "1"}}),
+        "delete from a where a = 2;", "select * from a;", 0,
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", to_string(1.0), "1"}}),
         "a a_meta");
 }
 
@@ -1296,8 +1296,10 @@ TEST_F(DROP_TESTS, UPDATE_TEST_1) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a(a int, b real, c varchar(100));");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 2, '2');");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 2, '2');");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 2, '2');");
     CHECK_DROP_REQUEST_ST_CLIENT(
         "update a set a = 1, b = 1, c = '1';", "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", to_string(1.0), "1"}}),
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", to_string(1.0), "1"}, {"1", to_string(1.0), "1"}, {"1", to_string(1.0), "1"}}),
         "a a_meta");
 }

@@ -71,7 +71,7 @@ std::string check_request(const std::string& request, const long exception,
 void test_sleep(size_t time) {
 #if defined(WIN32) || defined(_WIN32) || \
     defined(__WIN32) && !defined(__CYGWIN__)
-    Sleep(time);
+    std::this_thread::sleep_for(std::chrono::milliseconds(time));
 #else
     usleep(time);
 #endif
@@ -135,9 +135,9 @@ std::string drop_test(const std::string& request,
         }
         Server::get()->run();
         client.connect();
-        std::string ans;
         client.sendRequest(request);
         test_sleep(start_time + count * step_time);
+        std::cout << "Time sleep: " << start_time + count * step_time << std::endl;
         Server::get()->stop();
         Server::get()->run();
         client.connect();
