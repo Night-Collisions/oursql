@@ -1164,14 +1164,16 @@ TEST_F(UNION_TESTS, EXCEPTION_TEST_1) {
     /*    CHECK_REQUEST_ST_CLIENT(
             "select * from a union select * from b;", -1,
             ""); */ // Это даёт ошибку, т. к. вложенные селекты ещё не задовали.
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from a union f;",
-        exc::ExceptionType::access_table_nonexistent,
-        "~~Exception 701:\n table f nonexistent.\n~~Exception in "
-        "command:\"select * from a union f;\"\n");  // TODO: не существует
-    /*    CHECK_REQUEST_ST_CLIENT(
-            "select * from a union a;", -1,
-            ""); */ // TODO: если это риализованно и нормально работает, то перемести
+//    CHECK_REQUEST_ST_CLIENT(
+//        "select * from a union b;",
+//        exc::ExceptionType::access_table_nonexistent,
+//        "");  // TODO: не существует
+        CHECK_REQUEST_ST_CLIENT(
+            "select * from a union a;", 0,
+            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                   {"0", "Viktor"},
+                                   {"1", "Viktor"},
+                                   {"1", "Vitichka"}}));  // TODO: если это риализованно и нормально работает, то перемести
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a_a (a int not null, b varchar(100));");
     CHECK_REQUEST_ST_CLIENT(
