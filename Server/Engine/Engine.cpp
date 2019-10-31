@@ -8,6 +8,8 @@
 // columns: reserved: 1 byte, n: 4 bytes, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
 
 Engine::Initializer Engine::initializer_;
+const std::string Engine::kTmpTableFile("tmp_table_1324ygoasdhvmzn14bfh");
+const std::string Engine::kStatusFile_( "status");
 
 std::string Engine::getPathToTable(const std::string& table_name) {
     return "DataBD/" + table_name;

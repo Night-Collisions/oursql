@@ -43,7 +43,7 @@ class Engine {
 
     static void setIds(int lastCompletedId, int lastPerformingId);
 
-    inline static const std::string kTmpTableFile = "tmp_table_1324ygoasdhvmzn14bfh";
+    static const std::string kTmpTableFile;
     static const size_t kTableNameLength = 128;
 
 private:
@@ -52,7 +52,7 @@ private:
         Initializer() { Engine::initialize(); }
     } initializer_;
 
-    inline static const std::string kStatusFile_ = "status";
+    static const std::string kStatusFile_;
     static const size_t kColumnNameLength_ = 128;
 };
 

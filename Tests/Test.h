@@ -84,7 +84,7 @@ std::string drop_test(const std::string& request,
                       const long checker_exception,
                       const std::string& checker_answer,
                       const std::string& db_files, ourSQL::client::Client& client,
-                      size_t start_time = 70, size_t step_time = 10,
+                      size_t start_time = 1, size_t step_time = 1,
                       size_t max_time = 60000);
 std::string get_select_answer(
     const std::vector<std::string>& column,

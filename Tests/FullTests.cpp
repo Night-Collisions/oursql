@@ -1064,16 +1064,16 @@ TEST_F(JOIN_TESTS, AS_TEST_1) {
         "~~Exception 702:\n column a.a in table t nonexistent.\n~~Exception in "
         "command:\"select a.a, t.a.b from a INNER JOIN a as t on a.a = "
         "t.a.a;\"\n");
-    /*    CHECK_REQUEST_ST_CLIENT(
-            "select Second.a.a, Second.b.b from (a as b INNER JOIN a on a.a = "
-            "b.a) as Second;",
-            0, //TODO: данила. тут явно мало записей выводит, я посмотрел,
-       реально больше должно быть get_select_answer({"Second.a.a",
-       "Second.b.b"}, {{"1", "Viktor"},
-                                                               {"1", "Danila"},
-                                                               {"0", "Danila"},
-                                                               {"3",
-       "Ivan"}}));*/
+    CHECK_REQUEST_ST_CLIENT(
+        "select Second.a.a, Second.b.b from (a as b INNER JOIN a on a.a = "
+        "b.a) as Second;",
+        0, get_select_answer(
+            {"Second.a.a", "Second.b.b"}, {{"1", "Viktor"},
+                                           {"1", "Danila"},
+                                           {"1", "Viktor"},
+                                           {"1", "Danila"},
+                                           {"0", "Danila"},
+                                           {"3", "Ivan"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select Second.b.a.a, Second.b.a.b from (a as b INNER JOIN a as b on "
         "b.a.a = b.a.a) as Second;",
@@ -1164,14 +1164,16 @@ TEST_F(UNION_TESTS, EXCEPTION_TEST_1) {
     /*    CHECK_REQUEST_ST_CLIENT(
             "select * from a union select * from b;", -1,
             ""); */ // Это даёт ошибку, т. к. вложенные селекты ещё не задовали.
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from a union f;",
-        exc::ExceptionType::access_table_nonexistent,
-        "~~Exception 701:\n table f nonexistent.\n~~Exception in "
-        "command:\"select * from a union f;\"\n");  // TODO: не существует
-    /*    CHECK_REQUEST_ST_CLIENT(
-            "select * from a union a;", -1,
-            ""); */ // TODO: если это риализованно и нормально работает, то перемести
+//    CHECK_REQUEST_ST_CLIENT(
+//        "select * from a union b;",
+//        exc::ExceptionType::access_table_nonexistent,
+//        "");  // TODO: не существует
+        CHECK_REQUEST_ST_CLIENT(
+            "select * from a union a;", 0,
+            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                   {"0", "Viktor"},
+                                   {"1", "Viktor"},
+                                   {"1", "Vitichka"}}));  // TODO: если это риализованно и нормально работает, то перемести
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a_a (a int not null, b varchar(100));");
     CHECK_REQUEST_ST_CLIENT(
@@ -1287,10 +1289,9 @@ TEST_F(DROP_TESTS, DROP_TEST_1) {
 TEST_F(DROP_TESTS, INSERT_TEST_1) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a(a int, b real, c varchar(100));");
-    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (1, 0, '1');");
     CHECK_DROP_REQUEST_ST_CLIENT(
         "insert into a values (1, 0, '1');", "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", to_string(0.0), "1"}}),
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", to_string(0.0), "1"}}),
         "a a_meta");
 }
 
@@ -1299,9 +1300,10 @@ TEST_F(DROP_TESTS, DELETE_TEST_1) {
         "create table a(a int, b real, c varchar(100));");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (1, 1, '1');");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 2, '2');");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 3, '2');");
     CHECK_DROP_REQUEST_ST_CLIENT(
-        "delete from a where a = 2", "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", to_string(1.0), "1"}}),
+        "delete from a where a = 2;", "select * from a;", 0,
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", to_string(1.0), "1"}}),
         "a a_meta");
 }
 
@@ -1309,8 +1311,12 @@ TEST_F(DROP_TESTS, UPDATE_TEST_1) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a(a int, b real, c varchar(100));");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 2, '2');");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 2, '2');");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 2, '2');");
     CHECK_DROP_REQUEST_ST_CLIENT(
         "update a set a = 1, b = 1, c = '1';", "select * from a;", 0,
-        get_select_answer({"a", "b", "c"}, {{"1", to_string(1.0), "1"}}),
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", to_string(1.0), "1"},
+                                                  {"1", to_string(1.0), "1"},
+                                                  {"1", to_string(1.0), "1"}}),
         "a a_meta");
 }
