@@ -1064,16 +1064,16 @@ TEST_F(JOIN_TESTS, AS_TEST_1) {
         "~~Exception 702:\n column a.a in table t nonexistent.\n~~Exception in "
         "command:\"select a.a, t.a.b from a INNER JOIN a as t on a.a = "
         "t.a.a;\"\n");
-    /*    CHECK_REQUEST_ST_CLIENT(
-            "select Second.a.a, Second.b.b from (a as b INNER JOIN a on a.a = "
-            "b.a) as Second;",
-            0, //TODO: данила. тут явно мало записей выводит, я посмотрел,
-       реально больше должно быть get_select_answer({"Second.a.a",
-       "Second.b.b"}, {{"1", "Viktor"},
-                                                               {"1", "Danila"},
-                                                               {"0", "Danila"},
-                                                               {"3",
-       "Ivan"}}));*/
+    CHECK_REQUEST_ST_CLIENT(
+        "select Second.a.a, Second.b.b from (a as b INNER JOIN a on a.a = "
+        "b.a) as Second;",
+        0, get_select_answer(
+            {"Second.a.a", "Second.b.b"}, {{"1", "Viktor"},
+                                           {"1", "Danila"},
+                                           {"1", "Viktor"},
+                                           {"1", "Danila"},
+                                           {"0", "Danila"},
+                                           {"3", "Ivan"}}));
     CHECK_REQUEST_ST_CLIENT(
         "select Second.b.a.a, Second.b.a.b from (a as b INNER JOIN a as b on "
         "b.a.a = b.a.a) as Second;",
@@ -1182,7 +1182,8 @@ TEST_F(UNION_TESTS, EXCEPTION_TEST_1) {
         "create table a_b (a int, b varchar(100) primary key);");
     CHECK_REQUEST_ST_CLIENT("select * from a union a_b;", -1, "");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
-        "create table long_a (a int not null, b varchar(100) not null, c varchar(100) not null);");
+        "create table long_a (a int not null, b varchar(100) not null, c "
+        "varchar(100) not null);");
     CHECK_REQUEST_ST_CLIENT("a union long_a;", -1,
                             "");  // TODO: не совпадает количество колонок
 }
@@ -1301,6 +1302,8 @@ TEST_F(DROP_TESTS, UPDATE_TEST_1) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2, 2, '2');");
     CHECK_DROP_REQUEST_ST_CLIENT(
         "update a set a = 1, b = 1, c = '1';", "select * from a;", 0,
-        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", to_string(1.0), "1"}, {"1", to_string(1.0), "1"}, {"1", to_string(1.0), "1"}}),
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"1", to_string(1.0), "1"},
+                                                  {"1", to_string(1.0), "1"},
+                                                  {"1", to_string(1.0), "1"}}),
         "a a_meta");
 }
