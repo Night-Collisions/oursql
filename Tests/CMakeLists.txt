@@ -18,11 +18,6 @@ macro(package_set_test TESTNAME)
     set(ALL_TEST ${ALL_TEST} ${ARGN})
 endmacro()
 
-macro(package_add_test_with_parser TESTNAME)
-    add_executable(${TESTNAME} ${ARGN} Test.h Test.cpp)
-    package_set_test(${TESTNAME} ${ARGN})
-endmacro()
-
 macro(package_add_test TESTNAME)
     add_executable(${TESTNAME} ${ARGN} Test.h Test.cpp)
     package_set_test(${TESTNAME} ${ARGN})
@@ -30,4 +25,4 @@ endmacro()
 
 init(${PROJECT_BINARY_DIR})
 
-package_add_test_with_parser(FullTests FullTests.cpp)
+package_add_test(FullTests FullTests.cpp)

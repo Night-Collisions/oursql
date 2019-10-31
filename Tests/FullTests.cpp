@@ -675,6 +675,13 @@ TEST_F(UPDATE_TESTS, TEST_7) {
         "int.\n~~Exception in command:\"update a set a = '2';\"\n");
 }
 
+TEST_F(UPDATE_TESTS, TEST_8) {
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table a(a int primary key);");
+    CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2);");
+    CHECK_REQUEST_ST_CLIENT(
+        "update a set a = 2 where a = 2;", 0, "");
+}
+
 class WHERE_TESTS : public REQUEST_TESTS {};
 
 TEST_F(WHERE_TESTS, TEST_1) {
