@@ -17,7 +17,7 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
         for (int i = 0; i < siz1; ++i) {
             col_names.push_back(columns1[i].getName());
             if (!Helper::checkTypes(columns1[i].getType(),
-                                   columns2[i].getType()) ||
+                                    columns2[i].getType()) ||
                 (columns1[i].getN() != columns2[i].getN())) {
                 e.reset(new exc::UnionException(
                     "Columns must have the same type order.",
@@ -64,7 +64,7 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
             unioned.push_back(r);
         }
     }
-    
+
     for (auto& r : records2) {
         auto key = Helper::recordToConcat(r);
         if (repeated_records.find(key) == repeated_records.end()) {

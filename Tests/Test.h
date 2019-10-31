@@ -78,14 +78,15 @@ class Server {
 
 void clearDB();
 std::string check_request(const std::string& request, const long exception,
-                          const std::string& answer, ourSQL::client::Client& client);
+                          const std::string& answer,
+                          ourSQL::client::Client& client);
 std::string drop_test(const std::string& request,
                       const std::string& checker_request,
                       const long checker_exception,
                       const std::string& checker_answer,
-                      const std::string& db_files, ourSQL::client::Client& client,
-                      size_t start_time = 1, size_t step_time = 1,
-                      size_t max_time = 60000);
+                      const std::string& db_files,
+                      ourSQL::client::Client& client, size_t start_time = 1,
+                      size_t step_time = 1, size_t max_time = 60000);
 std::string get_select_answer(
     const std::vector<std::string>& column,
     const std::vector<std::vector<std::string>>& data);
