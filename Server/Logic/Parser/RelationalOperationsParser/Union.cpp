@@ -16,7 +16,7 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
     if (siz1 == siz2) {
         for (int i = 0; i < siz1; ++i) {
             col_names.push_back(columns1[i].getName());
-            if (Helper::checkTypes(columns1[i].getType(),
+            if (!Helper::checkTypes(columns1[i].getType(),
                                    columns2[i].getType()) ||
                 (columns1[i].getN() != columns2[i].getN())) {
                 e.reset(new exc::UnionException(
@@ -57,6 +57,14 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
     if (e) {
         return Table();
     }
+
+    for (auto& r : records1) {
+        auto key = Helper::recordToConcat(r);
+        if (repeated_records.find(key) != repeated_records.end()) {
+            unioned.push_back(r);
+        }
+    }
+    
     for (auto& r : records2) {
         auto key = Helper::recordToConcat(r);
         if (repeated_records.find(key) == repeated_records.end()) {
@@ -76,10 +84,9 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
     std::vector<int> varchar_lengths;
     std::vector<std::set<ColumnConstraint>> constraints;
     for (int i = 0; i < table1.getColumns().size(); ++i) {
-        table.getColumns()[i].setType(table1.getColumns()[i].getType());
-        table.getColumns()[i].setN(table1.getColumns()[i].getN());
-        table.getColumns()[i].setConstraints(
-            table1.getColumns()[i].getConstraints());
+        table.setType(table1.getColumns()[i].getType(), i);
+        table.setN(table1.getColumns()[i].getN(), i);
+        table.setConstraints(table1.getColumns()[i].getConstraints(), i);
     }
 
     return table;

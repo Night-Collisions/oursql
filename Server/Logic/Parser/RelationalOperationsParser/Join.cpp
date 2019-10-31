@@ -61,11 +61,25 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             record_to_hash = records2;
             record_to_run = records1;
             key_col = col2;
-            pos_right =
+            pos_right = 0;
+            pos_left = 0;
+            for (auto& c : table2.getColumns()) {
+                if (c.getName() == key_col) {
+                    break;
+                }
+                ++pos_right;
+            }
+            for (auto& c : table1.getColumns()) {
+                if (c.getName() == col1) {
+                    break;
+                }
+                ++pos_left;
+            }
+            /*pos_right =
                 std::distance(column_info[table2.getName()].begin(),
-                              column_info[table2.getName()].find(key_col));
-            pos_left = std::distance(column_info[table1.getName()].begin(),
-                                     column_info[table1.getName()].find(col1));
+                              column_info[table2.getName()].find(key_col));*/
+           /* pos_left = std::distance(column_info[table1.getName()].begin(),
+                                     column_info[table1.getName()].find(col1));*/
             tablename_to_run = table1.getName();
             tablename_to_hash = table2.getName();
             table_to_run = table1;
@@ -74,11 +88,25 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             record_to_hash = records1;
             record_to_run = records2;
             key_col = col1;
-            pos_right =
+/*            pos_right =
                 std::distance(column_info[table1.getName()].begin(),
                               column_info[table1.getName()].find(key_col));
             pos_left = std::distance(column_info[table2.getName()].begin(),
-                                     column_info[table2.getName()].find(col2));
+                                     column_info[table2.getName()].find(col2));*/
+            pos_right = 0;
+            pos_left = 0;
+            for (auto& c : table1.getColumns()) {
+                if (c.getName() == key_col) {
+                    break;
+                }
+                ++pos_right;
+            }
+            for (auto& c : table2.getColumns()) {
+                if (c.getName() == col2) {
+                    break;
+                }
+                ++pos_left;
+            }
             tablename_to_run = table2.getName();
             tablename_to_hash = table1.getName();
             table_to_run = table2;
