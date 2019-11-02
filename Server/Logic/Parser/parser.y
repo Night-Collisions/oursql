@@ -449,7 +449,10 @@ sub_rel_expr:
     LPAREN relational_expr RPAREN AS id { 
         $2->setAlias($5->getName());
         $$ = $2;
-    };
+    } /*|
+    relational_expr {
+        $$ = $1;
+    };*/
 
 relational_expr:
     relational_expr join_opers sub_rel_expr join_cond {
@@ -475,7 +478,6 @@ join_cond:
     ON root_expr { $$ = $2; } |
     /*empty*/ { $$ = nullptr; };
 
-
 %%
 
 void yyerror(const char *s) {
@@ -492,7 +494,6 @@ void destroy() {
     identList.clear();
     selectList.clear();
     constantList.clear();
-    ex = nullptr;
     yylval.varcharLen = 0;
 
     parseTree = nullptr;

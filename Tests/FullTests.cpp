@@ -906,7 +906,7 @@ TEST_F(JOIN_TESTS, INNER_TEST_1) {
             {"a.a", "b.b", "a.b"},
             {{"0", to_string(2), "Danila"}, {"3", to_string(0.2), "Ivan"}}));
     CHECK_REQUEST_ST_CLIENT(
-        "select * from c INNER JOIN a on c.a = a.b;", 0,
+        "select * from a INNER JOIN c on c.a = a.b;", 0,
         get_select_answer({"a.a", "a.b", "c.a", "c.b"},
                           {
                               {"1", "Viktor", "Viktor", "Parsed this request."},
@@ -1008,13 +1008,8 @@ TEST_F(JOIN_TESTS, TEST_1) {
         get_select_answer({"t.a.b", "b.b", "t.c.b"},
                           {{"Danila", to_string(2.0), "Write this test."},
                            {"Ivan", to_string(0.2), "Save this data."},
-                           {"Danila", "null", "Write this test."},
-                           {"Viktor", "null", "Parsed this request."}}));
-    /*    CHECK_REQUEST_ST_CLIENT(
-            "select t.a.a, b.b, t.c.b from (a join c on a.b = c.a) as t LEFT
-       JOIN " "b on t.a.a "
-            "= b.a;",
-            0, "");*/  // TODO: фиг его знает что выдаст.
+                           {"Viktor", "null", "Parsed this request."},
+                           {"Danila", "null", "Write this test."}}));
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a_filter(a int);"
         "insert into a_filter values(1);"
@@ -1073,8 +1068,8 @@ TEST_F(JOIN_TESTS, AS_TEST_1) {
         "b.a) as Second;",
         0,
         get_select_answer({"Second.a.a", "Second.b.b"}, {{"1", "Viktor"},
-                                                         {"1", "Danila"},
                                                          {"1", "Viktor"},
+                                                         {"1", "Danila"},
                                                          {"1", "Danila"},
                                                          {"0", "Danila"},
                                                          {"3", "Ivan"}}));

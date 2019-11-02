@@ -31,7 +31,6 @@
 
     int lineno = 1;
     long long int symbols = 0;
-    //todo: free?
     char *tmp_str = (char *) malloc(100);
     std::string in;
     std::string local_str;

@@ -10,6 +10,7 @@ class Helper {
    public:
     static std::string recordToConcat(const std::vector<Value>& r);
     static bool checkTypes(DataType a, DataType b);
+    static std::string getCorrectTablePrefix(const std::string& s);
 };
 
 #endif  // OURSQL_SERVER_LOGIC_PARSER_RELATIONALOPERATIONSPARSER_HELPER_H_

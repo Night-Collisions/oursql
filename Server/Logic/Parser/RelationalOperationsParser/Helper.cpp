@@ -26,3 +26,7 @@ std::string Helper::recordToConcat(const std::vector<Value>& r) {
 
     return res;
 }
+
+std::string Helper::getCorrectTablePrefix(const std::string& s) {
+    return (s.empty()) ? ("") : (s + ".");
+}

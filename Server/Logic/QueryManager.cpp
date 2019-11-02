@@ -13,6 +13,7 @@
 #include "Parser/Nodes/IdentList.h"
 #include "Parser/Nodes/RelExpr.h"
 #include "Parser/Nodes/SelectList.h"
+#include "Parser/RelationalOperationsParser/Helper.h"
 #include "Parser/RelationalOperationsParser/Intersect.h"
 #include "Parser/RelationalOperationsParser/Join.h"
 #include "Parser/RelationalOperationsParser/Union.h"
@@ -109,8 +110,7 @@ void printSelect(const Table& table, t_column_infos column_infos,
     out << "=======\n";
     for (auto& c : cols_from_parser) {
         auto expr = static_cast<Expression*>(c);
-        std::string prefix =
-            (table.getName().empty()) ? ("") : (table.getName() + ".");
+        std::string prefix = Helper::getCorrectTablePrefix(table.getName());
         if (expr->getConstant()->getName() == "*") {
             for (auto& k : table.getColumns()) {
                 out << prefix + k.getName() + ": " +
