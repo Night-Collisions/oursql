@@ -1054,7 +1054,7 @@ TEST_F(JOIN_TESTS, AS_TEST_1) {
         "select Second.a.a, Second.a.b from (a INNER JOIN a on a.a = a.a) as "
         "Second;",
         exc::ExceptionType::ambiguous_column_name,
-        "~~Exception 7:\n ambiguous column name a.a\n~~Exception in "
+        "~~Exception 7:\n ambiguous column name a\n~~Exception in "
         "command:\"select Second.a.a, Second.a.b from (a INNER JOIN a on a.a = "
         "a.a) as Second;\"\n");
     CHECK_REQUEST_ST_CLIENT(
