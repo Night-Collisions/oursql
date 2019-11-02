@@ -27,16 +27,23 @@ class Cursor {
     void commit();
 
 private:
-    void saveBlock(Block& block, int num);
+    void setBlocksIds();
+    void saveBlock(Block& block, int id);
     void openTmpFile();
+    int getNextId(int id);
+    void setNextId(int id, int nextId);
+    int getPrevId(int id);
+    void setPrevId(int id, int prevId);
 
     static const int kNewBlockNumber_ = -1;
     std::fstream file_;
     std::fstream tmp_file_;
     Table table_;
     Block block_;
-    int current_block_ = 0;
+    int current_block_ = Block::kNullBlockId;
     bool was_block_changed_ = false;
+    int last_empty_block_id_ = Block::kNullBlockId;
+    int last_non_empty_block_id_ = Block::kNullBlockId;
 };
 
 #endif

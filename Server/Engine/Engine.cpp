@@ -71,30 +71,28 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
     try {
         std::ofstream metafile(getPathToTableMeta(table.getName()), std::ios::binary);
         unsigned char reserved = 0;
-        metafile << reserved;
+        metafile.write((char*) &reserved, sizeof(unsigned char));
         char table_name[kTableNameLength] = {0};
         std::memcpy(table_name, table.getName().c_str(), table.getName().size());
         metafile.write(table_name, kTableNameLength);
         unsigned char columns_count = table.getColumns().size();
-        metafile << columns_count;
+        metafile.write((char*) &columns_count, sizeof(unsigned char));
 
         for (const auto& column : table.getColumns()) {
             unsigned char reserved = 0;
-            metafile << reserved;
+            metafile.write((char*) &reserved, sizeof(unsigned char));
             int n = column.getN();
-            metafile.write((char*) &n, sizeof(n));
+            metafile.write((char*) &n, sizeof(int));
             unsigned char type = static_cast<unsigned char>(column.getType());
-            metafile << type;
+            metafile.write((char*) &type, sizeof(unsigned char));
             unsigned char constraints = column.getBitConstraint();
-            metafile << constraints;
+            metafile.write((char*) &constraints, sizeof(unsigned char));
             char column_name[kColumnNameLength_] = {0};
             std::memcpy(column_name, column.getName().c_str(), column.getName().size());
             metafile.write(column_name, kColumnNameLength_);
         }
 
         std::fstream file(getPathToTable(table.getName()), std::ios::binary | std::ios::out);
-        char delimiter = 0;
-        file << delimiter;
         Block block(table);
         file.write(block.getBuffer(), Block::kBlockSize);
 
@@ -115,22 +113,22 @@ Table Engine::show(const std::string& table_name, std::unique_ptr<exc::Exception
     Table table;
 
     unsigned char reserved;
-    metafile >> reserved;
+    metafile.read((char*) &reserved, sizeof(unsigned char));
     char table_name_[kTableNameLength];
     metafile.read(table_name_, kTableNameLength);
     table.setName(table_name);
     unsigned char columns_count;
-    metafile >> columns_count;
+    metafile.read((char*) &columns_count, sizeof(unsigned char));
 
     for (int i = 0; i < columns_count; ++i) {
         unsigned char reserved;
-        metafile >> reserved;
+        metafile.read((char*) &reserved, sizeof(unsigned char));
         int n;
         metafile.read((char*) &n, sizeof(n));
         unsigned char type;
-        metafile >> type;
+        metafile.read((char*) &type, sizeof(unsigned char));
         unsigned char constraints;
-        metafile >> constraints;
+        metafile.read((char*) &constraints, sizeof(unsigned char));
         char column_name[kTableNameLength];
         metafile.read(column_name, kColumnNameLength_);
         std::unique_ptr<exc::Exception> e;
@@ -195,12 +193,21 @@ void Engine::freeMemory(const std::string& table_name) {
     std::string salt("afhh2lhrlfjlsdjfnh34232432gfg");
     std::fstream old_file(getPathToTable(table_name), std::ios::binary | std::ios::in);
     std::fstream new_file(getPathToTable(table_name) + salt, std::ios::binary | std::ios::out);
+    
+    int id = Block::kNullBlockId;
     while (!old_file.eof()) {
         Block block(table, old_file);
         if (block.getCount() != 0) {
-            new_file << block.getBuffer();
+            block.setPrevBlockId(id);
+            id = (id == Block::kNullBlockId) ? (0) : (id + 1);
+            new_file.write(block.getBuffer(), Block::kBlockSize);
         }
     }
+    if (id == Block::kNullBlockId) {
+        Block block(table);
+        new_file.write(block.getBuffer(), Block::kBlockSize);
+    }
+    
     old_file.close();
     new_file.close();
     std::remove(getPathToTable(table_name).c_str());
