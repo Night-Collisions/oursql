@@ -11,6 +11,11 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
         return Table();
     }
 
+    if (table1.getName() == table2.getName()) {
+        e.reset(new exc::AmbiguousColumnName("ambiguous column name " + table1.getColumns()[0].getName()));
+        return Table();
+    }
+
     std::map<std::string, std::map<std::string, Column>> column_info;
     for (auto& c : table1.getColumns()) {
         column_info[table1.getName()][c.getName()] = c;
@@ -269,6 +274,8 @@ bool Join::isHashJoinOk(
         !child2->childs()[1]) {
         ok2 = true;
     }
+
+    //TODO: когда имя таблицы пустое, рассматривать соединенное имя
 
     auto tbl_name1 = static_cast<Ident*>(child1->getConstant())->getTableName();
     auto tbl_name2 = static_cast<Ident*>(child2->getConstant())->getTableName();

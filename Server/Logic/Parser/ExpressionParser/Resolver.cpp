@@ -840,10 +840,10 @@ std::map<std::string, std::string> Resolver::getRecordMap(
     int counter = 0;
     for (auto& k : cols) {
         auto c = k.getName();
-        if (m.find(c) != m.end()) {
+/*        if (m.find(c) != m.end()) {
             e.reset(new exc::AmbiguousColumnName("ambiguous column name " + c));
             return m;
-        }
+        }*/
         if (record[counter].is_null) {
             if (k.getType() == DataType::varchar) {
                 m[c] = "";
