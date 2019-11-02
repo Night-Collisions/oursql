@@ -1076,8 +1076,8 @@ TEST_F(JOIN_TESTS, AS_TEST_1) {
     CHECK_REQUEST_ST_CLIENT(
         "select Second.b.a.a, Second.b.a.b from (a as b INNER JOIN a as b on "
         "b.a.a = b.a.a) as Second;",
-        exc::ExceptionType::access_column_nonexistent,
-        "~~Exception 702:\n column a.a in table b nonexistent.\n~~Exception in "
+        exc::ExceptionType::ambiguous_column_name,
+        "~~Exception 7:\n ambiguous column name a\n~~Exception in "
         "command:\"select Second.b.a.a, Second.b.a.b from (a as b INNER JOIN a "
         "as b on b.a.a = b.a.a) as Second;\"\n");
     CHECK_REQUEST_ST_CLIENT(
