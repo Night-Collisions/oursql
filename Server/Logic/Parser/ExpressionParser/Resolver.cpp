@@ -1,4 +1,5 @@
 #include "Resolver.h"
+#include <iostream>
 #include "../Nodes/Ident.h"
 #include "../Nodes/IntConstant.h"
 #include "../Nodes/RealConstant.h"
@@ -7,21 +8,25 @@ std::array<func, static_cast<unsigned int>(ExprUnit::Count)>
     Resolver::operations_ = {equal,     notEqual, greater, greaterEqual, less,
                              lessEqual, logicAnd, logicOr, logicNot,     mul,
                              div,       add,      sub};
-std::string Resolver::table_;
-std::map<std::string, Column> Resolver::all_columns_;
+std::string Resolver::table1_;
+std::string Resolver::table2_;
+t_column_infos Resolver::column_infos_;
 
-std::string Resolver::resolve(const std::string& table,
-                              std::map<std::string, Column> all_columns,
-                              Expression* root,
-                              std::map<std::string, std::string> record,
+std::string Resolver::resolve(const std::string& table1,
+                              const std::string& table2,
+                              t_column_infos column_infos, Expression* root,
+                              t_record_infos record,
                               std::unique_ptr<exc::Exception>& e) {
-    table_ = table;
-    all_columns_ = std::move(all_columns);
+    table1_ = table1;
+    table2_ = table2;
+    column_infos_ = column_infos;
 
-    calculate(root, record, e);
-    if (!e && root && root->getConstant()->getNodeType() == NodeType::ident) {
-        return record[root->getConstant()->getName()];
+    if (!e && root && root->getConstant() &&
+        root->getConstant()->getNodeType() == NodeType::ident) {
+        auto id = static_cast<Ident*>(root->getConstant());
+        return record[id->getTableName()][id->getName()];
     }
+    calculate(root, record, e);
     return (root && !e)
                ? ((static_cast<Constant*>(root->getConstant())->getValue() ==
                        "null" ||
@@ -33,8 +38,7 @@ std::string Resolver::resolve(const std::string& table,
                : ("1");
 }
 
-void Resolver::calculate(Expression* root,
-                         std::map<std::string, std::string> record,
+void Resolver::calculate(Expression* root, t_record_infos record,
                          std::unique_ptr<exc::Exception>& e) {
     if (e) {
         return;
@@ -61,17 +65,17 @@ void Resolver::calculate(Expression* root,
     }
 }
 
-bool Resolver::compareTypes(const std::string& table_name,
-                            std::map<std::string, Column>& all_columns,
-                            Node* left, Node* right,
-                            std::unique_ptr<exc::Exception>& e,
+bool Resolver::compareTypes(const std::string& table1,
+                            const std::string& table2,
+                            t_column_infos& column_info, Node* left,
+                            Node* right, std::unique_ptr<exc::Exception>& e,
                             const CompareCondition& cond,
                             const std::string& oper = "") {
     DataType left_type = DataType::Count;
     DataType right_type = DataType::Count;
 
-    setDataTypes(left, right, left_type, right_type, table_name, all_columns,
-                 e);
+    setDataTypes(left, right, left_type, right_type, table1, table2,
+                 column_info, e);
     if (e) {
         return false;
     }
@@ -107,8 +111,7 @@ bool Resolver::compareTypes(const std::string& table_name,
     }
 }
 
-void Resolver::equal(Expression* root,
-                     std::map<std::string, std::string> record,
+void Resolver::equal(Expression* root, t_record_infos record,
                      std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -120,8 +123,8 @@ void Resolver::equal(Expression* root,
     DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
     setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
     if (e) {
         return;
     }
@@ -135,8 +138,7 @@ void Resolver::equal(Expression* root,
     root->setConstant(new IntConstant(res));
 }
 
-void Resolver::notEqual(Expression* root,
-                        std::map<std::string, std::string> record,
+void Resolver::notEqual(Expression* root, t_record_infos record,
                         std::unique_ptr<exc::Exception>& e) {
     equal(root, record, e);
     if (e) {
@@ -151,8 +153,7 @@ void Resolver::notEqual(Expression* root,
     }
 }
 
-void Resolver::greater(Expression* root,
-                       std::map<std::string, std::string> record,
+void Resolver::greater(Expression* root, t_record_infos record,
                        std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -165,8 +166,8 @@ void Resolver::greater(Expression* root,
     DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
     setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
     if (e) {
         return;
     }
@@ -202,8 +203,7 @@ void Resolver::greater(Expression* root,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::setStringValue(Expression* root,
-                              std::map<std::string, std::string> record,
+void Resolver::setStringValue(Expression* root, t_record_infos record,
                               std::unique_ptr<exc::Exception>& e,
                               std::string& a, std::string& b,
                               const CompareCondition& cond,
@@ -211,28 +211,51 @@ void Resolver::setStringValue(Expression* root,
     auto child1 = root->childs()[0];
     auto child2 = root->childs()[1];
 
-    if (!compareTypes(table_, all_columns_, child1->getConstant(),
+    if (!compareTypes(table1_, table2_, column_infos_, child1->getConstant(),
                       child2->getConstant(), e, cond, oper)) {
         return;
     }
 
-    auto constant1 = static_cast<Constant*>(child1->getConstant());
-    auto constant2 = static_cast<Constant*>(child2->getConstant());
-    if (constant1->getNodeType() == NodeType::ident) {
-        a = record[constant1->getName()];
-    } else {
-        a = constant1->getValue();
+    auto constant1 = child1->getConstant();
+    auto constant2 = child2->getConstant();
+
+    bindColumnToTable(constant1, e);
+    if (e) {
+        return;
+    }
+    bindColumnToTable(constant2, e);
+    if (e) {
+        return;
     }
 
-    if (child2->getConstant()->getNodeType() == NodeType::ident) {
-        b = record[constant2->getName()];
+    if (constant1->getNodeType() == NodeType::ident) {
+        auto id = static_cast<Ident*>(constant1);
+        a = record[id->getTableName()][id->getName()];
     } else {
-        b = constant2->getValue();
+        std::string val = static_cast<Constant*>(constant1)->getValue();
+        if (static_cast<Constant*>(constant1)->getDataType() !=
+            DataType::varchar) {
+            val = std::to_string(
+                std::stof(static_cast<Constant*>(constant1)->getValue()));
+        }
+        a = val;
+    }
+
+    if (constant2->getNodeType() == NodeType::ident) {
+        auto id = static_cast<Ident*>(constant2);
+        b = record[id->getTableName()][id->getName()];
+    } else {
+        std::string val = static_cast<Constant*>(constant2)->getValue();
+        if (static_cast<Constant*>(constant2)->getDataType() !=
+            DataType::varchar) {
+            val = std::to_string(
+                std::stof(static_cast<Constant*>(constant2)->getValue()));
+        }
+        b = val;
     }
 }
 
-void Resolver::greaterEqual(Expression* root,
-                            std::map<std::string, std::string> record,
+void Resolver::greaterEqual(Expression* root, t_record_infos record,
                             std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -245,8 +268,8 @@ void Resolver::greaterEqual(Expression* root,
     DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
     setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
     if (e) {
         return;
     }
@@ -282,7 +305,7 @@ void Resolver::greaterEqual(Expression* root,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::less(Expression* root, std::map<std::string, std::string> record,
+void Resolver::less(Expression* root, t_record_infos record,
                     std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -295,8 +318,8 @@ void Resolver::less(Expression* root, std::map<std::string, std::string> record,
     DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
     setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
     if (e) {
         return;
     }
@@ -332,8 +355,7 @@ void Resolver::less(Expression* root, std::map<std::string, std::string> record,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::lessEqual(Expression* root,
-                         std::map<std::string, std::string> record,
+void Resolver::lessEqual(Expression* root, t_record_infos record,
                          std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -346,8 +368,8 @@ void Resolver::lessEqual(Expression* root,
     DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
     setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
     if (e) {
         return;
     }
@@ -383,8 +405,7 @@ void Resolver::lessEqual(Expression* root,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::logicAnd(Expression* root,
-                        std::map<std::string, std::string> record,
+void Resolver::logicAnd(Expression* root, t_record_infos record,
                         std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -397,8 +418,8 @@ void Resolver::logicAnd(Expression* root,
     DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
     setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
     if (e) {
         return;
     }
@@ -436,8 +457,7 @@ void Resolver::logicAnd(Expression* root,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::logicOr(Expression* root,
-                       std::map<std::string, std::string> record,
+void Resolver::logicOr(Expression* root, t_record_infos record,
                        std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -450,8 +470,8 @@ void Resolver::logicOr(Expression* root,
     DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
     setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
     if (e) {
         return;
     }
@@ -489,7 +509,7 @@ void Resolver::logicOr(Expression* root,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::div(Expression* root, std::map<std::string, std::string> record,
+void Resolver::div(Expression* root, t_record_infos record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -502,8 +522,8 @@ void Resolver::div(Expression* root, std::map<std::string, std::string> record,
     DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
     setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
     if (e) {
         return;
     }
@@ -543,21 +563,22 @@ void Resolver::div(Expression* root, std::map<std::string, std::string> record,
     }
 }
 
-void Resolver::logicNot(Expression* root,
-                        std::map<std::string, std::string> record,
+void Resolver::logicNot(Expression* root, t_record_infos record,
                         std::unique_ptr<exc::Exception>& e) {
     auto child2 = root->childs()[1];
     std::string value;
+    bindColumnToTable(root->childs()[1]->getConstant(), e);
 
     if (child2->getConstant()->getNodeType() == NodeType::ident) {
-        value = record[child2->getConstant()->getName()];
+        auto id = static_cast<Ident*>(child2->getConstant());
+        value = record[id->getTableName()][id->getName()];
     } else {
         value = static_cast<Constant*>(child2->getConstant())->getValue();
     }
 
     DataType type2 = DataType::Count;
-    setDataType(root->childs()[1]->getConstant(), type2, table_, all_columns_,
-                e);
+    setDataType(root->childs()[1]->getConstant(), type2, table2_,
+                column_infos_[table2_], e);
     if (e) {
         return;
     }
@@ -588,7 +609,7 @@ void Resolver::logicNot(Expression* root,
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
-void Resolver::mul(Expression* root, std::map<std::string, std::string> record,
+void Resolver::mul(Expression* root, t_record_infos record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -601,8 +622,8 @@ void Resolver::mul(Expression* root, std::map<std::string, std::string> record,
     DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
     setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
     if (e) {
         return;
     }
@@ -633,7 +654,7 @@ void Resolver::mul(Expression* root, std::map<std::string, std::string> record,
     }
 }
 
-void Resolver::add(Expression* root, std::map<std::string, std::string> record,
+void Resolver::add(Expression* root, t_record_infos record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -646,8 +667,8 @@ void Resolver::add(Expression* root, std::map<std::string, std::string> record,
     DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
     setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
     if (e) {
         return;
     }
@@ -678,7 +699,7 @@ void Resolver::add(Expression* root, std::map<std::string, std::string> record,
     }
 }
 
-void Resolver::sub(Expression* root, std::map<std::string, std::string> record,
+void Resolver::sub(Expression* root, t_record_infos record,
                    std::unique_ptr<exc::Exception>& e) {
     std::string value1;
     std::string value2;
@@ -691,8 +712,8 @@ void Resolver::sub(Expression* root, std::map<std::string, std::string> record,
     DataType type1 = DataType::Count;
     DataType type2 = DataType::Count;
     setDataTypes(root->childs()[0]->getConstant(),
-                 root->childs()[1]->getConstant(), type1, type2, table_,
-                 all_columns_, e);
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
     if (e) {
         return;
     }
@@ -724,15 +745,27 @@ void Resolver::sub(Expression* root, std::map<std::string, std::string> record,
 }
 
 void Resolver::setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
-                            const std::string& table,
-                            std::map<std::string, Column> all_columns,
+                            const std::string& table1,
+                            const std::string& table2,
+                            t_column_infos column_infos,
                             std::unique_ptr<exc::Exception>& e) {
+    std::string table_name1 = table1;
+    std::string table_name2 = table2;
+    if (left->getNodeType() == NodeType::ident &&
+        right->getNodeType() == NodeType::ident) {
+        auto name1 = static_cast<Ident*>(left)->getTableName();
+        auto name2 = static_cast<Ident*>(right)->getTableName();
+        if (table1 == name2 && table2 == name1) {
+            std::swap(table_name1, table_name2);
+        }
+    }
+
     if (left->getNodeType() == NodeType::ident) {
         auto col_name = static_cast<Ident*>(left)->getName();
-        if (all_columns.find(col_name) != all_columns.end()) {
-            a = all_columns[col_name].getType();
+        if (column_infos[table_name1].find(col_name) != column_infos[table_name1].end()) {
+            a = column_infos[table_name1][col_name].getType();
         } else {
-            e.reset(new exc::acc::ColumnNonexistent(col_name, table));
+            e.reset(new exc::acc::ColumnNonexistent(col_name, table_name1));
             return;
         }
     } else {
@@ -741,10 +774,10 @@ void Resolver::setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
 
     if (right->getNodeType() == NodeType::ident) {
         auto col_name = static_cast<Ident*>(right)->getName();
-        if (all_columns.find(col_name) != all_columns.end()) {
-            b = all_columns[col_name].getType();
+        if (column_infos[table_name2].find(col_name) != column_infos[table_name2].end()) {
+            b = column_infos[table_name2][col_name].getType();
         } else {
-            e.reset(new exc::acc::ColumnNonexistent(col_name, table));
+            e.reset(new exc::acc::ColumnNonexistent(col_name, table_name2));
             return;
         };
     } else {
@@ -753,12 +786,12 @@ void Resolver::setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
 }
 
 void Resolver::setDataType(Node* nod, DataType& a, const std::string& table,
-                           std::map<std::string, Column> all_columns,
+                           std::map<std::string, Column> column_info,
                            std::unique_ptr<exc::Exception>& e) {
     if (nod->getNodeType() == NodeType::ident) {
         auto col_name = static_cast<Ident*>(nod)->getName();
-        if (all_columns.find(col_name) != all_columns.end()) {
-            a = all_columns[col_name].getType();
+        if (column_info.find(col_name) != column_info.end()) {
+            a = column_info[col_name].getType();
         } else {
             e.reset(new exc::acc::ColumnNonexistent(col_name, table));
             return;
@@ -766,4 +799,62 @@ void Resolver::setDataType(Node* nod, DataType& a, const std::string& table,
     } else {
         a = static_cast<Constant*>(nod)->getDataType();
     }
+}
+
+void Resolver::bindColumnToTable(Node* nod,
+                                 std::unique_ptr<exc::Exception>& e) {
+    if (nod->getNodeType() != NodeType::ident) {
+        return;
+    }
+
+    auto id = static_cast<Ident*>(nod);
+    if (!id->getTableName().empty()) {
+        return;
+    }
+
+    bool flag = false;
+    if (column_infos_[table1_].find(id->getName()) !=
+        column_infos_[table1_].end()) {
+        id->setTableName(table1_);
+        flag = true;
+    }
+
+    if (table1_ != table2_) {
+        if (column_infos_[table2_].find(id->getName()) !=
+            column_infos_[table2_].end()) {
+            if (flag) {
+                e.reset(new exc::AmbiguousColumnName("ambiguous column name " +
+                                                     id->getName()));
+                return;
+            } else {
+                id->setTableName(table2_);
+            }
+        }
+    }
+}
+
+std::map<std::string, std::string> Resolver::getRecordMap(
+    const std::vector<Column>& cols, std::vector<Value> record,
+    std::unique_ptr<exc::Exception>& e) {
+    std::map<std::string, std::string> m;
+    int counter = 0;
+    for (auto& k : cols) {
+        auto c = k.getName();
+/*        if (m.find(c) != m.end()) {
+            e.reset(new exc::AmbiguousColumnName("ambiguous column name " + c));
+            return m;
+        }*/
+        if (record[counter].is_null) {
+            if (k.getType() == DataType::varchar) {
+                m[c] = "";
+            } else {
+                m[c] = "null";
+            }
+        } else {
+            m[c] = record[counter].data;
+        }
+
+        ++counter;
+    }
+    return m;
 }

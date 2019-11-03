@@ -12,32 +12,50 @@
 
 #include "../Client/Client.h"
 
+#define CREATE_SERVER
+
+#define TEST_SERVER_HOST ("localhost")
+#define TEST_SERVER_PORT (11234)
+
+#define TEST_DIRECTORY_DB ("DataBD")
+
 #define EXCEPTION2NUMB(expect) static_cast<long>(expect)
 
-#define CHECK_REQUEST(request_message, exception, answer, client)           \
-    {                                                                       \
-        std::string out;                                                    \
-        const std::string error_message =                                   \
-            "Error in request:\n    " +                                     \
-            ::testing::PrintToString(request_message) + "\n";               \
-        long exception_request = client.request(request_message, out);      \
-        if (exception_request != static_cast<long>(exception)) {            \
-            FAIL() << error_message                                         \
-                   << "Wrong exception code:\n  expected:\n    "            \
-                   << static_cast<long>(exception) << "\n  real:\n    "     \
-                   << exception_request << "\n  Exception message:\n    "   \
-                   << ::testing::PrintToString(out);                        \
-        }                                                                   \
-        if (out != answer) {                                                \
-            FAIL() << error_message                                         \
-                   << "Wrong exception message:\n  expected:\n    "         \
-                   << ::testing::PrintToString(answer) << "\n  real:\n    " \
-                   << ::testing::PrintToString(out);                        \
-        }                                                                   \
+#define CHECKER_TEST_FUNCTION(funct) \
+    {                                \
+        std::string ans = funct;     \
+        if (!ans.empty()) {          \
+            FAIL() << ans;           \
+        }                            \
+    }
+
+#define CHECK_REQUEST(request_message, exception, answer, client)         \
+    {                                                                     \
+        CHECKER_TEST_FUNCTION(check_request(                              \
+            request_message, EXCEPTION2NUMB(exception), answer, client)); \
     }
 
 #define CHECK_REQUEST_ST_CLIENT(request_message, exception, answer) \
     { CHECK_REQUEST(request_message, exception, answer, client); }
+
+#define CHECK_UNREQUITED_REQUEST(request_message, client) \
+    { CHECK_REQUEST(request_message, 0, "", client); }
+
+#define CHECK_UNREQUITED_REQUEST_ST_CLIENT(request_message) \
+    CHECK_UNREQUITED_REQUEST(request_message, client)
+
+#define CHECK_DROP_REQUEST(request, checker_request, checker_exception,    \
+                           checker_answer, db_files, client)               \
+    {                                                                      \
+        CHECKER_TEST_FUNCTION(drop_test(request, checker_request,          \
+                                        checker_exception, checker_answer, \
+                                        db_files, client))                 \
+    }
+
+#define CHECK_DROP_REQUEST_ST_CLIENT(                                      \
+    request, checker_request, checker_exception, checker_answer, db_files) \
+    CHECK_DROP_REQUEST(request, checker_request, checker_exception,        \
+                       checker_answer, db_files, client)
 
 class Server {
    public:
@@ -45,7 +63,8 @@ class Server {
         if (obj_ == nullptr) {
             obj_ = new Server();
         }
-        return obj_; }
+        return obj_;
+    }
 
     void run();
     void stop();
@@ -58,5 +77,19 @@ class Server {
 };
 
 void clearDB();
+std::string check_request(const std::string& request, const long exception,
+                          const std::string& answer,
+                          ourSQL::client::Client& client);
+std::string drop_test(const std::string& request,
+                      const std::string& checker_request,
+                      const long checker_exception,
+                      const std::string& checker_answer,
+                      const std::string& db_files,
+                      ourSQL::client::Client& client, size_t start_time = 1,
+                      size_t step_time = 1, size_t max_time = 60000);
+std::string get_select_answer(
+    const std::vector<std::string>& column,
+    const std::vector<std::vector<std::string>>& data);
+std::string to_string(double a);
 
 #endif

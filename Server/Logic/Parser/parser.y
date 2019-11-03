@@ -13,8 +13,8 @@
     #include "../../Server/Logic/Parser/Nodes/NullConstant.h"
     #include "../../Server/Logic/Parser/Nodes/SelectList.h"
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
+    #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
     #include "../../Server/Core/Exception.h"
-
     #include "../../Server/Engine/Engine.h"
     #include "../../Server/Engine/Column.h"
 
@@ -55,7 +55,7 @@
 %token INT REAL VARCHAR
 %token NOT_NULL PRIMARY_KEY UNIQUE NULL_
 %token AND OR DIVIDE PLUS MINUS NOT
-%token LEFT RIGHT INNER OUTER FULL CROSS JOIN INTERSECT UNION
+%token LEFT RIGHT INNER OUTER FULL CROSS JOIN INTERSECT UNION AS ON
 
 %type<query> create show_create drop_table select insert
 %type<ident> id col_ident
@@ -65,15 +65,18 @@
 %type<iConst> int_const
 %type<rConst> real_const
 %type<tConst> text_const
+%type<relOperNodeType> join_opers union_intersect
 %type<nullConst> null_
 %type<anyConstant> constant where_element select_list_element val_or_var
 %type<exprUnit> logic_or logic_and plus_minus mul_div relations
-%type<expr> where_expr root_expr relation_expr exprssn term factor under_root_expr
+%type<expr> where_expr root_expr relation_expr exprssn term factor under_root_expr join_cond
+%type<relExpr> sub_rel_expr relational_expr
 
 %start start_expression
 
 %union {
     ColumnConstraint constraint;
+    RelOperNodeType relOperNodeType;
     Ident *ident;
     Query *query;
     Variable *var;
@@ -86,6 +89,7 @@
     Node *anyConstant;
     ExprUnit exprUnit;
     Expression *expr;
+    RelExpr *relExpr;
 
     int varcharLen;
 }
@@ -167,14 +171,22 @@ constraint:
 // --- select
 
 select:
-     SELECT select_decl FROM id where_expr {
+    SELECT select_decl FROM relational_expr where_expr {
+         std::map<NodeType, Node*> children;
+         children[NodeType::select_list] = new SelectList(selectList);
+         children[NodeType::relational_oper_expr] = $4;
+         children[NodeType::expression] = $5;
+
+         parseTree = new Query(children, CommandType::select);
+    } |
+    SELECT select_decl FROM id where_expr {
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $4;
         children[NodeType::select_list] = new SelectList(selectList);
         children[NodeType::expression] = $5;
 
         parseTree = new Query(children, CommandType::select);
-     } ;
+    };
 
 select_decl:
     asterisk | 
@@ -191,16 +203,10 @@ select_list:
 
 asterisk:
     ASTERISK {
-    	selectList.push_back(new Ident("*"));
+    	selectList.push_back(new Expression(new Ident("*")));
     };
 
 select_list_element:
-    col_ident {
-        $$ = $1;
-    } |
-    constant {
-        $$ = $1;
-    } |
     exprssn {
         $$ = $1;
     };
@@ -378,8 +384,7 @@ mul_div:
 
 val_or_var:
     constant { $$ = $1; } |
-    id { $$ = $1; } |
-    id DOT id { $$ = new Ident($1->getName(), $3->getName()); };
+    col_ident { $$ = $1; };
 
 logic_or:
         OR { $$ = ExprUnit::or_; };
@@ -426,17 +431,57 @@ type:
 
 col_ident: 
     id { $$ = $1; } |
-    id DOT id { $$ = new Ident($1->getName(), $3->getName()); };
+    id DOT col_ident { 
+        if ( $3->getTableName().empty()) {
+            $$ = new Ident($1->getName(), $3->getName()); 
+        } else {
+            $$ = new Ident($1->getName(), $3->getTableName() + "." + $3->getName()); 
+        }
+    };
 
 id:
-    ID { $$ = new Ident(*yylval.name); }
+    ID { $$ = new Ident(*yylval.name); };
 
-    
+sub_rel_expr:
+    id { $$ = new RelExpr($1, ""); } |
+    id AS id { $$ = new RelExpr($1, $3->getName()); } |
+    LPAREN id AS id RPAREN { $$ = new RelExpr($2, $4->getName()); } |
+    LPAREN relational_expr RPAREN AS id { 
+        $2->setAlias($5->getName());
+        $$ = $2;
+    } /*|
+    relational_expr {
+        $$ = $1;
+    };*/
+
+relational_expr:
+    relational_expr join_opers sub_rel_expr join_cond {
+        $$ = new RelExpr($1, $3, $2, $4);
+    } |
+    relational_expr union_intersect sub_rel_expr {
+        $$ = new RelExpr($1, $3, $2, nullptr);
+    } |
+    sub_rel_expr { $$ = $1; };
+
+join_opers:
+    JOIN { $$ = RelOperNodeType::join; } |
+    LEFT JOIN { $$ = RelOperNodeType::left_join; } |
+    RIGHT JOIN { $$ = RelOperNodeType::right_join; } |
+    INNER JOIN { $$ = RelOperNodeType::inner_join; } |
+    FULL JOIN { $$ = RelOperNodeType::full_join; };
+
+union_intersect:
+    UNION { $$ = RelOperNodeType::union_; } |
+    INTERSECT { $$ = RelOperNodeType::intersect; };
+
+join_cond:
+    ON root_expr { $$ = $2; } |
+    /*empty*/ { $$ = nullptr; };
 
 %%
 
 void yyerror(const char *s) {
-    //fprintf(stderr, "%s\n", s);
+    fprintf(stderr, "\n%s\n", s);
     ex.reset(new exc::SyntaxException());
 }
 
@@ -449,7 +494,6 @@ void destroy() {
     identList.clear();
     selectList.clear();
     constantList.clear();
-    ex = nullptr;
     yylval.varcharLen = 0;
 
     parseTree = nullptr;

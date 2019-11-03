@@ -103,6 +103,10 @@ bool Column::checkDataForType(const DataType type, const std::string& data) {
     return isAccording[static_cast<unsigned int>(type)](data);
 }
 
+void Column::addValue(const Value& v) noexcept {
+    values_.push_back(v);
+}
+
 std::vector<std::string> split(const std::string& s, const char sep) {
     int siz = 1;
     std::vector<std::string> res;

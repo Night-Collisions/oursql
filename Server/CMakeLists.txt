@@ -25,9 +25,10 @@ set(HEADERS
         Logic/Parser/Nodes/TextConstant.h
         Logic/Parser/Nodes/Constant.h
         Logic/Parser/ExpressionParser/Resolver.h
-        Logic/RelationalOperations/Join.h
-        Logic/RelationalOperations/Intersect.h
-        Logic/RelationalOperations/Union.h
+        Logic/Parser/RelationalOperationsParser/Join.h
+        Logic/Parser/Nodes/RelExpr.h
+        Logic/Parser/RelationalOperationsParser/Intersect.h
+        Logic/Parser/RelationalOperationsParser/Union.h
         Logic/Parser/Nodes/NullConstant.h
         Logic/Parser/ParserManager.h
         Core/DataType.h
@@ -55,12 +56,13 @@ set(DEFINITIONS
         Logic/Parser/Nodes/Variable.cpp
         Logic/Parser/Nodes/Ident.cpp
         Logic/Parser/Nodes/SelectList.cpp
-        Logic/RelationalOperations/Join.cpp
-        Logic/RelationalOperations/Intersect.cpp
-        Logic/RelationalOperations/Union.cpp
+        Logic/Parser/RelationalOperationsParser/Join.cpp
+        Logic/Parser/RelationalOperationsParser/Intersect.cpp
+        Logic/Parser/RelationalOperationsParser/Union.cpp
         Logic/Parser/Nodes/IntConstant.cpp
         Logic/Parser/Nodes/RealConstant.cpp
         Logic/Parser/Nodes/TextConstant.cpp
+        Logic/Parser/Nodes/RelExpr.cpp
         Logic/Parser/Nodes/IdentList.cpp
         Logic/Parser/ParserManager.cpp
         Logic/Parser/Nodes/Constant.cpp
@@ -69,12 +71,12 @@ set(DEFINITIONS
         Logic/Parser/ExpressionParser/Resolver.cpp
         Core/DataType.cpp
         Logic/QueryManager.cpp
-        )
+        Logic/Parser/RelationalOperationsParser/Helper.cpp Logic/Parser/RelationalOperationsParser/Helper.h)
 
 assemble_parser(Logic/Parser/)
 
 init(${PROJECT_BINARY_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} Logic/RelationalOperations/Union.cpp Logic/RelationalOperations/Union.h Logic/RelationalOperations/Intersect.cpp Logic/RelationalOperations/Intersect.h)
+add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} )
 
 show_compilation_warnings(${PROJECT_NAME})

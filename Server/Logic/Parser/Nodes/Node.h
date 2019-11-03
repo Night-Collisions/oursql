@@ -22,7 +22,9 @@ enum class NodeType {
     text_constant,
     expression_unit,
     expression,
-    relation
+    relation,
+    relational_oper_expr,
+
 };
 
 class Node {
@@ -30,7 +32,7 @@ class Node {
     explicit Node(NodeType type) : nodeType_(type) {}
     virtual ~Node() = default;
 
-    virtual NodeType getNodeType() const { return nodeType_; }
+    [[nodiscard]] virtual NodeType getNodeType() const { return nodeType_; }
 
     virtual std::string getName() = 0;
 

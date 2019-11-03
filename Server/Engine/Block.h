@@ -12,14 +12,18 @@
 
 class Block {
    public:
-    Block() = default;
+    Block();
     ~Block() { delete[] buffer_; }
     Block(const Table& table);
     Block(const Table& table, std::fstream& fstream);
     void setTable(const Table& table);
-    void load(std::fstream& fstream);
+    bool load(std::fstream& fstream);
     int getCount() const;
     void setCount(int count);
+    int getPrevBlockId() const;
+    int setPrevBlockId(int id);
+    int getNextBlockId() const;
+    int setNextBlockId(int id);
     bool next();
     std::vector<Value> fetch();
     bool insert(const std::vector<Value>& value);
@@ -27,10 +31,17 @@ class Block {
     void remove();
     const char* getBuffer() { return buffer_; }
 
-    static const size_t kBlockSize = 65536;
+    static const size_t kBlockSize;
+    static const int kNullBlockId;
+    static const int kRowsCountPosition;
+    static const int kPrevBlockIdPosition;
+    static const int kNextBlockIdPosition;
 
-private:
+   private:
     void setValues(const std::vector<Value>& values, int pos);
+
+    static const int kRemovedStackPosition_;
+    static const int kRowsStartPosition_;
 
     char* buffer_ = new char[kBlockSize]{};
     Table table_;

@@ -9,6 +9,7 @@
 
 #include "../Core/DataType.h"
 #include "../Core/Exception.h"
+#include "Value.h"
 
 enum class ColumnConstraint : unsigned int {
     primary_key,
@@ -47,9 +48,14 @@ class Column {
 
     [[nodiscard]] DataType getType() const { return type_; };
     [[nodiscard]] std::string getName() const { return name_; };
-    [[depricated]] const std::set<ColumnConstraint>& getConstraints() const {
+    void setName(const std::string& name) { name_ = name; }
+    const std::set<ColumnConstraint>& getConstraints() const {
         return constraint_;
     };
+
+    void setConstraints(std::set<ColumnConstraint> constraints) {
+        constraint_ = std::move(constraints);
+    }
 
     unsigned char getBitConstraint() const {
         unsigned char res = 0;
@@ -60,7 +66,8 @@ class Column {
         return res;
     }
 
-    static std::set<ColumnConstraint> bitConstraintToSet(unsigned char constraint) {
+    static std::set<ColumnConstraint> bitConstraintToSet(
+        unsigned char constraint) {
         std::set<ColumnConstraint> res;
         ColumnConstraint arr[]{ColumnConstraint::primary_key,
                                ColumnConstraint::not_null,
@@ -78,8 +85,17 @@ class Column {
 
     void addData(const std::string&, std::unique_ptr<exc::Exception>&);
 
+    // addValue is supposed to be used for creating artificial tables in join
+    // and other similar operations
+    void addValue(const Value& v) noexcept;
+    std::vector<Value> getValues() const { return values_; }
+
     void setN(int n) { n_ = n; }
     int getN() const { return n_; }
+
+    void setType(DataType type) {
+        type_ = type;
+    }
 
    private:
     static bool checkConstraint(const std::set<ColumnConstraint>&,
@@ -90,6 +106,7 @@ class Column {
     DataType type_;
     std::set<ColumnConstraint> constraint_;
     std::vector<std::string> data_;
+    std::vector<Value> values_;
     int n_;
 };
 

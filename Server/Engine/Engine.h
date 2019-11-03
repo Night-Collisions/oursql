@@ -12,6 +12,8 @@ class Engine {
    public:
     Engine() = delete;
 
+    static void initialize();
+
     static void create(const Table& table, std::unique_ptr<exc::Exception>& e);
 
     static Table show(const std::string& table_name,
@@ -31,8 +33,26 @@ class Engine {
 
     static void freeMemory(const std::string& table_name);
 
-   private:
-    static const size_t kTableNameLength_ = 128;
+    static int getLastCompletedId();
+
+    static int getLastPerformingId();
+
+    static void setLastCompletedId(int id);
+
+    static void setLastPerformingId(int id);
+
+    static void setIds(int lastCompletedId, int lastPerformingId);
+
+    static const std::string kTmpTableFile;
+    static const size_t kTableNameLength = 128;
+
+private:
+    static class Initializer {
+       public:
+        Initializer() { Engine::initialize(); }
+    } initializer_;
+
+    static const std::string kStatusFile_;
     static const size_t kColumnNameLength_ = 128;
 };
 

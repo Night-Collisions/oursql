@@ -13,6 +13,8 @@ enum class ExceptionType : unsigned int {
     was_not_loaded,
     repeat_column_in_table,
     repeat_column,
+    ambiguous_column_name,
+    different_column_sizes,
     div_by_zero,
     set_data_type_mismatch = 601,
     data_type_mismatch,
@@ -28,7 +30,13 @@ enum class ExceptionType : unsigned int {
     null_not_null,
     create_table_name_column = 1001,
     create_table_repeat_table_name,
-    insert_constants_more_columns = 1101
+    insert_constants_more_columns = 1101,
+    column_datatype_mismatch_union,
+    column_sizes_union,
+    null_column_in_union,
+    column_datatype_mismatch_intersect,
+    column_sizes_intersect,
+    null_column_in_intersect
 };
 
 class Exception {
@@ -76,6 +84,18 @@ class WasNotLoaded : public Exception {
                     table_name + "was not loaded!") {}
 };
 
+class UnionException : public Exception {
+   public:
+    UnionException(const std::string& msg, ExceptionType type)
+        : Exception(type, msg) {}
+};
+
+class IntersectException : public Exception {
+   public:
+    IntersectException(const std::string& msg, ExceptionType type)
+        : Exception(type, msg) {}
+};
+
 class RepeatColumnNameInTable : public Exception {
    public:
     RepeatColumnNameInTable(const std::string& table_name,
@@ -104,6 +124,12 @@ class TableException : public Exception {
 
    protected:
     const std::string table_name_;
+};
+
+class AmbiguousColumnName : public Exception {
+   public:
+    AmbiguousColumnName(const std::string& msg)
+        : Exception(ExceptionType::ambiguous_column_name, msg) {}
 };
 
 namespace constr {

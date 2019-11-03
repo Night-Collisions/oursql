@@ -8,8 +8,11 @@
 #include "../../../Engine/Column.h"
 #include "../Nodes/Expression.h"
 
-typedef void (*func)(Expression* root,
-                     std::map<std::string, std::string> record,
+typedef std::map<std::string, std::map<std::string, Column>> t_column_infos;
+typedef std::map<std::string, std::map<std::string, std::string>>
+    t_record_infos;
+
+typedef void (*func)(Expression* root, t_record_infos record,
                      std::unique_ptr<exc::Exception>& e);
 
 enum class CompareCondition : unsigned int {
@@ -21,83 +24,81 @@ enum class CompareCondition : unsigned int {
 
 class Resolver {
    public:
-    static std::string resolve(const std::string& table,
-                               std::map<std::string, Column> all_columns,
-                               Expression* root,
-                               std::map<std::string, std::string> record,
+    static std::map<std::string, std::string> getRecordMap(
+        const std::vector<Column>& cols, std::vector<Value> record,
+        std::unique_ptr<exc::Exception>& e);
+
+    static std::string resolve(const std::string& table1,
+                               const std::string& table2,
+                               t_column_infos column_infos, Expression* root,
+                               t_record_infos record,
                                std::unique_ptr<exc::Exception>& e);
 
-    static bool compareTypes(const std::string& table_name,
-                             std::map<std::string, Column>& all_columns,
-                             Node* left, Node* right,
-                             std::unique_ptr<exc::Exception>& e,
+    static bool compareTypes(const std::string& table1,
+                             const std::string& table2,
+                             t_column_infos& column_info, Node* left,
+                             Node* right, std::unique_ptr<exc::Exception>& e,
                              const CompareCondition& cond,
                              const std::string& oper);
 
    private:
-    static void calculate(Expression* root,
-                          std::map<std::string, std::string> record,
+    static void calculate(Expression* root, t_record_infos record,
                           std::unique_ptr<exc::Exception>& e);
 
-    static void equal(Expression* root,
-                      std::map<std::string, std::string> record,
+    static void equal(Expression* root, t_record_infos record,
                       std::unique_ptr<exc::Exception>& e);
-    static void notEqual(Expression* root,
-                         std::map<std::string, std::string> record,
+    static void notEqual(Expression* root, t_record_infos record,
                          std::unique_ptr<exc::Exception>& e);
-    static void greater(Expression* root,
-                        std::map<std::string, std::string> record,
+    static void greater(Expression* root, t_record_infos record,
                         std::unique_ptr<exc::Exception>& e);
-    static void greaterEqual(Expression* root,
-                             std::map<std::string, std::string> record,
+    static void greaterEqual(Expression* root, t_record_infos record,
                              std::unique_ptr<exc::Exception>& e);
-    static void less(Expression* root,
-                     std::map<std::string, std::string> record,
+    static void less(Expression* root, t_record_infos record,
                      std::unique_ptr<exc::Exception>& e);
-    static void lessEqual(Expression* root,
-                          std::map<std::string, std::string> record,
+    static void lessEqual(Expression* root, t_record_infos record,
                           std::unique_ptr<exc::Exception>& e);
 
-    static void logicAnd(Expression* root,
-                         std::map<std::string, std::string> record,
+    static void logicAnd(Expression* root, t_record_infos record,
                          std::unique_ptr<exc::Exception>& e);
-    static void logicOr(Expression* root,
-                        std::map<std::string, std::string> record,
+    static void logicOr(Expression* root, t_record_infos record,
                         std::unique_ptr<exc::Exception>& e);
-    static void logicNot(Expression* root,
-                         std::map<std::string, std::string> record,
+    static void logicNot(Expression* root, t_record_infos record,
                          std::unique_ptr<exc::Exception>& e);
 
-    static void mul(Expression* root, std::map<std::string, std::string> record,
+    static void mul(Expression* root, t_record_infos record,
                     std::unique_ptr<exc::Exception>& e);
-    static void div(Expression* root, std::map<std::string, std::string> record,
+    static void div(Expression* root, t_record_infos record,
                     std::unique_ptr<exc::Exception>& e);
-    static void add(Expression* root, std::map<std::string, std::string> record,
+    static void add(Expression* root, t_record_infos record,
                     std::unique_ptr<exc::Exception>& e);
-    static void sub(Expression* root, std::map<std::string, std::string> record,
+    static void sub(Expression* root, t_record_infos record,
                     std::unique_ptr<exc::Exception>& e);
 
-    static void setStringValue(Expression* root,
-                               std::map<std::string, std::string> record,
+    static void setStringValue(Expression* root, t_record_infos record,
                                std::unique_ptr<exc::Exception>& e,
                                std::string& a, std::string& b,
                                const CompareCondition& cond,
                                const std::string& oper);
 
     static void setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
-                             const std::string& table,
-                             std::map<std::string, Column> all_columns,
+                             const std::string& table1,
+                             const std::string& table2,
+                             t_column_infos column_infos,
                              std::unique_ptr<exc::Exception>& e);
 
     static void setDataType(Node* nod, DataType& a, const std::string& table,
-                            std::map<std::string, Column> all_columns,
+                            std::map<std::string, Column> column_info,
                             std::unique_ptr<exc::Exception>& e);
+
+    static void bindColumnToTable(Node* nod,
+                                  std::unique_ptr<exc::Exception>& e);
 
     static std::array<func, static_cast<unsigned int>(ExprUnit::Count)>
         operations_;
 
-    static std::string table_;
-    static std::map<std::string, Column> all_columns_;
+    static std::string table1_;
+    static std::string table2_;
+    static t_column_infos column_infos_;
 };
 
 #endif  // OURSQL_APP_LOGIC_PARSER_EXPRESSIONPARSER_RESOLVER_H_

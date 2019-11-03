@@ -42,9 +42,6 @@ unsigned int perform(std::istream& in, std::ostream& out) {
         ParserManager pm;
         //pm.setDebug(1);
 
-       //select * from a where id = 5 or not (5 = id * b and 15 - 3 = 12);
-       //select * from a where id = 5 or not (5 = id * b and 15 - 3 = 12);
-       //select * from t where not not (id = (id + 5)*2 + 1 and sdf = 'sdf') or gg > 7;
         auto query = pm.getParseTree(command, e);
         EXCEPTION_OURSQL_CHECK(e, out, command);
         QueryManager::execute(*query, e, out);
@@ -53,8 +50,6 @@ unsigned int perform(std::istream& in, std::ostream& out) {
     } while (!is_end);
     return 0;
 }
-
-//select * from t where not not (id = (id + 5)*2 + 1 and sdf = 'sdf') or gg > 7;
 
 void nonstop_perform(std::istream& in, std::ostream& out) {
     while (!in.eof()) {
