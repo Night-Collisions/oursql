@@ -12,7 +12,8 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
     }
 
     if (table1.getName() == table2.getName()) {
-        e.reset(new exc::AmbiguousColumnName("ambiguous column name " + table1.getColumns()[0].getName()));
+        e.reset(new exc::AmbiguousColumnName("ambiguous column name " +
+                                             table1.getColumns()[0].getName()));
         return Table();
     }
 
@@ -257,28 +258,45 @@ bool Join::isHashJoinOk(
         return false;
     }
 
-    if (child1->getNodeType() != NodeType::ident) {
+    if (static_cast<Ident*>(child1->getConstant())->getNodeType() != NodeType::ident) {
         return false;
     }
 
-    if (child2->getNodeType() != NodeType::ident) {
+    if (static_cast<Ident*>(child2->getConstant())->getNodeType() != NodeType::ident) {
         return false;
     }
 
-    if (child1->getNodeType() == NodeType::ident && !child2->childs()[0] &&
+    if (static_cast<Ident*>(child1->getConstant())->getNodeType() == NodeType::ident && !child2->childs()[0] &&
         !child2->childs()[1]) {
         ok2 = true;
     }
 
-    if (child2->getNodeType() == NodeType::ident && !child2->childs()[0] &&
+    if (static_cast<Ident*>(child2->getConstant())->getNodeType() == NodeType::ident && !child2->childs()[0] &&
         !child2->childs()[1]) {
         ok2 = true;
     }
 
-    //TODO: когда имя таблицы пустое, рассматривать соединенное имя
+    // TODO: когда имя таблицы пустое, рассматривать соединенное имя
 
-    auto tbl_name1 = static_cast<Ident*>(child1->getConstant())->getTableName();
-    auto tbl_name2 = static_cast<Ident*>(child2->getConstant())->getTableName();
+    auto tbl_name1 = name1;
+    auto tbl_name2 = name2;
+
+    if (name1.empty()) {
+        // tbl_name1 =
+        // static_cast<Ident*>(child1->getConstant())->getTableName();
+        auto t = static_cast<Ident*>(child1->getConstant())->getTableName();
+        auto c = static_cast<Ident*>(child1->getConstant())->getName();
+        static_cast<Ident*>(child1->getConstant())->setTableName("");
+        static_cast<Ident*>(child1->getConstant())
+            ->setName(Helper::getCorrectTablePrefix(t) + c);
+    }
+    if (name2.empty()) {
+        auto t = static_cast<Ident*>(child2->getConstant())->getTableName();
+        auto c = static_cast<Ident*>(child2->getConstant())->getName();
+        static_cast<Ident*>(child2->getConstant())->setTableName("");
+        static_cast<Ident*>(child2->getConstant())
+            ->setName(Helper::getCorrectTablePrefix(t) + c);
+    }
 
     if (!Resolver::compareTypes(tbl_name1, tbl_name2, column_info,
                                 child1->getConstant(), child2->getConstant(), e,
