@@ -195,11 +195,19 @@ void Engine::freeMemory(const std::string& table_name) {
     std::fstream new_file(getPathToTable(table_name) + salt, std::ios::binary | std::ios::out);
     
     int id = Block::kNullBlockId;
-    while (!old_file.eof()) {
-        Block block(table, old_file);
+    Block block(table);
+    while (!block.load(old_file)) {
         if (block.getCount() != 0) {
             block.setPrevBlockId(id);
-            id = (id == Block::kNullBlockId) ? (0) : (id + 1);
+            if (id == Block::kNullBlockId) {
+                id = 0;
+            } else {
+                ++id;
+                int p = new_file.tellp();
+                new_file.seekp(p - Block::kBlockSize + Block::kNextBlockIdPosition);
+                new_file.write((char*) &id, sizeof(int));
+                new_file.seekp(p);
+            }
             new_file.write(block.getBuffer(), Block::kBlockSize);
         }
     }
