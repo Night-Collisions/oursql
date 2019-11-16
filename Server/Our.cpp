@@ -2,6 +2,7 @@
 
 #include "Logic/Parser/ParserManager.h"
 #include "Logic/QueryManager.h"
+#include "Logic/TransactionManager.h"
 
 #define EXCEPTION_OURSQL_CHECK(e, out, command)                             \
     if (e != nullptr) {                                                     \
@@ -44,7 +45,8 @@ unsigned int perform(std::istream& in, std::ostream& out) {
 
         auto query = pm.getParseTree(command, e);
         EXCEPTION_OURSQL_CHECK(e, out, command);
-        QueryManager::execute(*query, e, out);
+        //TODO: передать id
+        //TransactionManager::execute(*query, e, out);
         EXCEPTION_OURSQL_CHECK(e, out, command);
         delete query;
     } while (!is_end);

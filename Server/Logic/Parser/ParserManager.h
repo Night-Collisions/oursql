@@ -5,12 +5,13 @@
 #include <memory>
 #include <iostream>
 
-#include "Nodes/Query.h"
 #include "../../Core/Exception.h"
+#include "Nodes/Query.h"
+#include "Nodes/Transaction.h"
 
 class ParserManager {
    public:
-    Query* getParseTree(const std::string& query, std::unique_ptr<exc::Exception>& exception);
+    Transaction* getParseTree(const std::string& query, std::unique_ptr<exc::Exception>& exception);
 
     void setDebug(bool d) { debug_ = d; }
 

@@ -7,6 +7,7 @@
 #include "../Engine/Value.h"
 #include "Parser/Nodes/Query.h"
 #include "Parser/Nodes/RelExpr.h"
+#include "Parser/Nodes/Transaction.h"
 
 typedef Table (*rel_func)(const Table& table1, const Table& table2,
                           Expression* on_expr,

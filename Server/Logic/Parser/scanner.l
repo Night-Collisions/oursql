@@ -21,6 +21,7 @@
     #include "../../Server/Logic/Parser/Nodes/SelectList.h"
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
+    #include "../../Server/Logic/Parser/Nodes/Transaction.h"
 
     #include "../../Server/Engine/Engine.h"
     #include "parser.hpp"
@@ -111,6 +112,9 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 
 "as"                       { return AS; }
 "on"                       { return ON; }
+
+"commit"                   { return COMMIT; }
+"begin"                    { return BEGIN_; }
   
 "int"                      { return INT; }
 "real"                     { return REAL; }

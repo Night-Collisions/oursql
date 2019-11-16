@@ -77,8 +77,9 @@ void Executer::run() {
             self->queue_lock_.lock();
             bool is_empty = self->queue_.empty();
             self->queue_lock_.unlock();
-
+            unsigned long long transact_num = 0;
             if (!is_empty) {
+                //TODO: передавать id транзакции
                 self->queue_lock_.lock();
                 std::pair<std::string, std::shared_ptr<Session>> i =
                     self->queue_.front();

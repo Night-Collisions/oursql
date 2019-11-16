@@ -14,6 +14,7 @@
     #include "../../Server/Logic/Parser/Nodes/SelectList.h"
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
+    #include "../../Server/Logic/Parser/Nodes/Transaction.h"
     #include "../../Server/Core/Exception.h"
     #include "../../Server/Engine/Engine.h"
     #include "../../Server/Engine/Column.h"
@@ -25,8 +26,6 @@
     #include <map>
     #include <sstream>
 
-    #define VARCHAR_MAX_LEN (1024)
-
     extern FILE *yyin;
     extern FILE *yyout;
 
@@ -35,7 +34,8 @@
     void yyerror(const char *s);
     void destroy();
 
-    Query *parseTree;
+    Transaction *parseTree;
+    std::vector<Query*> queryList;
     std::vector<Variable *> varList;
     std::vector<ColumnConstraint> constraintList;
     std::vector<Ident*> identList;
@@ -56,8 +56,9 @@
 %token NOT_NULL PRIMARY_KEY UNIQUE NULL_
 %token AND OR DIVIDE PLUS MINUS NOT
 %token LEFT RIGHT INNER OUTER FULL CROSS JOIN INTERSECT UNION AS ON
+%token BEGIN_ COMMIT
 
-%type<query> create show_create drop_table select insert
+%type<query> create show_create drop_table select insert delete update statement
 %type<ident> id col_ident
 %type<var> variable
 %type<dataType> type
@@ -97,21 +98,23 @@
 %%
 
 start_expression:
-    statements SEMI {
-        varList.clear();
-        constraintList.clear();
-        identList.clear();
-        selectList.clear();
-        constantList.clear();
+    statement SEMI {
+        parseTree = new Transaction(queryList);
+        destroy();
+    } | 
+    BEGIN_ SEMI statements COMMIT SEMI {
+        parseTree = new Transaction(queryList);
+        destroy();
     };
 
 statements:
     statement {
         varList.clear();
-    } |
-    statements statement {
-        varList.clear();
-    };
+        queryList.push_back($1);
+    } | 
+    statement SEMI statement {
+        queryList.push_back($3);
+    }
 
 statement:
     create |
@@ -120,7 +123,7 @@ statement:
     select |
     insert |
     update |
-    delete ;
+    delete;
 
 // ---- create table
 
@@ -130,7 +133,7 @@ create:
         children[NodeType::ident] = $3;
         children[NodeType::var_list] = new VarList(varList);
 
-        parseTree = new Query(children, CommandType::create_table);
+        $$ = new Query(children, CommandType::create_table);
     };
 
 variables:
@@ -177,7 +180,7 @@ select:
          children[NodeType::relational_oper_expr] = $4;
          children[NodeType::expression] = $5;
 
-         parseTree = new Query(children, CommandType::select);
+         $$ = new Query(children, CommandType::select);
     } |
     SELECT select_decl FROM id where_expr {
         std::map<NodeType, Node*> children;
@@ -185,7 +188,7 @@ select:
         children[NodeType::select_list] = new SelectList(selectList);
         children[NodeType::expression] = $5;
 
-        parseTree = new Query(children, CommandType::select);
+        $$ = new Query(children, CommandType::select);
     };
 
 select_decl:
@@ -211,7 +214,6 @@ select_list_element:
         $$ = $1;
     };
 
-
 where_expr:
     WHERE root_expr {
         $$ = $2;
@@ -229,7 +231,7 @@ show_create:
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $4;
 
-        parseTree = new Query(children, CommandType::show_create_table);
+        $$ = new Query(children, CommandType::show_create_table);
     };
 
 // --- drop table
@@ -239,7 +241,7 @@ drop_table:
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $3;
 
-        parseTree = new Query(children, CommandType::drop_table);
+        $$ = new Query(children, CommandType::drop_table);
     };
 
 // --- insert
@@ -251,7 +253,7 @@ insert:
         children[NodeType::ident_list] = new IdentList(identList);
         children[NodeType::constant_list] = new ConstantList(constantList);
 
-        parseTree = new Query(children, CommandType::insert);
+        $$ = new Query(children, CommandType::insert);
     };
 
 column_decl:
@@ -283,7 +285,7 @@ update:
         children[NodeType::constant_list] = new ConstantList(constantList);
         children[NodeType::expression] = $5;
 
-        parseTree = new Query(children, CommandType::update);
+        $$ = new Query(children, CommandType::update);
     };
 
 
@@ -308,7 +310,7 @@ delete:
         children[NodeType::constant_list] = new ConstantList(constantList);
         children[NodeType::expression] = $4;
 
-        parseTree = new Query(children, CommandType::remove);
+        $$ = new Query(children, CommandType::remove);
     };
 
 
@@ -494,12 +496,13 @@ void destroy() {
     identList.clear();
     selectList.clear();
     constantList.clear();
+    queryList.clear();
     yylval.varcharLen = 0;
 
     parseTree = nullptr;
 }
 
-Query* parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) {
+Transaction* parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) {
     destroy();
     exception.reset(nullptr);
 

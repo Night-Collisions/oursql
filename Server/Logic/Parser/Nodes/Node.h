@@ -6,7 +6,7 @@
 
 enum class NodeType {
     node,
-    query,  // root
+    query,
     command,
     var_list,
     variable,
@@ -24,7 +24,7 @@ enum class NodeType {
     expression,
     relation,
     relational_oper_expr,
-
+    transaction
 };
 
 class Node {
