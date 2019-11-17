@@ -2,7 +2,6 @@
 
 #include "Logic/Parser/ParserManager.h"
 #include "Logic/QueryManager.h"
-#include "Logic/TransactionManager.h"
 
 #define EXCEPTION_OURSQL_CHECK(e, out, command)                             \
     if (e != nullptr) {                                                     \
