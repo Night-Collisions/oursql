@@ -34,7 +34,7 @@
     void yyerror(const char *s);
     void destroy();
 
-    Transaction *parseTree;
+    std::vector<Transaction*> rootTransact;
     std::vector<Query*> queryList;
     std::vector<Variable *> varList;
     std::vector<ColumnConstraint> constraintList;
@@ -58,7 +58,7 @@
 %token LEFT RIGHT INNER OUTER FULL CROSS JOIN INTERSECT UNION AS ON
 %token BEGIN_ COMMIT
 
-%type<query> create show_create drop_table select insert delete update statement
+%type<query> create show_create drop_table select insert delete update statement statements
 %type<ident> id col_ident
 %type<var> variable
 %type<dataType> type
@@ -98,22 +98,24 @@
 %%
 
 start_expression:
-    statement SEMI {
-        parseTree = new Transaction(queryList);
+    statements {
+        for (auto& q : queryList) {
+            rootTransact.emplace_back(new Transaction(q));
+        }
         destroy();
     } | 
     BEGIN_ SEMI statements COMMIT SEMI {
-        parseTree = new Transaction(queryList);
+        rootTransact.emplace_back(new Transaction(queryList));
         destroy();
     };
 
 statements:
-    statement {
+    statement SEMI {
         varList.clear();
         queryList.push_back($1);
     } | 
-    statement SEMI statement {
-        queryList.push_back($3);
+    statements statement SEMI {
+        queryList.push_back($2);
     }
 
 statement:
@@ -498,11 +500,10 @@ void destroy() {
     constantList.clear();
     queryList.clear();
     yylval.varcharLen = 0;
-
-    parseTree = nullptr;
+    
 }
 
-Transaction* parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) {
+std::vector<Transaction*> parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) {
     destroy();
     exception.reset(nullptr);
 
@@ -511,6 +512,5 @@ Transaction* parse_string(const char* in, std::unique_ptr<exc::Exception>& excep
     end_lexical_scan();
 
     exception = std::move(ex);
-
-    return parseTree;
+    return std::move(rootTransact);
 }

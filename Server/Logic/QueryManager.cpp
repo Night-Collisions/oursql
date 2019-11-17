@@ -18,17 +18,14 @@
 #include "Parser/RelationalOperationsParser/Join.h"
 #include "Parser/RelationalOperationsParser/Union.h"
 
-std::array<rel_func, static_cast<unsigned int>(RelOperNodeType::Count)>
-    QueryManager::relational_oper_ = {Join::makeJoin, Join::makeJoin};
-
-void QueryManager::execute(const Query& query,
+void QueryManager::execute(const Query& query, t_ull transact_num,  // todo
                            std::unique_ptr<exc::Exception>& e,
                            std::ostream& out) {
     void (*const
               commandsActions[static_cast<unsigned int>(CommandType::Count)])(
-        const Query& query, std::unique_ptr<exc::Exception>& e,
-        std::ostream& out) = {
-        [](const Query&, std::unique_ptr<exc::Exception>& e,
+        const Query& query, t_ull transact_num,
+        std::unique_ptr<exc::Exception>& e, std::ostream& out) = {
+        [](const Query&, t_ull transact_num, std::unique_ptr<exc::Exception>& e,
            std::ostream& out) { assert(false); },
         createTable,
         showCreateTable,
@@ -39,11 +36,12 @@ void QueryManager::execute(const Query& query,
         remove};
     CommandType command = query.getCmdType();
     if (command != CommandType::Count) {
-        commandsActions[static_cast<unsigned int>(command)](query, e, out);
+        commandsActions[static_cast<unsigned int>(command)](query, transact_num,
+                                                            e, out);
     }
 }
 
-void QueryManager::createTable(const Query& query,
+void QueryManager::createTable(const Query& query, t_ull transact_num,
                                std::unique_ptr<exc::Exception>& e,
                                std::ostream& out) {
     e.reset(nullptr);
@@ -87,7 +85,7 @@ void QueryManager::createTable(const Query& query,
     Engine::create(table, e);
 }
 
-void QueryManager::showCreateTable(const Query& query,
+void QueryManager::showCreateTable(const Query& query, t_ull transact_num,
                                    std::unique_ptr<exc::Exception>& e,
                                    std::ostream& out) {
     auto name = query.getChildren()[NodeType::ident]->getName();
@@ -95,7 +93,7 @@ void QueryManager::showCreateTable(const Query& query,
     out << res << std::endl;
 }
 
-void QueryManager::dropTable(const Query& query,
+void QueryManager::dropTable(const Query& query, t_ull transact_num,
                              std::unique_ptr<exc::Exception>& e,
                              std::ostream& out) {
     auto name = query.getChildren()[NodeType::ident]->getName();
@@ -146,7 +144,7 @@ std::map<std::string, Column> getColumnMap(const Table& t) {
     return all_columns;
 }
 
-void QueryManager::select(const Query& query,
+void QueryManager::select(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     auto children = query.getChildren();
@@ -236,7 +234,7 @@ void QueryManager::select(const Query& query,
     }
 }
 
-void QueryManager::insert(const Query& query,
+void QueryManager::insert(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     e.reset(nullptr);
@@ -388,7 +386,7 @@ void QueryManager::insert(const Query& query,
     cursor.commit();
 }
 
-void QueryManager::update(const Query& query,
+void QueryManager::update(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     std::string name = query.getChildren()[NodeType::ident]->getName();
@@ -543,7 +541,7 @@ void QueryManager::update(const Query& query,
     cursor.commit();
 }
 
-void QueryManager::remove(const Query& query,
+void QueryManager::remove(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     auto name = query.getChildren()[NodeType::ident]->getName();

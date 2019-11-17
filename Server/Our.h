@@ -4,9 +4,12 @@
 #include <iostream>
 
 namespace ourSQL {
-unsigned int perform(std::istream& in = std::cin, std::ostream& out = std::cout);
-void nonstop_perform(std::istream& in = std::cin, std::ostream& out = std::cout);
-}
+extern volatile unsigned long long transaction_number_;
 
+unsigned int perform(std::istream& in = std::cin,
+                     std::ostream& out = std::cout);
+void nonstop_perform(std::istream& in = std::cin,
+                     std::ostream& out = std::cout);
+}  // namespace ourSQL
 
-#endif //OURSQL_OUR_H
+#endif  // OURSQL_OUR_H

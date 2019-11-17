@@ -8,7 +8,12 @@
 class Transaction : public Node {
    public:
     explicit Transaction(const std::vector<Query*>& queries)
-        : Node(NodeType::transaction) {}
+        : Node(NodeType::transaction), queries_(queries) {}
+
+    explicit Transaction(Query* query) : Node(NodeType::transaction) {
+        queries_.emplace_back(query);
+    }
+
     ~Transaction() override {
         for (auto& q : queries_) {
             delete q;

@@ -11,7 +11,7 @@
 
 class ParserManager {
    public:
-    Transaction* getParseTree(const std::string& query, std::unique_ptr<exc::Exception>& exception);
+    std::vector<Transaction*> getParseTree(const std::string& query, std::unique_ptr<exc::Exception>& exception);
 
     void setDebug(bool d) { debug_ = d; }
 

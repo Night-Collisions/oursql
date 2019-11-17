@@ -34,7 +34,6 @@ set(HEADERS
         Core/DataType.h
         Logic/Parser/Nodes/Expression.h
         Logic/QueryManager.h
-        Logic/TransactionManager.h
         Logic/Parser/Nodes/Transaction.h
         Logic/Parser/RelationalOperationsParser/Helper.h
         )
@@ -76,7 +75,6 @@ set(DEFINITIONS
         Logic/QueryManager.cpp
         Logic/Parser/RelationalOperationsParser/Helper.cpp
         Logic/Parser/Nodes/Transaction.cpp
-        Logic/TransactionManager.cpp
         )
 
 assemble_parser(Logic/Parser/)
