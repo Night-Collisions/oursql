@@ -1265,6 +1265,7 @@ void DROP_TESTS::SetUpTestCase() {
 #endif
     client.connect();
 }
+
 void DROP_TESTS::TearDownTestCase() {
 #if defined(CREATE_SERVER)
     Server::get()->stop();
@@ -1322,4 +1323,67 @@ TEST_F(DROP_TESTS, UPDATE_TEST_1) {
                                                   {"1", to_string(1.0), "1"},
                                                   {"1", to_string(1.0), "1"}}),
         "a a_meta");
+}
+
+class TRANSACTION_TESTS : public ::testing::Test {
+   public:
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void SetUp() override;
+    void TearDown() override { clearDB(); }
+
+    static ourSQL::client::Client client1;
+    static ourSQL::client::Client client2;
+};
+
+void TRANSACTION_TESTS::SetUpTestCase() {
+    clearDB();
+#if defined(CREATE_SERVER)
+    Server::get()->run();
+#endif
+    client1.connect();
+    client2.connect();
+}
+
+void TRANSACTION_TESTS::TearDownTestCase() {
+#if defined(CREATE_SERVER)
+    Server::get()->stop();
+#endif
+}
+
+void TRANSACTION_TESTS::SetUp() {
+    clearDB();
+    CHECK_UNREQUITED_REQUEST("create table a (a int, b varchar(100));\n",
+                             client1);
+    for (unsigned int i = 0; i < 1000; i++) {
+        CHECK_UNREQUITED_REQUEST(
+            "insert into a values(0, 'Grenkind and Igor the best "
+            "friends.');\n",
+            client1);
+    }
+    CHECK_UNREQUITED_REQUEST("insert into a values(1, 'Time to apologize.');\n",
+                             client1);
+}
+
+ourSQL::client::Client TRANSACTION_TESTS::client1(TEST_SERVER_HOST,
+                                                  TEST_SERVER_PORT);
+ourSQL::client::Client TRANSACTION_TESTS::client2(TEST_SERVER_HOST,
+                                                  TEST_SERVER_PORT);
+
+TEST_F(TRANSACTION_TESTS, TEST_1) {
+    std::vector<std::vector<std::string>> full_answer(1001);
+    for (unsigned int i = 0; i < 1000; i++) {
+        full_answer[i] = {"0", "Grenkind and Igor the best friends."};
+    }
+    full_answer.back() = {"1", "Time to apologize."};
+    client1.sendRequest(
+        "begin; delete from a where b = 'Grenkind and Igor the best friends.'; "
+        "commit;");
+    CHECK_REQUEST("select * from a;", 0,
+                  get_select_answer({"a", "b"}, full_answer), client2);
+    std::string ans;
+    client1.getAnswer(ans);
+    //    test_sleep(1500);
+    CHECK_REQUEST("select * from a;", 0,
+                  get_select_answer({"a", "b"}, {full_answer.back()}), client2);
 }

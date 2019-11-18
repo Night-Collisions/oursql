@@ -69,12 +69,7 @@ std::string check_request(const std::string& request, const long exception,
 }
 
 void test_sleep(size_t time) {
-#if defined(WIN32) || defined(_WIN32) || \
-    defined(__WIN32) && !defined(__CYGWIN__)
     std::this_thread::sleep_for(std::chrono::milliseconds(time));
-#else
-    usleep(time);
-#endif
 }
 
 void copyDB() {
