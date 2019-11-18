@@ -91,6 +91,7 @@ TEST_F(CREATE_TABLE_TESTS, TEST_7) {
 
 TEST_F(CREATE_TABLE_TESTS, TEST_8) {
     CHECK_REQUEST_ST_CLIENT(
+
         "create table a(MyColumn int, mycolumn varchar(100));",
         EXCEPTION2NUMB(exc::ExceptionType::repeat_column_in_table),
         "~~Exception 5:\n repeat column MyColumn in table a.\n"

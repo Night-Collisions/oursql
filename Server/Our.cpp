@@ -14,15 +14,24 @@
 namespace ourSQL {
 volatile unsigned long long transaction_number_ = 0;
 
+size_t containsBegin(const std::string& s) {
+    std::string tmp;
+    for (auto& c : s) {
+        tmp.push_back(tolower(c));
+    }
+
+    return tmp.find("begin");
+}
+
 bool get_command(std::istream& in, std::string& command) {
     int c = 0;
     command.clear();
     bool in_quotes = false;
     bool no_split = false;
     while ((c = in.get()) != EOF) {
-        command.push_back(tolower(c));
+        command.push_back(c);
         if (command.back() == ';' && !in_quotes) {
-            if (!no_split && command.find("begin") != std::string::npos) {
+            if (!no_split && containsBegin(command) != std::string::npos) {
                 no_split = true;
             } else if (!no_split) {
                 return true;
