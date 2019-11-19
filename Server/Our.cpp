@@ -45,7 +45,8 @@ bool get_command(std::istream& in, std::string& command) {
     return !command.empty();
 }
 
-unsigned int perform(std::istream& in, std::ostream& out) {
+unsigned int perform(std::istream& in, std::ostream& out,
+                     unsigned short client_id) {
     std::unique_ptr<exc::Exception> e = nullptr;
     std::string command;
     bool is_end = false;
@@ -73,10 +74,15 @@ unsigned int perform(std::istream& in, std::ostream& out) {
     return 0;
 }
 
-void nonstop_perform(std::istream& in, std::ostream& out) {
+void nonstop_perform(std::istream& in, std::ostream& out,
+                     unsigned short client_id) {
     while (!in.eof()) {
-        perform(in, out);
+        perform(in, out, client_id);
     }
+}
+
+void forget_client(unsigned short client_id) {
+    std::cout << "Forget: " << client_id << std::endl;
 }
 
 }  // namespace ourSQL

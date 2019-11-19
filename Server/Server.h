@@ -31,7 +31,7 @@ class Session : public std::enable_shared_from_this<Session> {
         : tcp_socket_(std::move(socket)), out_(out) {
         out_.write("Start of session: " + getSocketName());
     }
-    ~Session() { out_.write("End of session: " + getSocketName()); }
+    ~Session();
     void start() { read(); }
     void write(const std::string& response);
 
