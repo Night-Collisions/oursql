@@ -110,7 +110,8 @@ void printSelect(const Table& table, t_column_infos column_infos,
     for (auto& c : cols_from_parser) {
         auto expr = static_cast<Expression*>(c);
         std::string prefix = Helper::getCorrectTablePrefix(table.getName());
-        if (expr->getConstant()->getName() == "*") {
+        if (expr->exprType() == ExprUnit::value &&
+            expr->getConstant()->getName() == "*") {
             for (auto& k : table.getColumns()) {
                 out << prefix + k.getName() + ": " +
                            record[table.getName()][k.getName()]
@@ -180,10 +181,14 @@ void QueryManager::select(const Query& query, t_ull transact_num,
         std::string colname;
         std::string tablename;
         auto expr = static_cast<Expression*>(c);
-        if (expr->getConstant()->getName() == "*") {
+        if (expr->exprType() == ExprUnit::value &&
+            expr->getConstant()->getName() == "*") {
             continue;
         }
         auto node = expr->getConstant();
+        if (node == nullptr) {
+            continue;
+        }
         if (node->getNodeType() == NodeType::ident) {
             auto id = static_cast<Ident*>(node);
             tablename = resolvedTable.getName();

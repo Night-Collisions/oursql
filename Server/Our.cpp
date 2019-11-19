@@ -1,12 +1,12 @@
 #include "Our.h"
 
-#include "Logic/Parser/ParserManager.h"
-#include "Logic/QueryManager.h"
+#include <chrono>
 #include <mutex>
 #include <thread>
-#include <chrono>
+#include "Logic/Parser/ParserManager.h"
+#include "Logic/QueryManager.h"
 
-
+#if defined(queries)
 #define EXCEPTION_OURSQL_CHECK(e, out, command)                             \
     if (e != nullptr) {                                                     \
         out << e->getMessage() << "\n"                                      \
@@ -14,18 +14,26 @@
         queries.clear();                                                    \
         return e->getNumber();                                              \
     };
+#else
+#define EXCEPTION_OURSQL_CHECK(e, out, command)                             \
+    if (e != nullptr) {                                                     \
+        out << e->getMessage() << "\n"                                      \
+            << "~~Exception in command:\"" << command << "\"" << std::endl; \
+        return e->getNumber();                                              \
+    };
+#endif
 
 namespace ourSQL {
 std::mutex transact_counter_mtx;
 volatile unsigned long long transaction_number_ = 0;
 
-size_t contains(const std::string& s, const std::string& key) {
+bool contains(const std::string& s, const std::string& key) {
     std::string tmp;
     for (auto& c : s) {
         tmp.push_back(tolower(c));
     }
 
-    return tmp.find(key);
+    return tmp.find(key) != std::string::npos;
 }
 
 bool get_command(std::istream& in, std::string& command) {
@@ -49,7 +57,6 @@ unsigned int perform(std::istream& in, std::ostream& out,
                      unsigned short client_id) {
     std::unique_ptr<exc::Exception> e = nullptr;
     std::string command;
-    static bool transact_begin = false;
     static std::map<unsigned long long, unsigned long long> users_transacts;
     static std::map<unsigned long long, bool> users_begins;
     bool is_end = false;
@@ -61,26 +68,31 @@ unsigned int perform(std::istream& in, std::ostream& out,
         }
         if (contains(command, "begin")) {
             std::unique_lock<std::mutex> lock(transact_counter_mtx);
-            if (transact_begin) {
-                // exception, transaction has already been started
+            if (users_begins.find(client_id) != users_begins.end() &&
+                users_begins[client_id]) {
+                e.reset(new exc::tr::RepeatBeginTransact());
+                EXCEPTION_OURSQL_CHECK(e, out, command);
             } else {
-
-                transact_begin = true;
+                users_begins[client_id] = true;
+                users_transacts[client_id] = transaction_number_;
                 continue;
             }
-        } else if (!transact_begin) {
+        } else if (!users_begins[client_id]) {
+            // it means it's a single command
             std::unique_lock<std::mutex> lock(transact_counter_mtx);
-            ++transaction_number_;
+            users_transacts[client_id] = transaction_number_++;
         }
 
         if (contains(command, "commit")) {
-            if (transact_begin) {
+            std::unique_lock<std::mutex> lock(transact_counter_mtx);
+            if (users_begins[client_id]) {
+                users_begins[client_id] = false;
                 // TODO
-                // Как то сказать движку, что мы сделали коммит?
-                transact_begin = false;
+                // прописать end
                 continue;
             } else {
-                // exception: no unfinished transaction
+                e.reset(new exc::tr::NoUncommitedTransact());
+                EXCEPTION_OURSQL_CHECK(e, out, command);
             }
         }
 
@@ -89,8 +101,10 @@ unsigned int perform(std::istream& in, std::ostream& out,
         auto queries = pm.getParseTree(command, e);
         EXCEPTION_OURSQL_CHECK(e, out, command);
         for (auto& q : queries) {
-            QueryManager::execute(*q, transaction_number_, e, out);
-            //TODO: если это единичная команда, то сразу делать коммит
+            QueryManager::execute(*q, users_transacts[client_id], e, out);
+            if (!users_begins[client_id]) {
+                // TODO: если это единичная команда, то сразу делать коммит
+            }
         }
 
         EXCEPTION_OURSQL_CHECK(e, out, command);
