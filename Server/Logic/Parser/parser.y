@@ -34,7 +34,7 @@
     void yyerror(const char *s);
     void destroy();
 
-    std::vector<Transaction*> rootTransact;
+    std::vector<Query*> rootQuery;
     std::vector<Query*> queryList;
     std::vector<Variable *> varList;
     std::vector<ColumnConstraint> constraintList;
@@ -99,13 +99,9 @@
 
 start_expression:
     statements {
-        for (auto& q : queryList) {
-            rootTransact.emplace_back(new Transaction(q));
-        }
         destroy();
     } | 
     BEGIN_ SEMI statements COMMIT SEMI {
-        rootTransact.emplace_back(new Transaction(queryList));
         destroy();
     };
 
@@ -498,12 +494,10 @@ void destroy() {
     identList.clear();
     selectList.clear();
     constantList.clear();
-    queryList.clear();
     yylval.varcharLen = 0;
-    
 }
 
-std::vector<Transaction*> parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) {
+std::vector<Query*> parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) {
     destroy();
     exception.reset(nullptr);
 
@@ -512,5 +506,5 @@ std::vector<Transaction*> parse_string(const char* in, std::unique_ptr<exc::Exce
     end_lexical_scan();
 
     exception = std::move(ex);
-    return std::move(rootTransact);
+    return std::move(queryList);
 }
