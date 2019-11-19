@@ -1,6 +1,7 @@
 #ifndef OURSQL_APP_LOGIC_QUERYMANAGER_H_
 #define OURSQL_APP_LOGIC_QUERYMANAGER_H_
 
+#include <mutex>
 #include <set>
 #include "../Engine/Column.h"
 #include "../Engine/Table.h"
@@ -51,6 +52,8 @@ class QueryManager {
 
     static Table getFilledTable(const std::string& name,
                                 std::unique_ptr<exc::Exception>& e);
+
+    std::mutex transact_mtx_;
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_

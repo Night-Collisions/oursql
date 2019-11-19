@@ -1,6 +1,7 @@
 #include "QueryManager.h"
 #include <iostream>
 #include <memory>
+#include <mutex>
 
 #include "../Engine/Column.h"
 #include "../Engine/Cursor.h"
@@ -18,7 +19,7 @@
 #include "Parser/RelationalOperationsParser/Join.h"
 #include "Parser/RelationalOperationsParser/Union.h"
 
-void QueryManager::execute(const Query& query, t_ull transact_num,  // todo
+void QueryManager::execute(const Query& query, t_ull transact_num,
                            std::unique_ptr<exc::Exception>& e,
                            std::ostream& out) {
     void (*const
