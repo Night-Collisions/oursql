@@ -53,7 +53,7 @@ class QueryManager {
     static Table getFilledTable(const std::string& name,
                                 std::unique_ptr<exc::Exception>& e);
 
-    std::mutex transact_mtx_;
+    static std::map<std::string, bool> locked_tables_;
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_
