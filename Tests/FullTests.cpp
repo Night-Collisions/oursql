@@ -1442,3 +1442,16 @@ TEST_F(TRANSACTION_TESTS, TEST_3) {
         "commit;",
         -1, "", client2);
 }
+
+TEST_F(TRANSACTION_TESTS, TEST_4) {
+    CHECK_REQUEST(
+        "begin; "
+        "create table b(f int);"
+        "commit;",
+        -1, "", client1);
+    CHECK_REQUEST(
+        "begin; "
+        "drop table a;"
+        "commit;",
+        -1, "", client1);
+}
