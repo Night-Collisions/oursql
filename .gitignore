@@ -6,11 +6,19 @@
 !Tests
 !Tests/**/
 
-!App
-!App/**/
+!Client
+!Client/**/
+
+!Server
+!Server/**/
+
+!TestsGenerator
+!TestsGenerator/**/
 
 !**/CMakeLists.txt
 !**/*.cpp
 !**/*.tpp
 !**/*.ipp
 !**/*.h
+!**/*.l
+!**/*.y

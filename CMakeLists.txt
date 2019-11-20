@@ -3,32 +3,6 @@ project(OurSQL)
 
 set(CMAKE_CXX_STANDARD 17)
 
-if ( MSVC )
-    string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-    set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
-
-    string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL}")
-    set(CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_MINSIZEREL})
-
-    string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_C_FLAGS_RELEASE}_INIT")
-    set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
-
-    string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
-
-    string(REPLACE "/MD" "/MT" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-    set(CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
-
-    string(REPLACE "/MD" "/MT" CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL}")
-    set(CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL})
-
-    string(REPLACE "/MD" "/MT" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-    set(CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
-
-    string(REPLACE "/MD" "/MT" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-    set(CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO})
-endif ( MSVC )
-
 macro(show_compilation_warnings TERGET)
     target_compile_options(${TERGET} PRIVATE
             $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
@@ -44,6 +18,49 @@ macro(data_directory TARGET DIRECTORY)
             ${CMAKE_BINARY_DIR}/${DIRECTORY}/)
 endmacro()
 
-add_subdirectory(App)
+find_package(FLEX)
+find_package(BISON)
+
+macro(assemble_parser WAY)
+FLEX_TARGET(SCANNER ${CMAKE_CURRENT_SOURCE_DIR}/${WAY}scanner.l ${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp)
+BISON_TARGET(PARSER ${CMAKE_CURRENT_SOURCE_DIR}/${WAY}parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp COMPILE_FLAGS -t)
+ADD_FLEX_BISON_DEPENDENCY(SCANNER PARSER)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+endmacro()
+
+macro(init WAY)
+    file(MAKE_DIRECTORY ${WAY}/DataBD)
+endmacro()
+
+include(FetchContent)
+
+FetchContent_Declare(
+        rapidjson
+        GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+        GIT_TAG v1.1.0
+        UPDATE_DISCONNECTED 1
+)
+
+FetchContent_Populate(rapidjson)
+include_directories(${rapidjson_SOURCE_DIR}/include/)
+
+FetchContent_Declare(
+        asio
+        GIT_REPOSITORY https://github.com/chriskohlhoff/asio
+        GIT_TAG asio-1-14-0
+        UPDATE_DISCONNECTED 1
+)
+
+SET(CMAKE_CXX_FLAGS "-DASIO_STANDALONE -pthread")
+FetchContent_Populate(asio)
+include_directories(${asio_SOURCE_DIR}/asio/include/)
+
+if(WIN32)
+    link_libraries(ws2_32 wsock32)
+endif()
+
+add_subdirectory(Server)
+
+add_subdirectory(Client)
 
 add_subdirectory(Tests)
