@@ -61,7 +61,6 @@ unsigned int perform(std::istream& in, std::ostream& out,
     static std::map<unsigned long long, bool> users_begins;
     bool is_end = false;
     do {
-        // TODO: вынести это и прописать ошибки
         is_end = !get_command(in, command);
         if (command.empty() || command == "\n") {
             return 0;

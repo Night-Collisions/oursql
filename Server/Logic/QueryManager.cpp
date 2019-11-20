@@ -19,6 +19,9 @@
 #include "Parser/RelationalOperationsParser/Join.h"
 #include "Parser/RelationalOperationsParser/Union.h"
 
+std::mutex transact_mtx;
+std::map<std::string, bool> QueryManager::locked_tables_;
+
 void QueryManager::execute(const Query& query, t_ull transact_num,
                            std::unique_ptr<exc::Exception>& e,
                            std::ostream& out) {
@@ -252,6 +255,15 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
         return;
     }
 
+    {
+        std::unique_lock<std::mutex> table_lock(transact_mtx);
+        if (locked_tables_[table.getName()]) {
+            e.reset(new exc::tr::SerializeAccessError());
+            // TODO: rollback
+            return;
+        }
+    }
+
     std::map<std::string, std::map<std::string, Column>> column_info;
     for (auto& c : table.getColumns()) {
         column_info[table.getName()][c.getName()] = c;
@@ -402,6 +414,17 @@ void QueryManager::update(const Query& query, t_ull transact_num,
         return;
     }
 
+    {
+        std::unique_lock<std::mutex> table_lock(transact_mtx);
+        if (locked_tables_[table.getName()]) {
+            e.reset(new exc::tr::SerializeAccessError());
+            // TODO: rollback
+            return;
+        } else {
+            locked_tables_[table.getName()] = true;
+        }
+    }
+
     std::map<std::string, std::map<std::string, Column>> column_info;
     for (auto& c : table.getColumns()) {
         column_info[table.getName()][c.getName()] = c;
@@ -545,6 +568,11 @@ void QueryManager::update(const Query& query, t_ull transact_num,
     }
 
     cursor.commit();
+
+    {
+        std::unique_lock<std::mutex> table_lock(transact_mtx);
+        locked_tables_[table.getName()] = false;
+    }
 }
 
 void QueryManager::remove(const Query& query, t_ull transact_num,
@@ -555,6 +583,16 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
     if (table.getName().empty()) {
         e.reset(new exc::acc::TableNonexistent(name));
         return;
+    }
+    {
+        std::unique_lock<std::mutex> table_lock(transact_mtx);
+        if (locked_tables_[table.getName()]) {
+            e.reset(new exc::tr::SerializeAccessError());
+            // TODO: rollback
+            return;
+        } else {
+            locked_tables_[table.getName()] = true;
+        }
     }
 
     std::map<std::string, std::map<std::string, Column>> column_info;
@@ -585,6 +623,10 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
     }
 
     cursor.commit();
+    {
+        std::unique_lock<std::mutex> table_lock(transact_mtx);
+        locked_tables_[table.getName()] = false;
+    }
 }
 
 Table QueryManager::resolveRelationalOperTree(

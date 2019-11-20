@@ -317,10 +317,10 @@ class DivByZero : public Exception {
 namespace tr {
 class SerializeAccessError : public Exception {
    public:
-    SerializeAccessError(const std::string& cmd)
+    SerializeAccessError()
         : Exception(
               ExceptionType::serialize_access_error,
-              "Could not serialize access due to concurrent " + cmd + ".") {}
+              "Could not serialize access.") {}
 };
 
 class RepeatBeginTransact : public Exception {
