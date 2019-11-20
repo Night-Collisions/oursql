@@ -1334,6 +1334,8 @@ class TRANSACTION_TESTS : public ::testing::Test {
 
     static ourSQL::client::Client client1;
     static ourSQL::client::Client client2;
+
+    static const unsigned int number_start_row;
 };
 
 void TRANSACTION_TESTS::SetUpTestCase() {
@@ -1355,7 +1357,7 @@ void TRANSACTION_TESTS::SetUp() {
     clearDB();
     CHECK_UNREQUITED_REQUEST("create table a (a int, b varchar(100));\n",
                              client1);
-    for (unsigned int i = 0; i < 1000; i++) {
+    for (unsigned int i = 0; i < number_start_row - 1; i++) {
         CHECK_UNREQUITED_REQUEST(
             "insert into a values(0, 'Grenkind and Igor the best "
             "friends.');\n",
@@ -1370,9 +1372,11 @@ ourSQL::client::Client TRANSACTION_TESTS::client1(TEST_SERVER_HOST,
 ourSQL::client::Client TRANSACTION_TESTS::client2(TEST_SERVER_HOST,
                                                   TEST_SERVER_PORT);
 
+const unsigned int TRANSACTION_TESTS::number_start_row = 500;
+
 TEST_F(TRANSACTION_TESTS, TEST_1) {
-    std::vector<std::vector<std::string>> full_answer(1001);
-    for (unsigned int i = 0; i < 1000; i++) {
+    std::vector<std::vector<std::string>> full_answer(number_start_row);
+    for (unsigned int i = 0; i < number_start_row - 1; i++) {
         full_answer[i] = {"0", "Grenkind and Igor the best friends."};
     }
     full_answer.back() = {"1", "Time to apologize."};
@@ -1380,10 +1384,61 @@ TEST_F(TRANSACTION_TESTS, TEST_1) {
         "begin; delete from a where b = 'Grenkind and Igor the best friends.'; "
         "commit;");
     CHECK_REQUEST("select * from a;", 0,
-                  get_select_answer({"a", "b"}, full_answer), client2);
+                  get_select_answer({"a.a", "a.b"}, full_answer), client2);
     std::string ans;
     client1.getAnswer(ans);
     //    test_sleep(1500);
     CHECK_REQUEST("select * from a;", 0,
-                  get_select_answer({"a", "b"}, {full_answer.back()}), client2);
+                  get_select_answer({"a.a", "a.b"}, {full_answer.back()}),
+                  client2);
+}
+
+TEST_F(TRANSACTION_TESTS, TEST_2) {
+    std::vector<std::vector<std::string>> full_answer(number_start_row);
+    for (unsigned int i = 0; i < number_start_row - 1; i++) {
+        full_answer[i] = {"0", "Grenkind and Igor the best friends."};
+    }
+    client1.sendRequest(
+        "begin; "
+        "update a set a = 3 where a = 0; "
+        "select a.a from a where b = 'Grenkind and Igor the best friends.'; "
+        "delete from a where b = 'Time to apologize.'; "
+        "commit;");
+    CHECK_REQUEST(
+        "begin; "
+        "select * from a where a = 3;"
+        "commit;",
+        0, "", client2);
+    std::string ans;
+    client1.getAnswer(ans);
+    //    test_sleep(1500);
+    std::vector<std::vector<std::string>> expected_ans_client1(
+        number_start_row - 1);
+    for (unsigned int i = 0; i < number_start_row - 1; i++) {
+        expected_ans_client1[i] = {"3"};
+    }
+    ASSERT_EQ(ans, get_select_answer({"a.a", "a.b"}, expected_ans_client1))
+        << "Wrong answer client1!!!";
+    CHECK_REQUEST("select * from a;", 0,
+                  get_select_answer({"a.a", "a.b"}, {full_answer.back()}),
+                  client2);
+}
+
+TEST_F(TRANSACTION_TESTS, TEST_3) {
+    std::vector<std::vector<std::string>> full_answer(number_start_row);
+    for (unsigned int i = 0; i < number_start_row - 1; i++) {
+        full_answer[i] = {"0", "Grenkind and Igor the best friends."};
+    }
+    full_answer.back() = {"1", "Time to apologize."};
+    client1.sendRequest(
+        "begin; "
+        "update a set a = 3 where a = 0; "
+        "select a.a from a where b = 'Grenkind and Igor the best friends.'; "
+        "delete from a where a = 3; "
+        "commit;");
+    CHECK_REQUEST(
+        "begin; "
+        "update a set a = 2 where a = 1;"
+        "commit;",
+        -1, "", client2);
 }
