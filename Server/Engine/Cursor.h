@@ -1,6 +1,7 @@
 #ifndef OURSQL_CURSOR_H
 #define OURSQL_CURSOR_H
 
+#include <unordered_set>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -9,15 +10,11 @@
 #include "Block.h"
 #include "Value.h"
 #include "Engine.h"
-
-enum class BlockStatus : int {
-    updated_block,
-    new_block
-};
+#include "ChangeManager.h"
 
 class Cursor {
    public:
-    Cursor(const std::string& table_name);
+    Cursor(int tr_id, const std::string& table_name);
     void reset();
     std::vector<Value> fetch();
     bool next();
@@ -25,25 +22,17 @@ class Cursor {
     void update(const std::vector<Value>& values);
     void remove();
     void commit();
+    int getTrId() { return tr_id_; }
 
 private:
-    void setBlocksIds();
-    void saveBlock(Block& block, int id);
-    void openTmpFile();
-    int getNextId(int id);
-    void setNextId(int id, int nextId);
-    int getPrevId(int id);
-    void setPrevId(int id, int prevId);
-
-    static const int kNewBlockNumber_ = -1;
+    std::unordered_set<int> removed_rows_;
+    int tr_id_;
     std::fstream file_;
-    std::fstream tmp_file_;
     Table table_;
+    ChangeManager change_manager_;
     Block block_;
-    int current_block_ = Block::kNullBlockId;
-    bool was_block_changed_ = false;
-    int last_empty_block_id_ = Block::kNullBlockId;
-    int last_non_empty_block_id_ = Block::kNullBlockId;
+    int current_block_ = 0;
+    bool was_file_finished_ = false;
 };
 
 #endif

@@ -6,13 +6,17 @@
 #include <vector>
 #include <array>
 #include <fstream>
+#include <sstream>
 #include "Column.h"
 #include "Value.h"
 #include "Table.h"
 
 class Block {
    public:
-    Block();
+    static std::stringstream toRow(const Table& table, const std::vector<Value>& values);
+    static std::vector<Value> toValues(const Table& table, char* buff);
+
+    Block() = default;
     ~Block() { delete[] buffer_; }
     Block(const Table& table);
     Block(const Table& table, std::fstream& fstream);
@@ -20,28 +24,29 @@ class Block {
     bool load(std::fstream& fstream);
     int getCount() const;
     void setCount(int count);
-    int getPrevBlockId() const;
-    int setPrevBlockId(int id);
-    int getNextBlockId() const;
-    int setNextBlockId(int id);
-    bool next();
+    void setTrStartId(int id);
+    void setTrEndId(int id);
+    int getTrStartId();
+    int getTrEndId();
+    bool next(int id);
     std::vector<Value> fetch();
-    bool insert(const std::vector<Value>& value);
-    void update(const std::vector<Value>& values);
-    void remove();
+    bool insert(const std::vector<Value>& values, int id);
+    bool insert(const std::string& values, int id);
+    void remove(int id);
     const char* getBuffer() { return buffer_; }
+    int getPosition() { return position_; }
+    int getRowSize() { return row_size_; };
 
-    static const size_t kBlockSize;
-    static const int kNullBlockId;
-    static const int kRowsCountPosition;
-    static const int kPrevBlockIdPosition;
-    static const int kNextBlockIdPosition;
+    static const size_t kBlockSize = 65536;
+    static const int kRowsCountPosition = 0;
 
-   private:
+    static const int kTrStartIdPosition = 0;
+    static const int kTrEndIdPosition = 4;
+
+private:
     void setValues(const std::vector<Value>& values, int pos);
 
-    static const int kRemovedStackPosition_;
-    static const int kRowsStartPosition_;
+    static const int kRowsStartPosition_ = 4;
 
     char* buffer_ = new char[kBlockSize]{};
     Table table_;

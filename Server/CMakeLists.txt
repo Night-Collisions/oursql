@@ -9,6 +9,8 @@ set(HEADERS
         Engine/Engine.h
         Engine/Block.h
         Engine/Cursor.h
+        Engine/ChangeManager.h
+        Engine/Value.h
         Core/Exception.h
         Core/DataType.h
         Logic/Parser/ParserManager.h
@@ -46,7 +48,7 @@ set(DEFINITIONS
         Engine/Table.cpp
         Engine/Block.cpp
         Engine/Cursor.cpp
-        Engine/Value.h
+        Engine/ChangeManager.cpp
         Core/Exception.cpp
         Core/DataType.cpp
         Engine/Engine.cpp
