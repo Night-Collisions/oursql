@@ -3,6 +3,7 @@
 #include <chrono>
 #include <mutex>
 #include <thread>
+#include "Engine/Engine.h"
 #include "Logic/Parser/ParserManager.h"
 #include "Logic/QueryManager.h"
 
@@ -73,21 +74,21 @@ unsigned int perform(std::istream& in, std::ostream& out,
                 EXCEPTION_OURSQL_CHECK(e, out, command);
             } else {
                 users_begins[client_id] = true;
-                users_transacts[client_id] = transaction_number_;
+                users_transacts[client_id] =
+                    Engine::generateNextTransactionId();
                 continue;
             }
         } else if (!users_begins[client_id]) {
             // it means it's a single command
             std::unique_lock<std::mutex> lock(transact_counter_mtx);
-            users_transacts[client_id] = transaction_number_++;
+            users_transacts[client_id] = Engine::generateNextTransactionId();
         }
 
         if (contains(command, "commit")) {
             std::unique_lock<std::mutex> lock(transact_counter_mtx);
             if (users_begins[client_id]) {
                 users_begins[client_id] = false;
-                // TODO
-                // прописать end
+                Engine::commitTransaction(users_transacts[client_id]);
                 continue;
             } else {
                 e.reset(new exc::tr::NoUncommitedTransact());
@@ -102,7 +103,7 @@ unsigned int perform(std::istream& in, std::ostream& out,
         for (auto& q : queries) {
             QueryManager::execute(*q, users_transacts[client_id], e, out);
             if (!users_begins[client_id]) {
-                // TODO: если это единичная команда, то сразу делать коммит
+                Engine::commitTransaction(users_transacts[client_id]);
             }
         }
 

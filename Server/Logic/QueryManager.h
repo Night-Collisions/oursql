@@ -47,10 +47,10 @@ class QueryManager {
     static void remove(const Query& query, t_ull transact_num,
                        std::unique_ptr<exc::Exception>& e, std::ostream& out);
 
-    static Table resolveRelationalOperTree(RelExpr* root,
+    static Table resolveRelationalOperTree(RelExpr* root, t_ull transact_num,
                                            std::unique_ptr<exc::Exception>& e);
 
-    static Table getFilledTable(const std::string& name,
+    static Table getFilledTable(const std::string& name, t_ull transact_num,
                                 std::unique_ptr<exc::Exception>& e);
 
     static std::map<std::string, bool> locked_tables_;

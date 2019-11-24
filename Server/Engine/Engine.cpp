@@ -168,7 +168,7 @@ std::string Engine::showCreate(const std::string& table_name, std::unique_ptr<ex
         e.reset(new exc::acc::TableNonexistent(table_name));
         return std::string();
     }
-    Table table = show(table_name, e);
+    Table table = show(table_name);
     std::string query("CREATE TABLE " + table.getName() + "(");
 
     for (unsigned int i = 0; i < table.getColumns().size(); ++i) {

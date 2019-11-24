@@ -161,14 +161,14 @@ void QueryManager::select(const Query& query, t_ull transact_num,
     if (children.find(NodeType::relational_oper_expr) != children.end()) {
         auto root =
             static_cast<RelExpr*>(children[NodeType::relational_oper_expr]);
-        resolvedTable = resolveRelationalOperTree(root, e);
+        resolvedTable = resolveRelationalOperTree(root, transact_num, e);
         if (e) {
             return;
         }
 
     } else {
         auto name = children[NodeType::ident]->getName();
-        resolvedTable = getFilledTable(name, e);
+        resolvedTable = getFilledTable(name, transact_num, e);
 
         if (e) {
             return;
@@ -249,8 +249,8 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
     e.reset(nullptr);
 
     auto name = query.getChildren()[NodeType::ident]->getName();
-    auto table = Engine::show(name, e);
-    if (table.getName().empty()) {
+    auto table = Engine::show(name);
+    if (!Engine::exists(name)) {
         e.reset(new exc::acc::TableNonexistent(name));
         return;
     }
@@ -259,7 +259,7 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
         std::unique_lock<std::mutex> table_lock(transact_mtx);
         if (locked_tables_[table.getName()]) {
             e.reset(new exc::tr::SerializeAccessError());
-            // TODO: rollback
+            Engine::endTransaction(transact_num);
             return;
         }
     }
@@ -339,7 +339,7 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
         }
     }
 
-    Cursor cursor(name);
+    Cursor cursor(transact_num, name);
     std::vector<std::vector<Value>> fetch_arr;
     while (cursor.next()) {
         fetch_arr.push_back(cursor.fetch());
@@ -408,8 +408,8 @@ void QueryManager::update(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     std::string name = query.getChildren()[NodeType::ident]->getName();
-    auto table = Engine::show(name, e);
-    if (table.getName().empty()) {
+    auto table = Engine::show(name);
+    if (!Engine::exists(name)) {
         e.reset(new exc::acc::TableNonexistent(name));
         return;
     }
@@ -418,7 +418,7 @@ void QueryManager::update(const Query& query, t_ull transact_num,
         std::unique_lock<std::mutex> table_lock(transact_mtx);
         if (locked_tables_[table.getName()]) {
             e.reset(new exc::tr::SerializeAccessError());
-            // TODO: rollback
+            Engine::endTransaction(transact_num);
             return;
         } else {
             locked_tables_[table.getName()] = true;
@@ -480,7 +480,7 @@ void QueryManager::update(const Query& query, t_ull transact_num,
         ++cnt;
     }
 
-    Cursor cursor(name);
+    Cursor cursor(transact_num, name);
     std::vector<std::vector<Value>> fetch_arr;
     std::vector<std::vector<Value>> ready_ftch;
     std::vector<std::vector<Value>> updated_records;
@@ -579,8 +579,8 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     auto name = query.getChildren()[NodeType::ident]->getName();
-    auto table = Engine::show(name, e);
-    if (table.getName().empty()) {
+    auto table = Engine::show(name);
+    if (!Engine::exists(name)) {
         e.reset(new exc::acc::TableNonexistent(name));
         return;
     }
@@ -588,7 +588,7 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
         std::unique_lock<std::mutex> table_lock(transact_mtx);
         if (locked_tables_[table.getName()]) {
             e.reset(new exc::tr::SerializeAccessError());
-            // TODO: rollback
+            Engine::endTransaction(transact_num);
             return;
         } else {
             locked_tables_[table.getName()] = true;
@@ -600,7 +600,7 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
         column_info[table.getName()][c.getName()] = c;
     }
 
-    Cursor cursor(name);
+    Cursor cursor(transact_num, name);
     while (cursor.next()) {
         auto ftch = cursor.fetch();
         std::map<std::string, std::map<std::string, std::string>> record;
@@ -630,7 +630,7 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
 }
 
 Table QueryManager::resolveRelationalOperTree(
-    RelExpr* root, std::unique_ptr<exc::Exception>& e) {
+    RelExpr* root, t_ull transact_num, std::unique_ptr<exc::Exception>& e) {
     if (e) {
         return Table();
     }
@@ -643,7 +643,7 @@ Table QueryManager::resolveRelationalOperTree(
         Table table2;
 
         if (child1->getRelOperType() == RelOperNodeType::table_ident) {
-            table1 = getFilledTable(child1->getName(), e);
+            table1 = getFilledTable(child1->getName(), transact_num, e);
             if (!child1->getAlias().empty()) {
                 table1.setName(child1->getAlias());
             }
@@ -651,14 +651,14 @@ Table QueryManager::resolveRelationalOperTree(
                 return Table();
             }
         } else {
-            table1 = resolveRelationalOperTree(child1, e);
+            table1 = resolveRelationalOperTree(child1, transact_num, e);
             if (e) {
                 return Table();
             }
         }
 
         if (child2->getRelOperType() == RelOperNodeType::table_ident) {
-            table2 = getFilledTable(child2->getName(), e);
+            table2 = getFilledTable(child2->getName(), transact_num, e);
             if (!child2->getAlias().empty()) {
                 table2.setName(child2->getAlias());
             }
@@ -666,7 +666,7 @@ Table QueryManager::resolveRelationalOperTree(
                 return Table();
             }
         } else {
-            table2 = resolveRelationalOperTree(child2, e);
+            table2 = resolveRelationalOperTree(child2, transact_num, e);
             if (e) {
                 return Table();
             }
@@ -696,14 +696,14 @@ Table QueryManager::resolveRelationalOperTree(
     }
 }
 
-Table QueryManager::getFilledTable(const std::string& name,
+Table QueryManager::getFilledTable(const std::string& name, t_ull transact_num,
                                    std::unique_ptr<exc::Exception>& e) {
-    auto table = Engine::show(name, e);
-    if (e || table.getName().empty()) {
+    auto table = Engine::show(name);
+    if (!Engine::exists(name)) {
         return Table();
     }
     table.setName(name);
-    Cursor cursor(name);
+    Cursor cursor(transact_num, name);
 
     while (cursor.next()) {
         table.addRecord(cursor.fetch(), e);
