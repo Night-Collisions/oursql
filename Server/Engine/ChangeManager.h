@@ -5,8 +5,9 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "Engine.h"
 #include "Value.h"
+#include "Table.h"
+#include "Block.h"
 
 enum ChangeType : char {
     inserted = 0,
@@ -37,7 +38,7 @@ class ChangeManager {
     int getUnprocessedPosition();
     void setUnprocessedPosition(int pos);
 
-    static const int kRowSizePosition_ = Engine::kTableNameLength;
+    static const int kRowSizePosition_ = 128;
     static const int kUnprocessedPosition_ = kRowSizePosition_ + sizeof(int);
 
     std::fstream file_;

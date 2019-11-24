@@ -10,9 +10,10 @@ ChangeManager::ChangeManager(const Table& table, int tr_id) : table_(table) {
     bool was_exist = static_cast<bool>(std::ifstream(path));
     file_.open(path,std::ios::binary | std::fstream::in | std::fstream::out);
     if (!was_exist) {
-        char buffer[Engine::kTableNameLength] = {0};
+        const int name_length = 128;
+        char buffer[name_length] = {0};
         std::memcpy(buffer, table_.getName().c_str(), table_.getName().size());
-        file_.write(buffer, Engine::kTableNameLength);
+        file_.write(buffer, name_length);
         int row_size = 0;
         file_.write((char*) &row_size, sizeof(int));
         int unprocessed_position = kUnprocessedPosition_ + sizeof(int);

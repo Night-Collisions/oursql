@@ -50,7 +50,7 @@ class Engine {
 
     static void setIds(int lastTransactionId, int lastPerformingTransactionId);
 
-    static const size_t kTableNameLength = 128;
+    static const int kTableNameLength = 128;
     static const int kNullTransactionId = 0;
 
 private:

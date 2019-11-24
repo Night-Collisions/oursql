@@ -3,7 +3,7 @@
 Cursor::Cursor(int tr_id, const std::string& table_name) :
         tr_id_(tr_id),
         table_(Engine::show(table_name)),
-        change_manager_(ChangeManager(table_, tr_id)) {
+        change_manager_(table_, tr_id) {
     file_.open(Engine::getPathToTable(table_name), std::ios::binary | std::ios::in | std::ios::out);
     std::unique_ptr<exc::Exception> e;
     block_.setTable(table_);
