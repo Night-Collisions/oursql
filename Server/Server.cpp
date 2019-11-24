@@ -3,6 +3,7 @@
 #include <ctime>
 #include <iomanip>
 
+
 namespace ourSQL {
 namespace server {
 
@@ -12,6 +13,11 @@ void LogOut::write(const std::string& s) {
     lock_.lock();
     str_ << std::put_time(&local_time, "%d-%m-%Y_%H-%M-%S::") << s << std::endl;
     lock_.unlock();
+}
+
+Session::~Session() {
+    ourSQL::forget_client(tcp_socket_.remote_endpoint().port());
+    out_.write("End of session: " + getSocketName());
 }
 
 void Session::write(const std::string& response) {
@@ -55,7 +61,8 @@ void Session::read() {
 
                 std::stringstream in(request);
                 std::stringstream out;
-                std::string ans = std::to_string(ourSQL::perform(in, out));
+                std::string ans = std::to_string(ourSQL::perform(
+                    in, out, self->tcp_socket_.remote_endpoint().port()));
                 self->out_.write("Was executed: \"" + request +
                                  "\". Answer: \"" + out.str() + "\".");
 

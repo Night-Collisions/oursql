@@ -36,7 +36,10 @@ enum class ExceptionType : unsigned int {
     null_column_in_union,
     column_datatype_mismatch_intersect,
     column_sizes_intersect,
-    null_column_in_intersect
+    null_column_in_intersect,
+    serialize_access_error,
+    repeat_begin_transact,
+    no_uncommited_transact
 };
 
 class Exception {
@@ -310,6 +313,31 @@ class DivByZero : public Exception {
         : Exception(ExceptionType::div_by_zero,
                     "division by zero '" + mess + "'.") {}
 };
+
+namespace tr {
+class SerializeAccessError : public Exception {
+   public:
+    SerializeAccessError()
+        : Exception(
+              ExceptionType::serialize_access_error,
+              "Could not serialize access.") {}
+};
+
+class RepeatBeginTransact : public Exception {
+   public:
+    RepeatBeginTransact()
+        : Exception(ExceptionType::repeat_begin_transact,
+                    "Transaction is already being started.") {}
+};
+
+class NoUncommitedTransact : public Exception {
+   public:
+    NoUncommitedTransact()
+        : Exception(ExceptionType::no_uncommited_transact,
+                    "No uncomitted transaction.") {}
+};
+}  // namespace tr
+
 };  // namespace exc
 
 #endif  // OURSQL_EXCEPTIONS_H
