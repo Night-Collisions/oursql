@@ -8,7 +8,9 @@
 ChangeManager::ChangeManager(const Table& table, int tr_id) : table_(table) {
     std::string path = std::to_string(tr_id) + "/" + table_.getName();
     bool was_exist = static_cast<bool>(std::ifstream(path));
-    file_.open(path,std::ios::binary | std::fstream::in | std::fstream::out);
+    file_.open(path, std::fstream::out);
+    file_.close();
+    file_.open(path, std::ios::binary | std::fstream::in | std::fstream::out);
     if (!was_exist) {
         const int name_length = 128;
         char buffer[name_length] = {0};

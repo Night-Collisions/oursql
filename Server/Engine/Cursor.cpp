@@ -5,7 +5,6 @@ Cursor::Cursor(int tr_id, const std::string& table_name) :
         table_(Engine::show(table_name)),
         change_manager_(table_, tr_id) {
     file_.open(Engine::getPathToTable(table_name), std::ios::binary | std::ios::in | std::ios::out);
-    std::unique_ptr<exc::Exception> e;
     block_.setTable(table_);
     block_.load(file_);
     change_manager_.setRowSize(block_.getRowSize());

@@ -7,6 +7,7 @@
 #include <cstring>
 #include <fstream>
 #include <sstream>
+#include "../Core/Exception.h"
 #include "Table.h"
 #include "Cursor.h"
 
@@ -59,7 +60,7 @@ private:
         Initializer() { Engine::initialize(); }
     } initializer_;
 
-    static const std::string kTransactionsIdsFile_;
+    static inline const std::string kTransactionsIdsFile_ = "transactions_ids";
     static const size_t kColumnNameLength_ = 128;
 
     static std::mutex mutex_;

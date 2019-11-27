@@ -1,5 +1,4 @@
 #include "Engine.h"
-#include "../Core/Exception.h"
 
 // Metafile:
 // reserved: 1 byte;
@@ -10,7 +9,6 @@
 namespace fs = boost::filesystem;
 
 Engine::Initializer Engine::initializer_;
-const std::string Engine::kTransactionsIdsFile_("transactions_ids");
 std::mutex Engine::mutex_;
 
 std::string Engine::getPathToTable(const std::string& table_name) {
@@ -87,7 +85,7 @@ void Engine::setPerformingTransactionId(int id) {
 
 void Engine::setIds(int lastTransactionId, int lastPerformingTransactionId) {
     std::ofstream statusFile(kTransactionsIdsFile_);
-    statusFile << lastTransactionId << lastPerformingTransactionId;
+    statusFile << lastTransactionId << " " << lastPerformingTransactionId;
 }
 
 void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
