@@ -59,12 +59,6 @@ if(WIN32)
     link_libraries(ws2_32 wsock32)
 endif()
 
-find_package(Boost 1.36.0)
-
-if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
-endif()
-
 #TODO: взять asio из boost
 
 add_subdirectory(Server)
