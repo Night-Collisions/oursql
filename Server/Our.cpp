@@ -76,12 +76,14 @@ unsigned int perform(std::istream& in, std::ostream& out,
                 users_begins[client_id] = true;
                 users_transacts[client_id] =
                     Engine::generateNextTransactionId();
+                Engine::beginTransaction(users_transacts[client_id]);
                 continue;
             }
         } else if (!users_begins[client_id]) {
             // it means it's a single command
             std::unique_lock<std::mutex> lock(transact_counter_mtx);
             users_transacts[client_id] = Engine::generateNextTransactionId();
+            Engine::beginTransaction(users_transacts[client_id]);
         }
 
         if (contains(command, "commit")) {

@@ -7,7 +7,7 @@
 // columns count: 1 byte;
 // columns: reserved: 1 byte, n: 4 bytes, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
 
-namespace fs = std::filesystem;
+namespace fs = boost::filesystem;
 
 Engine::Initializer Engine::initializer_;
 const std::string Engine::kTransactionsIdsFile_("transactions_ids");
