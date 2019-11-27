@@ -401,7 +401,6 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
     if (!e) {
         cursor.insert(v_arr);
     }
-    cursor.commit();
 
     {
         std::unique_lock<std::mutex> table_lock(transact_mtx);
@@ -572,8 +571,6 @@ void QueryManager::update(const Query& query, t_ull transact_num,
         }
     }
 
-    cursor.commit();
-
     {
         std::unique_lock<std::mutex> table_lock(transact_mtx);
         locked_tables_[table.getName()] = false;
@@ -627,7 +624,6 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
         }
     }
 
-    cursor.commit();
     {
         std::unique_lock<std::mutex> table_lock(transact_mtx);
         locked_tables_[table.getName()] = false;
