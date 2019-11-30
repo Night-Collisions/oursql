@@ -43,7 +43,7 @@ void Engine::commitTransaction(int id) {
     setPerformingTransactionId(id);
 
     for (auto& p : fs::directory_iterator(fs::current_path() / std::to_string(id))) {
-        std::ifstream file(std::to_string(id) + "/" + fs::path(p.path()).filename().c_str());
+        std::ifstream file(std::to_string(id) + "/" + fs::path(p.path()).filename().string());
         char table_name_[kTableNameLength];
         file.read(table_name_, kTableNameLength);
         file.close();

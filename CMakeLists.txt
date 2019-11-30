@@ -59,6 +59,8 @@ if(WIN32)
     link_libraries(ws2_32 wsock32)
 endif()
 
+#TODO: взять asio из boost
+
 add_subdirectory(Server)
 
 add_subdirectory(Client)

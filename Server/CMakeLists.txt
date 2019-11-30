@@ -87,5 +87,13 @@ add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER
 
 show_compilation_warnings(${PROJECT_NAME})
 
-set(GCC_COVERAGE_COMPILE_FLAGS "-lboost_filesystem -lboost_system")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
+find_package(Boost 1.62.0 REQUIRED COMPONENTS system filesystem)
+
+include_directories(${PROJECT_NAME} ${Boost_INCLUDE_DIRS})
+
+link_directories(${PROJECT_NAME} ${Boost_LIBRARY_DIRS})
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
+
+
+#    set(GCC_COVERAGE_COMPILE_FLAGS "-lboost_filesystem -lboost_system")
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
