@@ -95,7 +95,7 @@ Block::Block(const Table& table, std::fstream& fstream) : Block(table) {
 
 void Block::setTable(const Table& table) {
     table_ = table;
-    row_size_ = 1 + table_.getColumns().size();
+    row_size_ = 4 + 4 + table_.getColumns().size();
     for (const auto& column : table_.getColumns()) {
         switch (column.getType()) {
             case DataType::integer:
@@ -173,7 +173,7 @@ bool Block::next(int id) {
 
 std::vector<Value> Block::fetch() {
     std::vector<Value> values;
-    return toValues(table_, &(buffer_[position_ + 1]));
+    return toValues(table_, &(buffer_[position_ + 8]));
 }
 
 bool Block::insert(const std::vector<Value>& values, int id) {
@@ -205,17 +205,17 @@ bool Block::insert(const std::string& values, int id) {
     setTrStartId(id);
     setTrEndId(Engine::kNullTransactionId);
     position_ = tmp;
-
-    std::fill(buffer_ + pos, buffer_ + pos + row_size_ - 1, 0);
-    memcpy((char*) &(buffer_[pos]), values.c_str(), row_size_);
+    int row_start = 8 + pos;
+    std::fill(buffer_ + row_start, buffer_ + row_start + row_size_ - 8, 0);
+    memcpy((char*) &(buffer_[row_start]), values.c_str(), row_size_ - 8);
     setCount(getCount() + 1);
 
     return true;
 }
 
 void Block::setValues(const std::vector<Value>& values, int pos) {
-    std::fill(buffer_ + pos, buffer_ + pos + row_size_ - 1, 0);
-    memcpy((char*) &(buffer_[pos]), (char*) toRow(table_, values).rdbuf(), row_size_);
+    std::fill(buffer_ + pos, buffer_ + pos + row_size_ - 8, 0);
+    memcpy((char*) &(buffer_[pos]), (char*) toRow(table_, values).rdbuf(), row_size_ - 8);
 }
 
 void Block::remove(int id) {

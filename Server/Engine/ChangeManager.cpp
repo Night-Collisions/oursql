@@ -7,26 +7,31 @@
 
 ChangeManager::ChangeManager(const Table& table, int tr_id) : table_(table) {
     std::string path = std::to_string(tr_id) + "/" + table_.getName();
-    bool was_exist = static_cast<bool>(std::ifstream(path));
-    file_.open(path, std::fstream::out);
-    file_.close();
-    file_.open(path, std::ios::binary | std::fstream::in | std::fstream::out);
+    bool was_exist;
+    {
+        was_exist = static_cast<bool>(std::ifstream(path));
+    }
     if (!was_exist) {
+        file_.open(path, std::fstream::binary | std::fstream::out);
         const int name_length = 128;
         char buffer[name_length] = {0};
         std::memcpy(buffer, table_.getName().c_str(), table_.getName().size());
         file_.write(buffer, name_length);
         int row_size = 0;
         file_.write((char*) &row_size, sizeof(int));
-        int unprocessed_position = kUnprocessedPosition_ + sizeof(int);
+        int unprocessed_position = 0;
         file_.write((char*) &unprocessed_position, sizeof(int));
+        file_.flush();
+        file_.close();
     }
+    file_.open(path, std::fstream::binary | std::fstream::in | std::fstream::out);
     reset();
 }
 
 void ChangeManager::reset() {
-    file_.seekg(kUnprocessedPosition_ + sizeof(int));
+    pos_ = 0;
     file_.seekp(0, std::ios::end);
+    was_file_finished_ = false;
 }
 
 int ChangeManager::getRowSize() {
@@ -76,12 +81,15 @@ std::vector<Value> ChangeManager::fetch() {
 }
 
 void ChangeManager::insert(const std::vector<Value>& values) {
+    int p = file_.tellp();
+    file_.seekp(0, std::fstream::end);
     char type = ChangeType::inserted;
     file_.write(&type, sizeof(char));
     char was_removed = 0;
     file_.write(&was_removed, sizeof(char));
     file_.write(Block::toRow(table_, values).rdbuf()->str().c_str(), getRowSize());
     file_.flush();
+    file_.seekp(p);
 }
 
 void ChangeManager::markRemoved() {
@@ -94,23 +102,29 @@ void ChangeManager::markRemoved() {
 }
 
 void ChangeManager::remove(int position) {
+    int p = file_.tellp();
+    file_.seekp(0, std::fstream::end);
     char type = ChangeType::removed;
     file_.write(&type, sizeof(char));
     file_.write((char*) &position, sizeof(int));
     file_.flush();
+    file_.seekp(p);
 }
 
 bool ChangeManager::next() {
-    int g = getChangeRowSize() + file_.tellg();
-    file_.seekg(g);
+    if (was_file_finished_) {
+        return true;
+    }
+    pos_ = (pos_ == 0) ? (kUnprocessedPosition_ + sizeof(int)) : (pos_ + getChangeRowSize());
+    file_.seekg(pos_);
     char type;
     file_.read(&type, sizeof(char));
-    bool was_file_finished = file_.fail();
-    if (was_file_finished) {
+    was_file_finished_ = file_.fail();
+    if (was_file_finished_) {
         file_.clear();
     }
-    file_.seekg(g);
-    return !was_file_finished;
+    file_.seekg(pos_);
+    return !was_file_finished_;
 }
 
 bool ChangeManager::nextInserted() {

@@ -43,6 +43,8 @@ class ChangeManager {
 
     std::fstream file_;
     Table table_;
+    int pos_ = 0;
+    bool was_file_finished_ = false;
 };
 
 

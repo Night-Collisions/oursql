@@ -34,8 +34,9 @@ class Block {
     bool insert(const std::string& values, int id);
     void remove(int id);
     const char* getBuffer() { return buffer_; }
+    void setPosition(int position) { position_ = position; }
     int getPosition() { return position_; }
-    int getRowSize() { return row_size_; };
+    int getRowSize() { return row_size_ - 4 - 4; };
 
     static const size_t kBlockSize = 65536;
     static const int kRowsCountPosition = 0;
