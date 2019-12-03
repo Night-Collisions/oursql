@@ -19,6 +19,7 @@ class Cursor {
     std::vector<Value> fetch();
     bool next();
     void insert(const std::vector<Value>& values);
+    void markUpdate(bool is_update) { change_manager_.markUpdate(is_update); }
     void update(const std::vector<Value>& values);
     void remove();
     void commit();

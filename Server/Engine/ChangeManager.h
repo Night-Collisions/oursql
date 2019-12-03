@@ -23,8 +23,9 @@ class ChangeManager {
     void insert(const std::vector<Value>& values);
     void markRemoved();
     void remove(int position);
-    int getRowSize();
-    void setRowSize(int size);
+    int getRowSize() { return row_size_; }
+    void setRowSize(int size) { row_size_ = size; }
+    void markUpdate(bool is_update);
 
     bool next();
     int getChangeRowSize();
@@ -34,16 +35,19 @@ class ChangeManager {
     void markProcessed();
     void moveToUnprocessed();
 
+    static const int kNullEndPosition;
+
    private:
     int getUnprocessedPosition();
     void setUnprocessedPosition(int pos);
 
-    static const int kRowSizePosition_ = 128;
-    static const int kUnprocessedPosition_ = kRowSizePosition_ + sizeof(int);
+    static const int kUnprocessedPosition_;
 
     std::fstream file_;
     Table table_;
     int pos_ = 0;
+    int end_pos_ = kNullEndPosition;
+    int row_size_;
     bool was_file_finished_ = false;
 };
 

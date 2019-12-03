@@ -97,5 +97,6 @@ void Cursor::commit() {
 
     if (block_.getCount() != 0) {
         file_.write(block_.getBuffer(), Block::kBlockSize);
+        change_manager_.markProcessed();
     }
 }

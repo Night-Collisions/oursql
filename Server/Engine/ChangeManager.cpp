@@ -5,6 +5,9 @@
 //   removed: position: 4 byte
 //   inserted: was removed: 1 byte, values: row size bytes
 
+const int ChangeManager::kNullEndPosition = -1;
+const int ChangeManager::kUnprocessedPosition_ = 128;
+
 ChangeManager::ChangeManager(const Table& table, int tr_id) : table_(table) {
     std::string path = std::to_string(tr_id) + "/" + table_.getName();
     bool was_exist;
@@ -17,8 +20,6 @@ ChangeManager::ChangeManager(const Table& table, int tr_id) : table_(table) {
         char buffer[name_length] = {0};
         std::memcpy(buffer, table_.getName().c_str(), table_.getName().size());
         file_.write(buffer, name_length);
-        int row_size = 0;
-        file_.write((char*) &row_size, sizeof(int));
         int unprocessed_position = 0;
         file_.write((char*) &unprocessed_position, sizeof(int));
         file_.flush();
@@ -30,24 +31,8 @@ ChangeManager::ChangeManager(const Table& table, int tr_id) : table_(table) {
 
 void ChangeManager::reset() {
     pos_ = 0;
-    file_.seekp(0, std::ios::end);
+    file_.seekp(0, std::fstream::end);
     was_file_finished_ = false;
-}
-
-int ChangeManager::getRowSize() {
-    int g = file_.tellg();
-    file_.seekg(kRowSizePosition_);
-    int size;
-    file_.read((char*) &size, sizeof(int));
-    file_.seekg(g);
-    return size;
-}
-
-void ChangeManager::setRowSize(int size) {
-    int p = file_.tellp();
-    file_.seekp(kRowSizePosition_);
-    file_.write((char*) &size, sizeof(int));
-    file_.seekp(p);
 }
 
 int ChangeManager::getUnprocessedPosition() {
@@ -111,11 +96,24 @@ void ChangeManager::remove(int position) {
     file_.seekp(p);
 }
 
+void ChangeManager::markUpdate(bool is_update) {
+    int p = file_.tellp();
+    file_.seekp(0, std::fstream::end);
+    int end = file_.tellp();
+    file_.seekp(p);
+    end_pos_ = (is_update) ? (end) : (kNullEndPosition);
+}
+
 bool ChangeManager::next() {
     if (was_file_finished_) {
         return true;
     }
+    int old_pos = pos_;
     pos_ = (pos_ == 0) ? (kUnprocessedPosition_ + sizeof(int)) : (pos_ + getChangeRowSize());
+    if (pos_ == end_pos_) {
+        pos_ = old_pos;
+        return false;
+    }
     file_.seekg(pos_);
     char type;
     file_.read(&type, sizeof(char));
