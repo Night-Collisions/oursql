@@ -38,16 +38,16 @@ class Block {
     int getPosition() { return position_; }
     int getRowSize() { return row_size_ - 4 - 4; };
 
-    static const size_t kBlockSize = 65536;
-    static const int kRowsCountPosition = 0;
+    static const int kBlockSize;
+    static const int kRowsCountPosition;
 
-    static const int kTrStartIdPosition = 0;
-    static const int kTrEndIdPosition = 4;
+    static const int kTrStartIdPosition;
+    static const int kTrEndIdPosition;
 
 private:
     void setValues(const std::vector<Value>& values, int pos);
 
-    static const int kRowsStartPosition_ = 4;
+    static const int kRowsStartPosition_;
 
     char* buffer_ = new char[kBlockSize]{};
     Table table_;

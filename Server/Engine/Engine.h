@@ -51,19 +51,19 @@ class Engine {
 
     static void setIds(int lastTransactionId, int lastPerformingTransactionId);
 
-    static const int kTableNameLength = 128;
-    static const int kNullTransactionId = 0;
+    static const int kTableNameLength;
+    static const int kNullTransactionId;
 
 private:
-    static class Initializer {
-       public:
-        Initializer() { Engine::initialize(); }
-    } initializer_;
-
-    static inline const std::string kTransactionsIdsFile_ = "transactions_ids";
-    static const size_t kColumnNameLength_ = 128;
+    static const std::string kTransactionsIdsFile_;
+    static const size_t kColumnNameLength_;
 
     static std::mutex mutex_;
+
+    static class Initializer {
+     public:
+        Initializer() { Engine::initialize(); }
+    } initializer_;
 };
 
 #endif

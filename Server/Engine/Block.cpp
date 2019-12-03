@@ -7,6 +7,15 @@
 // field: null: 1 byte,
 //        integer: 4 bytes / real: 8 bytes / varchar(n): n bytes
 
+const int Block::kBlockSize = 65536;
+const int Block::kRowsCountPosition = 0;
+
+const int Block::kTrStartIdPosition = 0;
+const int Block::kTrEndIdPosition = 4;
+
+const int Block::kRowsStartPosition_ = 4;
+
+
 enum ValueState : char {
     null = 0,
     not_null = 1

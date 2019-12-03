@@ -8,8 +8,13 @@
 
 namespace fs = boost::filesystem;
 
-Engine::Initializer Engine::initializer_;
+const int Engine::kTableNameLength = 128;
+const int Engine::kNullTransactionId = 0;
+const std::string Engine::kTransactionsIdsFile_ ("transactions_ids");
+const size_t Engine::kColumnNameLength_ = 128;
+
 std::mutex Engine::mutex_;
+Engine::Initializer Engine::initializer_;
 
 std::string Engine::getPathToTable(const std::string& table_name) {
     return "DataBD/" + table_name;
@@ -20,7 +25,11 @@ std::string Engine::getPathToTableMeta(const std::string& table_name) {
 }
 
 void Engine::initialize() {
-    if (!static_cast<bool>(std::ifstream(kTransactionsIdsFile_))) {
+    bool is_exist;
+    {
+        is_exist = static_cast<bool>(std::ifstream(kTransactionsIdsFile_));
+    }
+    if (!is_exist) {
         setIds(0, kNullTransactionId);
     }
     if (getPerformingTransactionId() != kNullTransactionId) {

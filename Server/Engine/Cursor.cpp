@@ -63,7 +63,7 @@ void Cursor::commit() {
     file_.seekg(-Block::kBlockSize, std::fstream::end);
     block_.load(file_);
     file_.seekp(-Block::kBlockSize, std::fstream::end);
-    const int last_block_id = file_.tellp() / Block::kBlockSize;
+    int last_block_id = file_.tellp() / Block::kBlockSize;
 
     change_manager_.reset();
     change_manager_.moveToUnprocessed();
