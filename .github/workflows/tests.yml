@@ -1,3 +1,4 @@
+
 name: C/C++ CI
 
 on: [push]
@@ -10,8 +11,6 @@ jobs:
     - name: Install GCC
       run: sudo apt-get install -y gcc g++
     - name: Install CMake
-      run: sudo apt-get install cmake
+      run: sudo apt-get update && sudo apt-get install -y cmake
     - name: Install Boost
       run: sudo apt-get install libboost-all-dev
-    - name: test
-      run: cmake .
