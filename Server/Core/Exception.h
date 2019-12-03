@@ -286,8 +286,6 @@ class NoOperationForType : public Exception {
                     "no operation for these types.") {}
 };
 
-// TODO: переделать аргумены конструктора, и переделать то, как оно вызывается в
-// коде
 class DataTypeOversize : public Exception {
    public:
     DataTypeOversize()
@@ -334,7 +332,7 @@ class NoUncommitedTransact : public Exception {
    public:
     NoUncommitedTransact()
         : Exception(ExceptionType::no_uncommited_transact,
-                    "No uncomitted transaction.") {}
+                    "No uncommitted transaction.") {}
 };
 }  // namespace tr
 
