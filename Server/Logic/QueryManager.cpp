@@ -249,11 +249,11 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
     e.reset(nullptr);
 
     auto name = query.getChildren()[NodeType::ident]->getName();
-    auto table = Engine::show(name);
     if (!Engine::exists(name)) {
         e.reset(new exc::acc::TableNonexistent(name));
         return;
     }
+    auto table = Engine::show(name);
 
     {
         std::unique_lock<std::mutex> table_lock(transact_mtx);
@@ -412,11 +412,11 @@ void QueryManager::update(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     std::string name = query.getChildren()[NodeType::ident]->getName();
-    auto table = Engine::show(name);
     if (!Engine::exists(name)) {
         e.reset(new exc::acc::TableNonexistent(name));
         return;
     }
+    auto table = Engine::show(name);
 
     {
         std::unique_lock<std::mutex> table_lock(transact_mtx);
@@ -581,11 +581,11 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     auto name = query.getChildren()[NodeType::ident]->getName();
-    auto table = Engine::show(name);
     if (!Engine::exists(name)) {
         e.reset(new exc::acc::TableNonexistent(name));
         return;
     }
+    auto table = Engine::show(name);
     {
         std::unique_lock<std::mutex> table_lock(transact_mtx);
         if (locked_tables_[table.getName()]) {
@@ -699,10 +699,10 @@ Table QueryManager::resolveRelationalOperTree(
 
 Table QueryManager::getFilledTable(const std::string& name, t_ull transact_num,
                                    std::unique_ptr<exc::Exception>& e) {
-    auto table = Engine::show(name);
     if (!Engine::exists(name)) {
         return Table();
     }
+    auto table = Engine::show(name);
     table.setName(name);
     Cursor cursor(transact_num, name);
 

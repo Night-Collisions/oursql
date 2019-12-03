@@ -87,7 +87,7 @@ add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER
 
 show_compilation_warnings(${PROJECT_NAME})
 
-find_package(Boost 1.62.0 REQUIRED COMPONENTS system filesystem)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 
 include_directories(${PROJECT_NAME} ${Boost_INCLUDE_DIRS})
 
