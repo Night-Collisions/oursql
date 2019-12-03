@@ -77,7 +77,7 @@ set(DEFINITIONS
         Logic/QueryManager.cpp
         Logic/Parser/RelationalOperationsParser/Helper.cpp
         Logic/Parser/Nodes/Transaction.cpp
-        )
+        Logic/Calendar/DateManager.cpp Logic/Calendar/DateManager.h)
 
 assemble_parser(Logic/Parser/)
 

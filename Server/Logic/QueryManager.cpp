@@ -485,6 +485,7 @@ void QueryManager::update(const Query& query, t_ull transact_num,
     }
 
     Cursor cursor(transact_num, name);
+    cursor.markUpdate(true);
     std::vector<std::vector<Value>> fetch_arr;
     std::vector<std::vector<Value>> ready_ftch;
     std::vector<std::vector<Value>> updated_records;
@@ -628,6 +629,7 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
         std::unique_lock<std::mutex> table_lock(transact_mtx);
         locked_tables_[table.getName()] = false;
     }
+    cursor.markUpdate(false);
 }
 
 Table QueryManager::resolveRelationalOperTree(
