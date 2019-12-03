@@ -11,7 +11,11 @@ jobs:
     - name: Install GCC
       run: sudo apt-get install -y gcc g++
     - name: Install CMake
-      run: sudo apt-get update && sudo apt-get install -y cmake
+      run: mkdir ~/temp
+           cd ~/temp
+           wget https://github.com/Kitware/CMake/releases/download/v3.15.5/cmake-3.15.5-Linux-x86_64.sh
+           sudo chmod a+x ./cmake-3.15.5-Linux-x86_64.sh
+           sudo ./cmake-3.15.5-Linux-x86_64.sh --skip-license
     - name: Install Boost
       run: sudo apt-get install libboost-all-dev
     - name: test
