@@ -576,6 +576,7 @@ void QueryManager::update(const Query& query, t_ull transact_num,
         std::unique_lock<std::mutex> table_lock(transact_mtx);
         locked_tables_[table.getName()] = false;
     }
+    cursor.markUpdate(false);
 }
 
 void QueryManager::remove(const Query& query, t_ull transact_num,
@@ -629,7 +630,6 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
         std::unique_lock<std::mutex> table_lock(transact_mtx);
         locked_tables_[table.getName()] = false;
     }
-    cursor.markUpdate(false);
 }
 
 Table QueryManager::resolveRelationalOperTree(
