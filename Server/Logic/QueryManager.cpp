@@ -1,4 +1,5 @@
 #include "QueryManager.h"
+
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -6,14 +7,13 @@
 #include "../Engine/Column.h"
 #include "../Engine/Cursor.h"
 #include "../Engine/Engine.h"
-#include "Parser/Nodes/Ident.h"
-#include "Parser/Nodes/VarList.h"
-
 #include "Parser/ExpressionParser/Resolver.h"
 #include "Parser/Nodes/ConstantList.h"
+#include "Parser/Nodes/Ident.h"
 #include "Parser/Nodes/IdentList.h"
 #include "Parser/Nodes/RelExpr.h"
 #include "Parser/Nodes/SelectList.h"
+#include "Parser/Nodes/VarList.h"
 #include "Parser/RelationalOperationsParser/Helper.h"
 #include "Parser/RelationalOperationsParser/Intersect.h"
 #include "Parser/RelationalOperationsParser/Join.h"
@@ -491,7 +491,7 @@ void QueryManager::update(const Query& query, t_ull transact_num,
     std::vector<std::vector<Value>> updated_records;
     while (cursor.next()) {
         auto ftch = cursor.fetch();
-        fetch_arr.push_back(cursor.fetch());
+        fetch_arr.push_back(ftch);
         std::vector<Value> rec;
         for (int i = 0; i < table.getColumns().size(); ++i) {
             auto c = table.getColumns()[i];
@@ -544,30 +544,34 @@ void QueryManager::update(const Query& query, t_ull transact_num,
         auto f = cursor.fetch();
 
         for (int k = 0; k < ready_ftch.size(); ++k) {
+            std::string resp = "0";
+            bool equal = true;
             for (int i = 0; i < ready_ftch[k].size(); ++i) {
                 if (f[i].data != ready_ftch[k][i].data) {
-                    continue;
+                    equal = false;
+                    break;
                 }
-                std::map<std::string, std::map<std::string, std::string>>
-                    record;
-                std::map<std::string, std::string> m =
-                    Resolver::getRecordMap(table.getColumns(), f, e);
-                if (e) {
-                    return;
-                }
-                record[name] = m;
+            }
+            if (!equal) {
+                continue;
+            }
+            std::map<std::string, std::map<std::string, std::string>> record;
+            std::map<std::string, std::string> m =
+                Resolver::getRecordMap(table.getColumns(), f, e);
+            if (e) {
+                return;
+            }
+            record[name] = m;
 
-                auto root = static_cast<Expression*>(
-                    query.getChildren()[NodeType::expression]);
-                std::string resp =
-                    Resolver::resolve(name, name, column_info, root, record, e);
-                if (e) {
-                    return;
-                }
+            auto root = static_cast<Expression*>(
+                query.getChildren()[NodeType::expression]);
+            resp = Resolver::resolve(name, name, column_info, root, record, e);
+            if (e) {
+                return;
+            }
 
-                if (resp != "0") {
-                    cursor.update(updated_records[k]);
-                }
+            if (resp != "0") {
+                cursor.update(updated_records[k]);
             }
         }
     }

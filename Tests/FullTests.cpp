@@ -599,8 +599,8 @@ TEST_F(UPDATE_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("update a set a = 2;", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a.a", "a.b", "a.c"}, {{"2", "1.000000", "1"},
-                                                  {"2", "1.000000", "1"},
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"2", "0.000000", "1"},
+                                                  {"2", "1.000000", "0"},
                                                   {"2", "1.000000", "1"}}));
     CHECK_REQUEST_ST_CLIENT("update a set b = 3.45, c = 'H';", 0, "");
     CHECK_REQUEST_ST_CLIENT(
