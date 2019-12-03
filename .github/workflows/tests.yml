@@ -14,4 +14,4 @@ jobs:
     - name: Install Boost
       run: sudo apt-get install libboost-all-dev
     - name: test
-      run: pwd
+      run: cmake -G "gcc"
