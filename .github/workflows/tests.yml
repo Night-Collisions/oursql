@@ -18,6 +18,6 @@ jobs:
            sudo chmod a+x ./cmake-3.15.5-Linux-x86_64.sh
            sudo ./cmake-3.15.5-Linux-x86_64.sh --skip-license
     - name: Install Boost
-      run: sudo apt-get install libboost-all-dev
+      run: sudo apt-get update && sudo apt-get install libboost-all-dev
     - name: test
       run: make .
