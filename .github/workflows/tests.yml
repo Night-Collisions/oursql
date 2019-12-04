@@ -23,7 +23,5 @@ jobs:
       run: sudo apt-get update && sudo apt-get install libboost-all-dev
     - name: test
       run: |
-           mkdir cmake-build-debug
-           pwd
-           cmake --target OurSQL_Client .
+           cmake .
            sudo make
