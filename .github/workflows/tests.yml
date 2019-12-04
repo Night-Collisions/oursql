@@ -8,8 +8,10 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
-    - name: gggg
+    - name: Cmake
       run: cmake -help
+    - name: gcc
+      run: gcc -v
 #     - name: Install GCC
 #       run: sudo apt-get install -y gcc g++
 #     - name: Install CMake
