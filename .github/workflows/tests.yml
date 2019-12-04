@@ -24,5 +24,5 @@ jobs:
       run: sudo apt-get update && sudo apt-get install libboost-all-dev
     - name: test
       run: |
-           cmake .
+           cmake . --build cmake-build-debug
            sudo make
