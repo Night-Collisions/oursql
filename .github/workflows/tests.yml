@@ -23,4 +23,6 @@ jobs:
     - name: Install Boost
       run: sudo apt-get update && sudo apt-get install libboost-all-dev
     - name: test
-      run: cmake .
+      run: |
+           cmake .
+           sudo make
