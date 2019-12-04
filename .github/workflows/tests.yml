@@ -25,4 +25,4 @@ jobs:
     - name: test
       run: |
            mkdir cmake-build-debug
-           cmake --build cmake-build-debug --target all
+           cmake --build cmake-build-debug --target OurSQL_Client
