@@ -25,6 +25,7 @@ jobs:
     - name: test
       run: |
            mkdir cmake-build-debug
+           mkdir ~cmake-build-debug/Server
            pwd
-           cmake --target OurSQL_Client --build cmake-build-debug/Client.
+           cmake --target OurSQL_Client --build cmake-build-debug/Server
            sudo make
