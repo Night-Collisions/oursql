@@ -5,30 +5,25 @@ on: [push]
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Cmake
-      run: cmake -version
-    - name: gcc
-      run: gcc -v
+    - name: Install GCC
+      run: sudo apt-get install -y gcc g++
+    - name: Install CMake
+      run: |
+          mkdir ~/temp
+          cd ~/temp
+          wget https://github.com/Kitware/CMake/releases/download/v3.15.5/cmake-3.15.5-Linux-x86_64.sh
+          chmod +x ./cmake-3.15.5-Linux-x86_64.sh
+          sudo ./cmake-3.15.5-Linux-x86_64.sh --skip-license --prefix=/usr/local --exclude-subdir
+          which cmake
+    - name: Install Bison
+      run: sudo apt install flex bison
+    - name: Install Boost
+      run: sudo apt-get update && sudo apt-get install libboost-all-dev
     - name: test
-      run: cmake .
-#     - name: Install GCC
-#       run: sudo apt-get install -y gcc g++
-#     - name: Install CMake
-#       run: |
-#           mkdir ~/temp
-#           cd ~/temp
-#           wget https://github.com/Kitware/CMake/releases/download/v3.15.5/cmake-3.15.5-Linux-x86_64.sh
-#           chmod +x ./cmake-3.15.5-Linux-x86_64.sh
-#           sudo ./cmake-3.15.5-Linux-x86_64.sh --skip-license --prefix=/usr/local --exclude-subdir
-#           which cmake
-#     - name: Install Bison
-#       run: sudo apt install flex bison
-#     - name: Install Boost
-#       run: sudo apt-get update && sudo apt-get install libboost-all-dev
-#     - name: test
-#       run: |
-#            mkdir cmake-build-debug
-#            cmake --build cmake-build-debug --target OurSQL_Client
+      run: |
+           mkdir cmake-build-debug
+           pwd
+           cmake --target OurSQL_Client .
+           sudo make
