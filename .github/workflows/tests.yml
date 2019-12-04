@@ -18,7 +18,8 @@ jobs:
           chmod +x ./cmake-3.15.5-Linux-x86_64.sh
           sudo ./cmake-3.15.5-Linux-x86_64.sh --skip-license --prefix=/usr/local --exclude-subdir
           which cmake
-          pwd
+    - name: Install Bison
+      run: sudo apt install flex bison
     - name: Install Boost
       run: sudo apt-get update && sudo apt-get install libboost-all-dev
     - name: test
