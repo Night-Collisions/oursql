@@ -26,5 +26,5 @@ jobs:
       run: |
            mkdir -p cmake-build-debug/Server
            pwd
-           cmake --target OurSQL_Client --build cmake-build-debug/Server
+           cmake --target OurSQL_Client --build cmake-build-debug/Server .
            sudo make
