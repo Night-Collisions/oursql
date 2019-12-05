@@ -22,7 +22,13 @@ jobs:
       run: sudo apt install flex bison
     - name: Install Boost
       run: sudo apt-get update && sudo apt-get install libboost-all-dev
-    - name: test
+    - name: Build
       run: |
            cmake -H. -Bbuild
            cmake --build build
+    - name: Start
+      run: |
+           cd ./build 
+           cd ./Tests 
+           ./ FullTests
+
