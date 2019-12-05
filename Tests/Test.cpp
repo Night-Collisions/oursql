@@ -32,7 +32,7 @@ void Server::run() {
     defined(__WIN32) && !defined(__CYGWIN__)
     command = "start cmd.exe /c \"" + directory_ + name_ + ".exe\"";
 #else
-    command = "cd " + directory_ + " && ./" + name_ + " ; cd -";
+    command = "../Server/OurSQL_Server &";
 #endif
     std::system(command.c_str());
 }
