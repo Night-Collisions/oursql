@@ -7,6 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v1
     - name: Install GCC
       run: sudo apt-get install -y gcc g++
     - name: Install CMake
