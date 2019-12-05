@@ -9,7 +9,9 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: A
-      run: konsole
+      run: | 
+           sudo apt-get install gnome-terminal
+           gnome-terminal
     - name: Install GCC
       run: sudo apt-get install -y gcc g++
     - name: Install CMake
