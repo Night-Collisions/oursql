@@ -9,7 +9,7 @@ const int ChangeManager::kNullEndPosition = -1;
 const int ChangeManager::kUnprocessedPosition_ = 128;
 
 ChangeManager::ChangeManager(const Table& table, int tr_id) : table_(table) {
-    std::string path = std::to_string(tr_id) + "/" + table_.getName();
+    std::string path = "DataBD/" + std::to_string(tr_id) + "/" + table_.getName();
     bool was_exist;
     {
         was_exist = static_cast<bool>(std::ifstream(path));

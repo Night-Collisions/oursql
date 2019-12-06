@@ -24,15 +24,19 @@ std::vector<Value> Cursor::fetch() {
 
 bool Cursor::next() {
     while (block_.next(tr_id_)) {
-        if (removed_rows_.find(current_block_ * Block::kBlockSize + block_.getPosition()) == removed_rows_.end()) {
+        if (removed_rows_.find(current_block_ * Block::kBlockSize + block_.getPosition())
+                == removed_rows_.end()) {
             return true;
         }
     }
 
     while (!block_.load(file_)) {
         ++current_block_;
-        if (removed_rows_.find(current_block_ * Block::kBlockSize + block_.getPosition()) == removed_rows_.end()) {
-            return true;
+        while (block_.next(tr_id_)) {
+            if (removed_rows_.find(current_block_ * Block::kBlockSize + block_.getPosition())
+                    == removed_rows_.end()) {
+                return true;
+            }
         }
     }
 
@@ -64,13 +68,14 @@ void Cursor::commit() {
     block_.load(file_);
     file_.seekp(-Block::kBlockSize, std::fstream::end);
     int last_block_id = file_.tellp() / Block::kBlockSize;
+    bool is_last_block = true;;
 
     change_manager_.reset();
     change_manager_.moveToUnprocessed();
 
     while (change_manager_.next()) {
         if (change_manager_.getChangeType() == ChangeType::removed) {
-            if (change_manager_.getRemovedPosition() / Block::kBlockSize == last_block_id) {
+            if (is_last_block && change_manager_.getRemovedPosition() / Block::kBlockSize == last_block_id) {
                 int pos = block_.getPosition();
                 block_.setPosition(change_manager_.getRemovedPosition() % Block::kBlockSize);
                 block_.setTrEndId(Engine::getLastTransactionId());
@@ -91,6 +96,7 @@ void Cursor::commit() {
                 change_manager_.markProcessed();
                 block_ = Block(table_);
                 block_.insert(change_manager_.getValues(), tr_id_);
+                is_last_block = false;
             }
         }
     }

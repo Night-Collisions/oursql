@@ -38,20 +38,21 @@ void Engine::initialize() {
 }
 
 int Engine::generateNextTransactionId() {
+    std::lock_guard<std::mutex> guard(mutex_);
     int nextId = getLastTransactionId() + 1;
     setLastTransactionId(nextId);
     return nextId;
 }
 
 void Engine::beginTransaction(int id) {
-    fs::create_directory(fs::current_path() / std::to_string(id));
+    fs::create_directory(fs::current_path() / "DataBD" / std::to_string(id));
 }
 
 void Engine::commitTransaction(int id) {
     std::lock_guard<std::mutex> guard(mutex_);
     setPerformingTransactionId(id);
 
-    for (auto& p : fs::directory_iterator(fs::current_path() / std::to_string(id))) {
+    for (auto& p : fs::directory_iterator(fs::current_path() / "DataBD" / std::to_string(id))) {
         std::ifstream file(std::to_string(id) + "/" + fs::path(p.path()).filename().string());
         char table_name_[kTableNameLength];
         file.read(table_name_, kTableNameLength);
@@ -65,7 +66,7 @@ void Engine::commitTransaction(int id) {
 }
 
 void Engine::endTransaction(int id) {
-    fs::remove_all(fs::current_path() / std::to_string(id));
+    fs::remove_all(fs::current_path() / "DataBD" / std::to_string(id));
 }
 
 int Engine::getLastTransactionId() {
