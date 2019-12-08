@@ -10,7 +10,7 @@ namespace fs = boost::filesystem;
 
 const int Engine::kTableNameLength = 128;
 const int Engine::kNullTransactionId = 0;
-const std::string Engine::kTransactionsIdsFile_ ("transactions_ids");
+const std::string Engine::kTransactionsIdsFile_ ("DataBD/transactions_ids");
 const size_t Engine::kColumnNameLength_ = 128;
 
 std::mutex Engine::mutex_;
