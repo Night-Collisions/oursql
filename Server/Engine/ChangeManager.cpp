@@ -1,6 +1,6 @@
 #include "ChangeManager.h"
 
-// File: table name: Engine::kTableNameLength bytes, row size: 4 bytes, unprocessed position: 4 bytes, rows
+// File: table name: Engine::kTableNameLength bytes, unprocessed position: 4 bytes, rows
 // Row: type : 1 byte,
 //   removed: position: 4 byte
 //   inserted: was removed: 1 byte, values: row size bytes
