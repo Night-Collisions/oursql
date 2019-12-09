@@ -153,6 +153,11 @@ void QueryManager::select(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     auto children = query.getChildren();
+    auto name = query.getChildren()[NodeType::ident]->getName();
+    if (!Engine::exists(name)) {
+        e.reset(new exc::acc::TableNonexistent(name));
+        return;
+    }
 
     Table resolvedTable;
     t_column_infos column_info;
