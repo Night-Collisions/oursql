@@ -41,7 +41,7 @@ void QueryManager::execute(const Query& query, t_ull transact_num,
     CommandType command = query.getCmdType();
     if (command != CommandType::Count) {
         if (command != CommandType::create_table &&
-            command != CommandType::select ) {
+            command != CommandType::select) {
             auto name = query.getChildren()[NodeType::ident]->getName();
             if (!Engine::exists(name)) {
                 e.reset(new exc::acc::TableNonexistent(name));
@@ -197,6 +197,10 @@ void QueryManager::select(const Query& query, t_ull transact_num,
 
     } else {
         auto name = children[NodeType::ident]->getName();
+        if (!Engine::exists(name)) {
+            e.reset(new exc::acc::TableNonexistent(name));
+            return;
+        }
         resolvedTable = getFilledTable(name, transact_num, e);
 
         if (e) {

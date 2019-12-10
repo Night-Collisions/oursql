@@ -73,6 +73,9 @@ class Table {
     std::vector<std::vector<Value>> getRecords() const {
         std::vector<std::vector<Value>> res;
         std::vector<Value> rec;
+        if (columns_.empty()) {
+            return res;
+        }
         for (unsigned int i = 0; i < columns_[0].getValues().size(); ++i) {
             rec.clear();
             for (auto& column : columns_) {
