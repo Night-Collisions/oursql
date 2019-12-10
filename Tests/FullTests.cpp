@@ -155,7 +155,7 @@ TEST_F(SHOW_CREATE_TABLE_TESTS, TEST_2) {
     CHECK_REQUEST_ST_CLIENT(
         "show create table e;",
         EXCEPTION2NUMB(exc::ExceptionType::access_table_nonexistent),
-        "\n~~Exception 701:\n table e nonexistent.\n~~Exception in "
+        "~~Exception 701:\n table e nonexistent.\n~~Exception in "
         "command:\"show create table e;\"\n");
 }
 

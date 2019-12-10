@@ -682,6 +682,7 @@ Table QueryManager::resolveRelationalOperTree(
 Table QueryManager::getFilledTable(const std::string& name, t_ull transact_num,
                                    std::unique_ptr<exc::Exception>& e) {
     if (!Engine::exists(name)) {
+        e.reset(new exc::acc::TableNonexistent(name));
         return Table();
     }
     auto table = Engine::show(name);
