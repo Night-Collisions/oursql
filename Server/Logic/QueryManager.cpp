@@ -41,7 +41,7 @@ void QueryManager::execute(const Query& query, t_ull transact_num,
     CommandType command = query.getCmdType();
     if (command != CommandType::Count) {
         if (command != CommandType::create_table &&
-            command != CommandType::select) {
+            command != CommandType::select ) {
             auto name = query.getChildren()[NodeType::ident]->getName();
             if (!Engine::exists(name)) {
                 e.reset(new exc::acc::TableNonexistent(name));
@@ -119,6 +119,10 @@ void QueryManager::showCreateTable(const Query& query, t_ull transact_num,
                                    std::unique_ptr<exc::Exception>& e,
                                    std::ostream& out) {
     auto name = query.getChildren()[NodeType::ident]->getName();
+    if (!Engine::exists(name)) {
+        e.reset(new exc::acc::TableNonexistent(name));
+        return;
+    }
     auto res = Engine::showCreate(name, e);
     out << res << std::endl;
 }
@@ -179,8 +183,6 @@ void QueryManager::select(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     auto children = query.getChildren();
-    auto name = query.getChildren()[NodeType::ident]->getName();
-
     Table resolvedTable;
     t_column_infos column_info;
     std::vector<Node*> cols_from_parser;
