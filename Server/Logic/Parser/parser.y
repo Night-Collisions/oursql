@@ -58,6 +58,7 @@
 %token AND OR DIVIDE PLUS MINUS NOT
 %token LEFT RIGHT INNER OUTER FULL CROSS JOIN INTERSECT UNION AS ON
 %token BEGIN_ COMMIT
+%token SYSTEM_VERSIONING WITH PERIOD SYSTEM_TIME FOR_ OFF
 
 %type<query> create show_create drop_table select insert delete update statement statements
 %type<ident> id col_ident

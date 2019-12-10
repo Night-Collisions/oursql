@@ -1,7 +1,3 @@
-//
-// Created by Victor on 10.10.2019.
-//
-
 #ifndef OURSQL_APP_LOGIC_PARSER_NODES_CONSTANT_H_
 #define OURSQL_APP_LOGIC_PARSER_NODES_CONSTANT_H_
 

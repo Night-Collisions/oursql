@@ -40,8 +40,34 @@ void QueryManager::execute(const Query& query, t_ull transact_num,
         remove};
     CommandType command = query.getCmdType();
     if (command != CommandType::Count) {
-        commandsActions[static_cast<unsigned int>(command)](query, transact_num,
-                                                            e, out);
+        if (command != CommandType::create_table &&
+            command != CommandType::select) {
+            auto name = query.getChildren()[NodeType::ident]->getName();
+            if (!Engine::exists(name)) {
+                e.reset(new exc::acc::TableNonexistent(name));
+                return;
+            }
+            auto table = Engine::show(name);
+
+            {
+                std::unique_lock<std::mutex> table_lock(transact_mtx);
+                if (locked_tables_[table.getName()]) {
+                    e.reset(new exc::tr::SerializeAccessError());
+                    Engine::endTransaction(transact_num);
+                    return;
+                }
+            }
+            commandsActions[static_cast<unsigned int>(command)](
+                query, transact_num, e, out);
+            {
+                std::unique_lock<std::mutex> table_lock(transact_mtx);
+                locked_tables_[table.getName()] = false;
+            }
+
+        } else {
+            commandsActions[static_cast<unsigned int>(command)](
+                query, transact_num, e, out);
+        }
     }
 }
 
@@ -154,10 +180,6 @@ void QueryManager::select(const Query& query, t_ull transact_num,
                           std::ostream& out) {
     auto children = query.getChildren();
     auto name = query.getChildren()[NodeType::ident]->getName();
-    if (!Engine::exists(name)) {
-        e.reset(new exc::acc::TableNonexistent(name));
-        return;
-    }
 
     Table resolvedTable;
     t_column_infos column_info;
@@ -254,20 +276,7 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
     e.reset(nullptr);
 
     auto name = query.getChildren()[NodeType::ident]->getName();
-    if (!Engine::exists(name)) {
-        e.reset(new exc::acc::TableNonexistent(name));
-        return;
-    }
     auto table = Engine::show(name);
-
-    {
-        std::unique_lock<std::mutex> table_lock(transact_mtx);
-        if (locked_tables_[table.getName()]) {
-            e.reset(new exc::tr::SerializeAccessError());
-            Engine::endTransaction(transact_num);
-            return;
-        }
-    }
 
     std::map<std::string, std::map<std::string, Column>> column_info;
     for (auto& c : table.getColumns()) {
@@ -406,33 +415,13 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
     if (!e) {
         cursor.insert(v_arr);
     }
-
-    {
-        std::unique_lock<std::mutex> table_lock(transact_mtx);
-        locked_tables_[table.getName()] = false;
-    }
 }
 
 void QueryManager::update(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     std::string name = query.getChildren()[NodeType::ident]->getName();
-    if (!Engine::exists(name)) {
-        e.reset(new exc::acc::TableNonexistent(name));
-        return;
-    }
     auto table = Engine::show(name);
-
-    {
-        std::unique_lock<std::mutex> table_lock(transact_mtx);
-        if (locked_tables_[table.getName()]) {
-            e.reset(new exc::tr::SerializeAccessError());
-            Engine::endTransaction(transact_num);
-            return;
-        } else {
-            locked_tables_[table.getName()] = true;
-        }
-    }
 
     std::map<std::string, std::map<std::string, Column>> column_info;
     for (auto& c : table.getColumns()) {
@@ -580,11 +569,6 @@ void QueryManager::update(const Query& query, t_ull transact_num,
             }
         }
     }
-
-    {
-        std::unique_lock<std::mutex> table_lock(transact_mtx);
-        locked_tables_[table.getName()] = false;
-    }
     cursor.markUpdate(false);
 }
 
@@ -592,21 +576,7 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     auto name = query.getChildren()[NodeType::ident]->getName();
-    if (!Engine::exists(name)) {
-        e.reset(new exc::acc::TableNonexistent(name));
-        return;
-    }
     auto table = Engine::show(name);
-    {
-        std::unique_lock<std::mutex> table_lock(transact_mtx);
-        if (locked_tables_[table.getName()]) {
-            e.reset(new exc::tr::SerializeAccessError());
-            Engine::endTransaction(transact_num);
-            return;
-        } else {
-            locked_tables_[table.getName()] = true;
-        }
-    }
 
     std::map<std::string, std::map<std::string, Column>> column_info;
     for (auto& c : table.getColumns()) {
@@ -633,11 +603,6 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
         if (resp != "0") {
             cursor.remove();
         }
-    }
-
-    {
-        std::unique_lock<std::mutex> table_lock(transact_mtx);
-        locked_tables_[table.getName()] = false;
     }
 }
 
