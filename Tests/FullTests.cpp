@@ -1327,5 +1327,6 @@ TEST_F(DROP_TESTS, UPDATE_TEST_1) {
 //class GENERATE_REQUEST_TESTS: public REQUEST_TESTS {};
 
 TEST(GENERATE_REQUEST_TESTS, TEST_1) {
-    RequestGenerator gen("test.rg");
+    RequestGenerator gen("../../Tests/test.rg");
+    std::cout << gen.getRecuest() << std::endl;
 }

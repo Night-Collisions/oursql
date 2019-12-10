@@ -57,33 +57,31 @@ class RequestGenerator {
     void createTree(const std::string& file);
 
     std::string createRequest(NodeRequestGenerator *node);
-    std::string implCommand(std::string &);
+    std::string implCommand(const std::string &);
 
-    static std::string getChar(const std::string &s = "") {}
-    static std::string getWord(const std::string &s = "") {}
-    static std::string getIntNumber(const std::string &s = "") {}
-    static std::string getFloatNumber(const std::string &s = "") {}
-    static std::string getMathExpression(const std::string &s = "") {}
-    static std::string getBoolExpression(const std::string &s = "") {}
-    static std::string getArrayOf(const std::string &s) {}
-    static std::string getField(const std::string &s = "") {}
-    static std::string getTable(const std::string &s = "") {}
-    static std::string getMathExpressionWithField(const std::string &s = "") {}
-    static std::string getBoolExpressionWithField(const std::string &s = "") {}
+    std::string getLater(const std::string &s = "");
+    std::string getFigure(const std::string &s = "");
+    std::string getWord(const std::string &s = "");
+    std::string getIntNumber(const std::string &s = "");
+    std::string getFloatNumber(const std::string &s = "");
+    std::string getMathExpression(const std::string &s = "");
+    std::string getBoolExpression(const std::string &s = "");
+    std::string getArrayOf(const std::string &s);
+    std::string getField(const std::string &s = "");
+    std::string getTable(const std::string &s = "");
 
     std::map<std::string, NodeRequestGenerator*> trees_;
-    const std::map<std::string, std::string (*)(const std::string &)> comands_ = {
-        {"~char", getChar},
-        {"~word", getWord},
-        {"~int_number", getIntNumber},
-        {"~float_number", getFloatNumber},
-        {"~math_expr", getMathExpression},
-        {"~bool_expr", getBoolExpression},
-        {"~array_of", getArrayOf},
-        {"~field", getField},
-        {"~table", getTable},
-        {"~math_expr_with_field", getMathExpressionWithField},
-        {"~bool_expr_with_field", getBoolExpressionWithField}
+    const std::map<std::string, std::string (RequestGenerator::*)(const std::string &)> comands_ = {
+        {"~later", &RequestGenerator::getLater},
+        {"~figure", &RequestGenerator::getFigure},
+        {"~word", &RequestGenerator::getWord},
+        {"~int_number", &RequestGenerator::getIntNumber},
+        {"~float_number", &RequestGenerator::getFloatNumber},
+        {"~math_expr", &RequestGenerator::getMathExpression},
+        {"~bool_expr", &RequestGenerator::getBoolExpression},
+        {"~array_of", &RequestGenerator::getArrayOf},
+        {"~field", &RequestGenerator::getField},
+        {"~table", &RequestGenerator::getTable}
     };
     unsigned int max_mass_ = 0;
 };
