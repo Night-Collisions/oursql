@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 class NodeRequestGenerator {
    public:
@@ -51,7 +52,7 @@ class RequestGenerator {
     RequestGenerator(const std::string& file);
     ~RequestGenerator();
 
-    std::string getRecuest();
+    std::string getRequest();
 
    private:
     void createTree(const std::string& file);
@@ -59,16 +60,20 @@ class RequestGenerator {
     std::string createRequest(NodeRequestGenerator *node);
     std::string implCommand(const std::string &);
 
+    unsigned int Rand() { return rand(); }
+
     std::string getLater(const std::string &s = "");
     std::string getFigure(const std::string &s = "");
     std::string getWord(const std::string &s = "");
     std::string getIntNumber(const std::string &s = "");
     std::string getFloatNumber(const std::string &s = "");
     std::string getMathExpression(const std::string &s = "");
+    std::string getBoolOperator(const std::string &s = "");
     std::string getBoolExpression(const std::string &s = "");
     std::string getArrayOf(const std::string &s);
-    std::string getField(const std::string &s = "");
-    std::string getTable(const std::string &s = "");
+    std::string getName(const std::string& s = "");
+    std::string getNested(const std::string& s = "");
+    std::string setNotGeneratedNames(const std::string& s);
 
     std::map<std::string, NodeRequestGenerator*> trees_;
     const std::map<std::string, std::string (RequestGenerator::*)(const std::string &)> comands_ = {
@@ -78,11 +83,15 @@ class RequestGenerator {
         {"~int_number", &RequestGenerator::getIntNumber},
         {"~float_number", &RequestGenerator::getFloatNumber},
         {"~math_expr", &RequestGenerator::getMathExpression},
+        {"~bool_operator", &RequestGenerator::getBoolOperator},
         {"~bool_expr", &RequestGenerator::getBoolExpression},
         {"~array_of", &RequestGenerator::getArrayOf},
-        {"~field", &RequestGenerator::getField},
-        {"~table", &RequestGenerator::getTable}
+        {"~name", &RequestGenerator::getName},
+        {"~nested", &RequestGenerator::getNested},
+        {"~set_not_generated_names",
+                     &RequestGenerator::setNotGeneratedNames}
     };
+    std::unordered_set<std::string> not_generated_names_;
     unsigned int max_mass_ = 0;
 };
 

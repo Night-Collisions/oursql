@@ -1,17 +1,27 @@
 #include "RequestGenerator.h"
 
-#include <c++/functional>
+#include <ctime>
 #include <fstream>
+#include <functional>
 #include <iostream>
+#include <sstream>
 
 #define ARGUMENTS_SPLIT ':'
+#define STANDARD_FUNCTION '~'
+#define START_NON_GENERATED '-'
+#define START_GENERATED '+'
 
 RequestGenerator::RequestGenerator(const std::string& file) {
     createTree(file);
+    srand(time(0));
 }
 
 RequestGenerator::~RequestGenerator() {
-    //    delete tree.head;
+    auto it = trees_.begin();
+    while (it != trees_.end()) {
+        delete it->second;
+        it++;
+    }
 }
 
 void addNodeChildrens(NodeRequestGenerator* node, std::ifstream& f);
@@ -72,9 +82,22 @@ void RequestGenerator::createTree(const std::string& file) {
     std::string name;
     NodeRequestGenerator* node;
     while (f >> name) {
-        node = getNode(f);
-        if (name.front() == '+' || name.front() == '-') {
-            trees_.insert({name, node});
+        if (name.front() == START_GENERATED || name.front() == START_NON_GENERATED) {
+            if (name.size() > 3 && name[0] == START_NON_GENERATED && name[1] == STANDARD_FUNCTION) {
+                if (name.size() < 3 || name.back() != '/' ||
+                    name[name.size() - 2] != '\\') {
+                    int c;
+                    while ((c = f.get()) != EOF &&
+                        (name.size() < 3 || (name.back() != '/' &&
+                            name[name.size() - 2] != '\\'))) {
+                        name.push_back(c);
+                    }
+                }
+                implCommand(name.substr(1, name.size() - 1));
+            } else {
+                node = getNode(f);
+                trees_.insert({name, node});
+            }
         } else {
             std::cerr << "The file is damaged!" << std::endl;
             return;
@@ -85,20 +108,20 @@ void RequestGenerator::createTree(const std::string& file) {
     max_mass_ = 0;
     auto it = trees_.begin();
     while (it != trees_.end()) {
-        if (it->first.size() > 0 && it->first.front() == '+') {
+        if (it->first.size() > 0 && it->first.front() == START_GENERATED) {
             max_mass_ += it->second->getMass();
         }
         it++;
     }
 }
 
-std::string RequestGenerator::getRecuest() {
-    unsigned int numb = rand() % max_mass_;
+std::string RequestGenerator::getRequest() {
+    unsigned int numb = Rand() % max_mass_;
     unsigned int sum = 0;
     NodeRequestGenerator* node;
     auto it = trees_.begin();
     while (it != trees_.end()) {
-        if (it->first.size() > 0 && it->first.front() == '+') {
+        if (it->first.size() > 0 && it->first.front() == START_GENERATED) {
             sum += it->second->getMass();
             if (sum >= numb) {
                 node = it->second;
@@ -112,7 +135,7 @@ std::string RequestGenerator::getRecuest() {
 
 std::string RequestGenerator::implCommand(const std::string& s) {
     if (s.size() > 0) {
-        if (s.front() == '~') {
+        if (s.front() == STANDARD_FUNCTION) {
             unsigned int param = 0;
             for (param = 0; param < s.size() && s[param] != ARGUMENTS_SPLIT;
                  param++) {
@@ -125,7 +148,7 @@ std::string RequestGenerator::implCommand(const std::string& s) {
             }
             std::string args = (++param < s.size()) ? (s.substr(param)) : "";
             return (this->*(it->second))(args);
-        } else if (s.front() == '-' || s.front() == '+') {
+        } else if (s.front() == START_NON_GENERATED || s.front() == START_GENERATED) {
             auto it = trees_.find(s);
             if (it == trees_.end()) {
                 std::cerr << s << ":: is wrong command!" << std::endl;
@@ -142,11 +165,11 @@ std::string RequestGenerator::implCommand(const std::string& s) {
 std::string RequestGenerator::createRequest(NodeRequestGenerator* node) {
     std::string ans;
     auto names = node->getNames();
-    std::string command = names[rand() % names.size()];
+    std::string command = names[Rand() % names.size()];
     ans += implCommand(command);
     auto children = node->getChildren();
     if (!children.empty()) {
-        std::string s = createRequest(children[rand() % children.size()]);
+        std::string s = createRequest(children[Rand() % children.size()]);
         if (ans.empty()) {
             ans = s;
         } else if (!s.empty()) {
@@ -158,24 +181,24 @@ std::string RequestGenerator::createRequest(NodeRequestGenerator* node) {
 
 std::string RequestGenerator::getLater(const std::string& s) {
     return std::string(1,
-                       (rand() % 26) + (((rand() % 2) == 1) ? ('A') : ('a')));
+                       (Rand() % 26) + (((Rand() % 2) == 1) ? ('A') : ('a')));
 }
 
 std::string RequestGenerator::getFigure(const std::string& s) {
-    return std::string(1, rand() % 10 + '0');
+    return std::string(1, Rand() % 10 + '0');
 }
 
 std::string RequestGenerator::getWord(const std::string& s) {
     std::string ans = getLater();
-    while ((rand() % 5) != 0) {
+    while ((Rand() % 5) != 0) {
         ans.append(getLater());
     }
     return ans;
 }
 
 std::string RequestGenerator::getIntNumber(const std::string& s) {
-    std::string ans = (((rand() % 2) == 0) ? ("-") : ("")) + getFigure();
-    while ((rand() % 4) != 0) {
+    std::string ans = (((Rand() % 2) == 0) ? ("-") : ("")) + getFigure();
+    while ((Rand() % 4) != 0) {
         ans += getFigure();
     }
     return ans;
@@ -191,22 +214,22 @@ std::string RequestGenerator::getMathExpression(const std::string& s) {
     std::array<std::string, 4> signs = {"+", "/", "-", "*"};
     std::array<std::string (RequestGenerator::*)(const std::string&), 3> fun = {
         &RequestGenerator::getFloatNumber, &RequestGenerator::getFigure,
-        &RequestGenerator::getField};
+        &RequestGenerator::getName};
     size_t opened_gunnel = 0;
     std::string ans;
-    while ((rand() % 5) != 0) {
-        if ((rand() % 3) != 0) {
+    while ((Rand() % 5) != 0) {
+        if ((Rand() % 3) != 0) {
             ans += "(";
             opened_gunnel++;
         }
-        ans += (this->*(fun[rand() % nuber_kind_operants]))("");
-        if ((opened_gunnel > 0) && (rand() % 3) == 0) {
+        ans += (this->*(fun[Rand() % nuber_kind_operants]))("");
+        if ((opened_gunnel > 0) && (Rand() % 3) == 0) {
             ans += ")";
             opened_gunnel--;
         }
-        ans += " " + signs[rand() % signs.size()] + " ";
+        ans += " " + signs[Rand() % signs.size()] + " ";
     }
-    ans += (this->*(fun[rand() % nuber_kind_operants]))("");
+    ans += (this->*(fun[Rand() % nuber_kind_operants]))("");
     while (opened_gunnel > 0) {
         opened_gunnel--;
         ans += ")";
@@ -214,22 +237,26 @@ std::string RequestGenerator::getMathExpression(const std::string& s) {
     return ans;
 }
 
-std::string RequestGenerator::getBoolExpression(const std::string& s) {
+std::string RequestGenerator::getBoolOperator(const std::string& s) {
     std::array<std::string, 6> sign = {"=", "<", ">", "<=", ">=", "!="};
+    return sign[Rand() % sign.size()];
+}
+
+std::string RequestGenerator::getBoolExpression(const std::string& s) {
     std::string ans;
     size_t opened_gunnel = 0;
     do {
-        if ((rand() % 3) != 0) {
+        if ((Rand() % 3) != 0) {
             ans += "(";
             opened_gunnel++;
         }
         ans += getMathExpression(s);
-        if ((opened_gunnel > 0) && (rand() % 3) == 0) {
+        if ((opened_gunnel > 0) && (Rand() % 3) == 0) {
             ans += ")";
             opened_gunnel--;
         }
-        ans += " " + sign[rand() % sign.size()] + " ";
-    } while ((rand() % 2) != 0);
+        ans += " " + getBoolOperator() + " ";
+    } while ((Rand() % 2) != 0);
     ans += getMathExpression(s);
     while (opened_gunnel > 0) {
         opened_gunnel--;
@@ -246,24 +273,49 @@ std::string RequestGenerator::getArrayOf(const std::string& s) {
     }
     std::string split = (++i < s.size()) ? (s.substr(i)) : "";
     std::string ans = implCommand(command);
-    while ((rand() % 4) != 0) {
+    while ((Rand() % 4) != 0) {
         ans += split + " " + implCommand(command);
     }
     return ans;
 }
 
-std::string RequestGenerator::getField(const std::string& s) {
-    std::string ans = getTable();
-    while ((rand() % 3) == 0) {
-        ans += std::string(".") + getTable();
+std::string RequestGenerator::getNested(const std::string& s) {
+    std::string ans = getName();
+    while ((Rand() % 3) == 0) {
+        ans += std::string(".") + getNested();
     }
     return ans;
 }
 
-std::string RequestGenerator::getTable(const std::string& s) {
-    std::string ans = getLater();
-    while ((rand() % 3) != 0) {
-        ans += ((rand() % 3) == 0) ? (getFigure()) : (getLater());
+std::string to_lower(const std::string &s) {
+    auto ans = s;
+    for (auto &i : ans) {
+        i = tolower(i);
     }
     return ans;
+}
+
+std::string RequestGenerator::getName(const std::string& s) {
+    std::string ans = getLater();
+    while (((Rand() % 3) != 0) ||
+           (not_generated_names_.find(to_lower(ans)) != not_generated_names_.end())) {
+        ans += ((Rand() % 3) == 0) ? (getFigure()) : (getLater());
+    }
+    return ans;
+}
+
+std::string RequestGenerator::setNotGeneratedNames(const std::string& s) {
+    std::stringstream ss(s);
+    std::string word;
+    while (ss >> word) {
+        if (word.back() == '/') {
+            word.pop_back();
+            word.pop_back();
+            if (word.empty()) {
+                return "";
+            }
+        }
+        not_generated_names_.insert(word);
+    }
+    return "";
 }
