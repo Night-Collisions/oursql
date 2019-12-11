@@ -1285,7 +1285,7 @@ TEST_F(DROP_TESTS, DROP_TEST_1) {
     CHECK_DROP_REQUEST_ST_CLIENT(
         "drop table a;", "show create table a;",
         EXCEPTION2NUMB(exc::ExceptionType::access_table_nonexistent),
-        "\n~~Exception 701:\n table a nonexistent.\n~~Exception in "
+        "~~Exception 701:\n table a nonexistent.\n~~Exception in "
         "command:\"show create table a;\"\n",
         "a a_meta");
 }
