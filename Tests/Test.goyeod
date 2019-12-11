@@ -1,0 +1,186 @@
+-~set_not_generated_names:
+    create
+    show
+    drop
+    tables
+    table
+    select
+    from
+    where
+    insert
+    into
+    values
+    set
+    update
+    delete
+    and
+    or
+    not
+    left
+    right
+    inner
+    outer
+    full
+    join
+    union
+    intersect
+    as
+    on
+    int
+    real
+    varchar
+    null
+    unique
+\/
+
+-SELECT_FIELD
+\
+    ~nested\/
+    *\/
+    ~array_of:~nested:,\/
+    *,\~nested\//
+    *,\~array_of:~nested:,\//
+/
+
+-WHERE_STATEMENT
+\
+   '\~later|~word\'\///
+   ~int_number\/
+   ~float_number\/
+   ~math_expr\/
+   ~math_expr:field\/
+   ~bool_expr\/
+   ~bool_expr:field\/
+/
+
+-JOIN_START
+INNER JOIN|JOIN|FULL JOIN|LEFT JOIN|RIGHT JOIN\/
+
+-JOIN_END
+on\~bool_expr:field\//
+
+-JOIN
+\
+    ~name\-JOIN_START\~name\-JOIN_END\////
+    (\-JOIN\)\as\~name\
+        -JOIN_START\~name\-JOIN_END\///
+    /////
+    (\-JOIN\)\as\~name\
+        -JOIN_START\
+            (\-JOIN\)\as\~name\-JOIN_END\//////
+        /
+    /////
+    ~name\-JOIN_START\~later\-JOIN_END\////
+    ~later\-JOIN_START\~name\-JOIN_END\////
+/
+
+-UNION_DATA
+\
+    ~name\/
+    ~later\/
+    (\-UNION_END\)\as\~name\/////
+    -UNION_END\/
+    ~name\/
+    ~later\/
+/
+
+-UNION_END
+-UNION_DATA\union\-UNION_DATA\///
+
+-INTERSECT_DATA
+\
+    ~name\/
+    ~later\/
+    (\-INTERSECT_END\)\as\~name\/////
+    -INTERSECT_END\/
+    ~name\/
+    ~later\/
+/
+
+-INTERSECT_END
+-INTERSECT_DATA\intersect\-INTERSECT_DATA\///
+
++SELECT
+select\
+    -SELECT_FIELD\
+        from\
+            ~name\
+                \/
+                where\-WHERE_STATEMENT\//
+            /
+            -JOIN\/
+            -UNION_END\/
+            -INTERSECT_END\/
+        /
+    /
+/
+
+-CREATE_FIELD
+~name\
+    int|varchar(100)|real\
+        not null\/
+        unique\/
+        primary key\/
+    /
+/
+
++CREATE
+create table\
+    ~name\
+        (\
+            ~array_of:-CREATE_FIELD:,\
+                )\/
+            /
+        /
+    /
+/
+
++SHOW_CREATE_TABLE
+show create table\~name\//
+
++DROP_TABLE
+drop table\~name\//
+
+-INSERT_DATA
+\
+   '\~later|~word\'\///
+   ~int_number\/
+   ~float_number\/
+/
+
+-INSERT_DATAS
+values (\
+    ~array_of:-INSERT_DATA:,\)\//
+/
+
++INSERT
+insert into\~name\
+        -INSERT_DATAS\/
+        (\~array_of:~name:,\)\-INSERT_DATAS\////
+    /
+/
+
++DELETE
+delete from\
+    ~name\
+        where\-WHERE_STATEMENT\//
+    /
+/
+
+-UPDATE_STATEMENT
+~name\\
+    ~bool_operator\
+       '\~later|~word\'\///
+       ~int_number\/
+       ~float_number\/
+    /
+//
+
++UPDATE
+update\
+    ~name\
+        set\
+            ~array_of:-UPDATE_STATEMENT:,\/
+        /
+    /
+/
