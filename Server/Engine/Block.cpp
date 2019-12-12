@@ -102,6 +102,13 @@ Block::Block(const Table& table, std::fstream& fstream) : Block(table) {
     load(fstream);
 }
 
+void Block::reset() {
+    position_ = kRowsStartPosition_ - row_size_;
+    for (int i = 0; i < kBlockSize; ++i) {
+        buffer_[i] = 0;
+    }
+}
+
 void Block::setTable(const Table& table) {
     table_ = table;
     row_size_ = 4 + 4 + table_.getColumns().size();

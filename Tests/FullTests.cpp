@@ -1393,9 +1393,9 @@ TEST_F(TRANSACTION_TESTS, TEST_1) {
 }
 
 TEST_F(TRANSACTION_TESTS, TEST_2) {
-    std::vector<std::vector<std::string>> full_answer(number_start_row);
+    std::vector<std::vector<std::string>> full_answer(number_start_row - 1);
     for (unsigned int i = 0; i < number_start_row - 1; i++) {
-        full_answer[i] = {"0", "Grenkind and Igor the best friends."};
+        full_answer[i] = {"3", "Grenkind and Igor the best friends."};
     }
     client1.sendRequest(
         "begin; "
@@ -1419,7 +1419,7 @@ TEST_F(TRANSACTION_TESTS, TEST_2) {
     ASSERT_EQ(ans, get_select_answer({"a.a"}, expected_ans_client1))
         << "Wrong answer client1!!!";
     CHECK_REQUEST("select * from a;", 0,
-                  get_select_answer({"a.a", "a.b"}, {{"1", "Time to apologize."}}),
+                  get_select_answer({"a.a", "a.b"}, full_answer),
                   client2);
 }
 
@@ -1433,24 +1433,10 @@ TEST_F(TRANSACTION_TESTS, TEST_3) {
         "begin; "
         "update a set a = 3 where a = 0; "
         "select a.a from a where b = 'Grenkind and Igor the best friends.'; "
-        "delete from a where a = 3; "
-        "commit;");
+        "delete from a where a = 3;");
     CHECK_REQUEST(
         "begin; "
         "update a set a = 2 where a = 1;"
         "commit;",
         -1, "", client2);
-}
-
-TEST_F(TRANSACTION_TESTS, TEST_4) {
-    CHECK_REQUEST(
-        "begin; "
-        "create table b(f int);"
-        "commit;",
-        -1, "", client1);
-    CHECK_REQUEST(
-        "begin; "
-        "drop table a;"
-        "commit;",
-        -1, "", client1);
 }

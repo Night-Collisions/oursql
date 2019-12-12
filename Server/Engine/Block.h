@@ -20,6 +20,7 @@ class Block {
     ~Block() { delete[] buffer_; }
     Block(const Table& table);
     Block(const Table& table, std::fstream& fstream);
+    void reset();
     void setTable(const Table& table);
     bool load(std::fstream& fstream);
     int getCount() const;

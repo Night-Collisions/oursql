@@ -31,6 +31,7 @@ class ChangeManager {
     bool next();
     int getChangeRowSize();
     ChangeType getChangeType();
+    bool wasMarkedRemoved();
     int getRemovedPosition();
     std::string getValues();
     void markProcessed();
