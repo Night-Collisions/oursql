@@ -134,6 +134,15 @@ bool ChangeManager::nextInserted() {
     return false;
 }
 
+bool ChangeManager::nextRemoved() {
+    while (next()) {
+        if (getChangeType() == ChangeType::removed) {
+            return true;
+        }
+    }
+    return false;
+}
+
 ChangeType ChangeManager::getChangeType() {
     int g = file_.tellg();
     char type;

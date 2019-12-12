@@ -8,6 +8,14 @@ Cursor::Cursor(int tr_id, const std::string& table_name) :
     block_.setTable(table_);
     block_.load(file_);
     change_manager_.setRowSize(block_.getRowSize());
+    loadRemovedRows();
+}
+
+void Cursor::loadRemovedRows() {
+    while (change_manager_.nextRemoved()) {
+        removed_rows_.insert(change_manager_.getRemovedPosition());
+    }
+    change_manager_.reset();
 }
 
 void Cursor::reset() {
@@ -23,14 +31,14 @@ std::vector<Value> Cursor::fetch() {
 }
 
 bool Cursor::next() {
-    while (block_.next(tr_id_)) {
+    while (block_.next(tr_id_) && !was_file_finished_) {
         if (removed_rows_.find(current_block_ * Block::kBlockSize + block_.getPosition())
                 == removed_rows_.end()) {
             return true;
         }
     }
 
-    while (!block_.load(file_)) {
+    while (!block_.load(file_) && !was_file_finished_) {
         ++current_block_;
         while (block_.next(tr_id_)) {
             if (removed_rows_.find(current_block_ * Block::kBlockSize + block_.getPosition())
