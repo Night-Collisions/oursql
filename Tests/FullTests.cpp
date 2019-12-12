@@ -1381,13 +1381,12 @@ TEST_F(TRANSACTION_TESTS, TEST_1) {
     }
     full_answer.back() = {"1", "Time to apologize."};
     client1.sendRequest(
-        "begin; delete from a where b = 'Grenkind and Igor the best friends.'; "
-        "commit;");
+        "begin; delete from a where b = 'Grenkind and Igor the best friends.';");
     CHECK_REQUEST("select * from a;", 0,
                   get_select_answer({"a.a", "a.b"}, full_answer), client2);
     std::string ans;
+    client1.sendRequest("commit;");
     client1.getAnswer(ans);
-    //    test_sleep(1500);
     CHECK_REQUEST("select * from a;", 0,
                   get_select_answer({"a.a", "a.b"}, {full_answer.back()}),
                   client2);
@@ -1402,13 +1401,13 @@ TEST_F(TRANSACTION_TESTS, TEST_2) {
         "begin; "
         "update a set a = 3 where a = 0; "
         "select a.a from a where b = 'Grenkind and Igor the best friends.'; "
-        "delete from a where b = 'Time to apologize.'; "
-        "commit;");
+        "delete from a where b = 'Time to apologize.';");
     CHECK_REQUEST(
         "begin; "
         "select * from a where a = 3;"
         "commit;",
         0, "", client2);
+    client1.sendRequest("commit;");
     std::string ans;
     client1.getAnswer(ans);
     //    test_sleep(1500);
@@ -1417,10 +1416,10 @@ TEST_F(TRANSACTION_TESTS, TEST_2) {
     for (unsigned int i = 0; i < number_start_row - 1; i++) {
         expected_ans_client1[i] = {"3"};
     }
-    ASSERT_EQ(ans, get_select_answer({"a.a", "a.b"}, expected_ans_client1))
+    ASSERT_EQ(ans, get_select_answer({"a.a"}, expected_ans_client1))
         << "Wrong answer client1!!!";
     CHECK_REQUEST("select * from a;", 0,
-                  get_select_answer({"a.a", "a.b"}, {full_answer.back()}),
+                  get_select_answer({"a.a", "a.b"}, {{"1", "Time to apologize."}}),
                   client2);
 }
 
