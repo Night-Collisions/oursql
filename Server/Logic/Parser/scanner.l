@@ -22,6 +22,7 @@
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
     #include "../../Server/Logic/Parser/Nodes/Transaction.h"
+    #include "../../Server/Logic/Parser/Nodes/With.h"
 
     #include "../../Server/Engine/Engine.h"
     #include "parser.hpp"

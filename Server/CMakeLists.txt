@@ -38,6 +38,8 @@ set(HEADERS
         Logic/QueryManager.h
         Logic/Parser/Nodes/Transaction.h
         Logic/Parser/RelationalOperationsParser/Helper.h
+        Logic/Parser/Nodes/DatetimeConstant.h
+        Logic/Parser/Nodes/With.h
         )
 
 set(DEFINITIONS
@@ -76,7 +78,9 @@ set(DEFINITIONS
         Core/DataType.cpp
         Logic/QueryManager.cpp
         Logic/Parser/RelationalOperationsParser/Helper.cpp
-        Logic/Parser/Nodes/Transaction.cpp)
+        Logic/Parser/Nodes/Transaction.cpp
+        Logic/Parser/Nodes/DatetimeConstant.cpp
+        Logic/Parser/Nodes/With.cpp )
 
 assemble_parser(Logic/Parser/)
 

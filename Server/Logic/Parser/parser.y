@@ -15,6 +15,7 @@
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
     #include "../../Server/Logic/Parser/Nodes/Transaction.h"
+    #include "../../Server/Logic/Parser/Nodes/With.h"
     #include "../../Server/Core/Exception.h"
     #include "../../Server/Engine/Engine.h"
     #include "../../Server/Engine/Column.h"
@@ -74,6 +75,8 @@
 %type<exprUnit> logic_or logic_and plus_minus mul_div relations
 %type<expr> where_expr root_expr relation_expr exprssn term factor under_root_expr join_cond
 %type<relExpr> sub_rel_expr relational_expr
+%type<is_versioned> on_or_off
+%type<withCond> with
 
 %start start_expression
 
@@ -93,8 +96,10 @@
     ExprUnit exprUnit;
     Expression *expr;
     RelExpr *relExpr;
+    With *withCond;
 
     int varcharLen;
+    bool is_versioned;
 }
 
 %%
@@ -128,13 +133,18 @@ statement:
 // ---- create table
 
 create:
-    CREATE TABLE id LPAREN variables RPAREN {
+    CREATE TABLE id LPAREN variables RPAREN with_expr {
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $3;
         children[NodeType::var_list] = new VarList(varList);
+        children[NodeType::with] = with_expr;
 
         $$ = new Query(children, CommandType::create_table);
     };
+
+with_expr: WITH LPAREN SYSTEM_VERSIONING EQUAL on_or_off RPAREN { $$ = new With($5); }  | /*EMPTY*/;
+
+on_or_off: ON | OFF;
 
 variables:
     variable {
@@ -429,7 +439,8 @@ null_:
 type:
     INT { $$ = DataType::integer; } |
     REAL { $$ = DataType::real; } |
-    VARCHAR { $$ = DataType::varchar; };
+    VARCHAR { $$ = DataType::varchar; } | 
+    DATETIME { $$ = DataType::datetime; };
 
 col_ident: 
     id { $$ = $1; } |

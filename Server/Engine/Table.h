@@ -11,24 +11,20 @@ class Table {
    public:
     Table() = default;
     Table(const std::string& name, const std::vector<Column>& columns,
-          std::unique_ptr<exc::Exception>& e)
-        : name_(name) {
+          std::unique_ptr<exc::Exception>& e, bool system_vers = false)
+        : name_(name), system_versioning_(system_vers) {
         for (auto& i : columns) {
             addColumn(i, e);
         }
     }
 
-    void setType(DataType type, int ind) {
-        columns_[ind].setType(type);
-    }
+    void setType(DataType type, int ind) { columns_[ind].setType(type); }
 
     void setConstraints(std::set<ColumnConstraint> constraints, int ind) {
         columns_[ind].setConstraints(std::move(constraints));
     }
-    
-    void setN(int n, int ind) {
-        columns_[ind].setN(n);
-    }
+
+    void setN(int n, int ind) { columns_[ind].setN(n); }
 
     int getColSize() { return columns_.size(); }
 
@@ -90,6 +86,7 @@ class Table {
    private:
     std::string name_;
     std::vector<Column> columns_;
+    bool system_versioning_{false};
 };
 
 #endif
