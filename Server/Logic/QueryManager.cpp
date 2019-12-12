@@ -547,9 +547,8 @@ void QueryManager::update(const Query& query, t_ull transact_num,
 
     while (cursor.next()) {
         auto f = cursor.fetch();
-
+        std::string resp = "0";
         for (int k = 0; k < ready_ftch.size(); ++k) {
-            std::string resp = "0";
             bool equal = true;
             for (int i = 0; i < ready_ftch[k].size(); ++i) {
                 if (f[i].data != ready_ftch[k][i].data) {
@@ -574,10 +573,10 @@ void QueryManager::update(const Query& query, t_ull transact_num,
             if (e) {
                 return;
             }
-
             if (resp != "0") {
                 cursor.update(updated_records[k]);
             }
+            break;
         }
     }
     cursor.markUpdate(false);
