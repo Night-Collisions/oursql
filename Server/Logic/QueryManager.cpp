@@ -571,6 +571,7 @@ void QueryManager::update(const Query& query, t_ull transact_num,
             if (resp != "0") {
                 cursor.update(updated_records[k]);
             }
+            //ready_ftch.erase(ready_ftch.begin() + k);
             break;
         }
     }
