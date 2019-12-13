@@ -11,6 +11,7 @@
 #include "Parser/Nodes/ConstantList.h"
 #include "Parser/Nodes/Ident.h"
 #include "Parser/Nodes/IdentList.h"
+#include "Parser/Nodes/Period.h"
 #include "Parser/Nodes/RelExpr.h"
 #include "Parser/Nodes/SelectList.h"
 #include "Parser/Nodes/VarList.h"
@@ -82,6 +83,9 @@ void QueryManager::createTable(const Query& query, t_ull transact_num,
 
     auto is_versioned =
         static_cast<With*>(query.getChildren()[NodeType::with])->isVersioned();
+    auto period =
+        static_cast<Period*>(query.getChildren()[NodeType::period_pair])
+            ->getPeriod();
 
     std::vector<Column> columns;
     for (auto& v : vars) {
@@ -90,8 +94,6 @@ void QueryManager::createTable(const Query& query, t_ull transact_num,
         int len = 0;
         if (type == DataType::varchar) {
             len = v->getVarcharLen();
-        } else if (type == DataType::datetime) {
-            // must be not null
         }
 
         std::set<ColumnConstraint> constr_set;
@@ -108,10 +110,15 @@ void QueryManager::createTable(const Query& query, t_ull transact_num,
 
         Column col(col_name, type, e, constr_set);
         col.setN(len);
+        if (period.first == col_name) {
+            col.setPeriod(PeriodState::sys_start);
+        } else if (period.second == col_name) {
+            col.setPeriod(PeriodState::sys_end);
+        }
         columns.emplace_back(col);
     }
 
-    Table table(name, columns, e);
+    Table table(name, columns, e, is_versioned);
     if (e != nullptr) {
         return;
     }

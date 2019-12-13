@@ -2,6 +2,7 @@
 #define OURSQL_OUR_H
 
 #include <iostream>
+#include <map>
 
 namespace ourSQL {
 extern volatile unsigned long long transaction_number_;

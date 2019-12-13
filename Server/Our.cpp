@@ -8,8 +8,6 @@
 #include "Logic/Parser/ParserManager.h"
 #include "Logic/QueryManager.h"
 
-std::map<std::string, bool> ourSQL::locked_tables_;
-
 #if defined(queries)
 #define EXCEPTION_OURSQL_CHECK(e, out, command)                             \
     if (e != nullptr) {                                                     \

@@ -15,6 +15,7 @@
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
     #include "../../Server/Logic/Parser/Nodes/Transaction.h"
+    #include "../../Server/Logic/Parser/Nodes/Period.h"
     #include "../../Server/Logic/Parser/Nodes/With.h"
     #include "../../Server/Core/Exception.h"
     #include "../../Server/Engine/Engine.h"
@@ -39,7 +40,6 @@
     std::vector<Query*> queryList;
     std::vector<Variable *> varList;
     std::vector<ColumnConstraint> constraintList;
-    //todo: сделать узлом, иначе не скомпилит
     std::pair<std::string, std::string> period;
     std::vector<Ident*> identList;
     std::vector<Node*> constantList;
@@ -140,7 +140,7 @@ create:
         children[NodeType::ident] = $3;
         children[NodeType::var_list] = new VarList(varList);
         children[NodeType::with] = $7;
-        children[NodeType::period_pair] = period;
+        children[NodeType::period_pair] = new Period(period);
 
         $$ = new Query(children, CommandType::create_table);
     };
