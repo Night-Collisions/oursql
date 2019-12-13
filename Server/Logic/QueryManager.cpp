@@ -27,7 +27,6 @@ void QueryManager::execute(
     const Query& query, t_ull transact_num, std::unique_ptr<exc::Exception>& e,
     std::ostream& out,
     std::map<unsigned long long, std::set<std::string>>& locked_tables) {
-
     void (*const
               commandsActions[static_cast<unsigned int>(CommandType::Count)])(
         const Query& query, t_ull transact_num,
@@ -55,7 +54,7 @@ void QueryManager::execute(
             {
                 std::unique_lock<std::mutex> table_lock(transact_mtx);
                 for (auto& s : locked_tables) {
-                    if (s.second.find(table.getName()) != s.second.end())  {
+                    if (s.second.find(table.getName()) != s.second.end()) {
                         e.reset(new exc::tr::SerializeAccessError());
                         Engine::endTransaction(transact_num);
                         return;
@@ -80,14 +79,25 @@ void QueryManager::createTable(const Query& query, t_ull transact_num,
 
     auto vars = static_cast<VarList*>(query.getChildren()[NodeType::var_list])
                     ->getVars();
-
-    auto is_versioned =
-        static_cast<With*>(query.getChildren()[NodeType::with])->isVersioned();
+    /*    bool is_versioned = false;
+        if (query.getChildren().find(NodeType::with) !=
+       query.getChildren().end()) { is_versioned =
+                static_cast<With*>(query.getChildren()[NodeType::with])->isVersioned();
+        }*/
     auto period =
         static_cast<Period*>(query.getChildren()[NodeType::period_pair])
             ->getPeriod();
+    ;
+    bool is_period = false;
+    if (period.first.empty() || period.second.empty()) {
+        is_period = false;
+    } else {
+        is_period = true;
+    }
 
     std::vector<Column> columns;
+    bool sys_start_found = false;
+    bool sys_end_found = false;
     for (auto& v : vars) {
         std::string col_name = v->getName();
         DataType type = v->getType();
@@ -112,13 +122,19 @@ void QueryManager::createTable(const Query& query, t_ull transact_num,
         col.setN(len);
         if (period.first == col_name) {
             col.setPeriod(PeriodState::sys_start);
+            sys_start_found = true;
         } else if (period.second == col_name) {
             col.setPeriod(PeriodState::sys_end);
+            sys_end_found = true;
         }
         columns.emplace_back(col);
     }
-
-    Table table(name, columns, e, is_versioned);
+    bool is_period_correct = sys_start_found && sys_end_found;
+    if (!is_period_correct && is_period) {
+        // TODO: не существует поля, которое указано в period
+        return;
+    }
+    Table table(name, columns, e, is_period_correct);
     if (e != nullptr) {
         return;
     }
@@ -582,7 +598,7 @@ void QueryManager::update(const Query& query, t_ull transact_num,
             if (resp != "0") {
                 cursor.update(updated_records[k]);
             }
-            //ready_ftch.erase(ready_ftch.begin() + k);
+            // ready_ftch.erase(ready_ftch.begin() + k);
             break;
         }
     }
