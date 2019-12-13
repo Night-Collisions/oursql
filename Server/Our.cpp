@@ -111,8 +111,8 @@ unsigned int perform(std::istream& in, std::ostream& out,
             if (!users_begins[client_id]) {
                 Engine::commitTransaction(users_transacts[client_id]);
             }
-            if (e && e->getNumber() >
-                static_cast<unsigned int>(exc::ExceptionType::syntax)) {
+            if (e && e->getNumber() > static_cast<unsigned int>(
+                                          exc::ExceptionType::syntax)) {
                 trancasts_tables[users_transacts[client_id]].clear();
             }
         }
