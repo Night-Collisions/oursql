@@ -3,9 +3,12 @@
 #include <chrono>
 #include <mutex>
 #include <thread>
+
 #include "Engine/Engine.h"
 #include "Logic/Parser/ParserManager.h"
 #include "Logic/QueryManager.h"
+
+std::map<std::string, bool> ourSQL::locked_tables_;
 
 #if defined(queries)
 #define EXCEPTION_OURSQL_CHECK(e, out, command)                             \
@@ -103,7 +106,8 @@ unsigned int perform(std::istream& in, std::ostream& out,
         auto queries = pm.getParseTree(command, e);
         EXCEPTION_OURSQL_CHECK(e, out, command);
         for (auto& q : queries) {
-            QueryManager::execute(*q, users_transacts[client_id], e, out);
+            QueryManager::execute(*q, users_transacts[client_id], e, out,
+                                  locked_tables_);
             if (!users_begins[client_id]) {
                 Engine::commitTransaction(users_transacts[client_id]);
             }

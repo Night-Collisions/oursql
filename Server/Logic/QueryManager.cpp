@@ -21,11 +21,11 @@
 #include "Parser/RelationalOperationsParser/Union.h"
 
 std::mutex transact_mtx;
-std::map<std::string, bool> QueryManager::locked_tables_;
 
 void QueryManager::execute(const Query& query, t_ull transact_num,
                            std::unique_ptr<exc::Exception>& e,
-                           std::ostream& out) {
+                           std::ostream& out,
+                           std::map<std::string, bool>& locked_tables) {
     void (*const
               commandsActions[static_cast<unsigned int>(CommandType::Count)])(
         const Query& query, t_ull transact_num,
@@ -52,7 +52,7 @@ void QueryManager::execute(const Query& query, t_ull transact_num,
 
             {
                 std::unique_lock<std::mutex> table_lock(transact_mtx);
-                if (locked_tables_[table.getName()]) {
+                if (locked_tables[table.getName()]) {
                     e.reset(new exc::tr::SerializeAccessError());
                     Engine::endTransaction(transact_num);
                     return;
@@ -62,7 +62,7 @@ void QueryManager::execute(const Query& query, t_ull transact_num,
                 query, transact_num, e, out);
             {
                 std::unique_lock<std::mutex> table_lock(transact_mtx);
-                locked_tables_[table.getName()] = false;
+                locked_tables[table.getName()] = false;
             }
 
         } else {

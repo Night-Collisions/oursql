@@ -40,7 +40,7 @@ set(HEADERS
         Logic/Parser/RelationalOperationsParser/Helper.h
         Logic/Parser/Nodes/DatetimeConstant.h
         Logic/Parser/Nodes/With.h
-        )
+         Logic/Parser/Nodes/Period.h)
 
 set(DEFINITIONS
         Our.cpp
@@ -80,7 +80,7 @@ set(DEFINITIONS
         Logic/Parser/RelationalOperationsParser/Helper.cpp
         Logic/Parser/Nodes/Transaction.cpp
         Logic/Parser/Nodes/DatetimeConstant.cpp
-        Logic/Parser/Nodes/With.cpp )
+        Logic/Parser/Nodes/With.cpp Logic/Parser/Nodes/Period.cpp)
 
 assemble_parser(Logic/Parser/)
 

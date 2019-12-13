@@ -3,6 +3,7 @@
 
 #include <mutex>
 #include <set>
+
 #include "../Engine/Column.h"
 #include "../Engine/Table.h"
 #include "../Engine/Value.h"
@@ -22,7 +23,8 @@ class QueryManager {
     QueryManager() = delete;
 
     static void execute(const Query& query, t_ull transact_num,
-                        std::unique_ptr<exc::Exception>& e, std::ostream& out);
+                        std::unique_ptr<exc::Exception>& e, std::ostream& out,
+                        std::map<std::string, bool>& locked_tables);
 
    private:
     static void createTable(const Query& query, t_ull transact_num,
@@ -52,8 +54,6 @@ class QueryManager {
 
     static Table getFilledTable(const std::string& name, t_ull transact_num,
                                 std::unique_ptr<exc::Exception>& e);
-
-    static std::map<std::string, bool> locked_tables_;
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_

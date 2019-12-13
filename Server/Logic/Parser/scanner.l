@@ -116,6 +116,8 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "period"                   { return PERIOD; }
 "for"                      { return FOR_; }
 "system_time"              { return SYSTEM_TIME; }
+"versioning"               { return VERSIONING; }
+"with"                     { return WITH; }
 
 "commit"                   { return COMMIT; }
 "begin"                    { return BEGIN_; }
