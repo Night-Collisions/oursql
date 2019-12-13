@@ -1381,8 +1381,8 @@ TEST_F(TRANSACTION_TESTS, TEST_1) {
     }
     full_answer.back() = {"1", "Time to apologize."};
     client1.sendRequest(
-        "begin; delete from a where b = 'Grenkind and Igor the best friends.'; "
-        "commit;");
+        "begin; delete from a where b = 'Grenkind and Igor the best friends.'; commit;"
+ );
     CHECK_REQUEST("select * from a;", 0,
                   get_select_answer({"a.a", "a.b"}, full_answer), client2);
     std::string ans;
