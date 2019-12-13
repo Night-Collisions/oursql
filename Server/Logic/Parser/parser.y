@@ -15,6 +15,7 @@
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
     #include "../../Server/Logic/Parser/Nodes/Transaction.h"
+    #include "../../Server/Logic/Parser/Nodes/With.h"
     #include "../../Server/Core/Exception.h"
     #include "../../Server/Engine/Engine.h"
     #include "../../Server/Engine/Column.h"
@@ -38,6 +39,8 @@
     std::vector<Query*> queryList;
     std::vector<Variable *> varList;
     std::vector<ColumnConstraint> constraintList;
+    //todo: сделать узлом, иначе не скомпилит
+    std::pair<std::string, std::string> period;
     std::vector<Ident*> identList;
     std::vector<Node*> constantList;
     std::vector<Node*> selectList;
@@ -58,7 +61,7 @@
 %token AND OR DIVIDE PLUS MINUS NOT
 %token LEFT RIGHT INNER OUTER FULL CROSS JOIN INTERSECT UNION AS ON
 %token BEGIN_ COMMIT
-%token SYSTEM_VERSIONING WITH PERIOD SYSTEM_TIME FOR_ OFF
+%token VERSIONING WITH PERIOD SYSTEM_TIME FOR_ OFF
 
 %type<query> create show_create drop_table select insert delete update statement statements
 %type<ident> id col_ident
@@ -74,6 +77,8 @@
 %type<exprUnit> logic_or logic_and plus_minus mul_div relations
 %type<expr> where_expr root_expr relation_expr exprssn term factor under_root_expr join_cond
 %type<relExpr> sub_rel_expr relational_expr
+%type<is_versioned> on_or_off
+%type<withCond> with_expr
 
 %start start_expression
 
@@ -93,8 +98,10 @@
     ExprUnit exprUnit;
     Expression *expr;
     RelExpr *relExpr;
+    With *withCond;
 
     int varcharLen;
+    bool is_versioned;
 }
 
 %%
@@ -128,13 +135,19 @@ statement:
 // ---- create table
 
 create:
-    CREATE TABLE id LPAREN variables RPAREN {
+    CREATE TABLE id LPAREN variables RPAREN with_expr {
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $3;
         children[NodeType::var_list] = new VarList(varList);
+        children[NodeType::with] = $7;
+        children[NodeType::period_pair] = period;
 
         $$ = new Query(children, CommandType::create_table);
     };
+
+with_expr: WITH LPAREN VERSIONING EQUAL on_or_off RPAREN { $$ = new With($5); }  | /*EMPTY*/;
+
+on_or_off: ON { $$ = true; } | OFF { $$ = false; };
 
 variables:
     variable {
@@ -156,6 +169,10 @@ variable:
             $$->addVarcharLen(yylval.varcharLen);
         }
         constraintList.clear();
+    } |
+    PERIOD FOR_ SYSTEM_TIME LPAREN id COMMA id RPAREN {
+        period.first = $5->getName();
+        period.second = $7->getName();
     };
 
 constraints:
@@ -429,7 +446,8 @@ null_:
 type:
     INT { $$ = DataType::integer; } |
     REAL { $$ = DataType::real; } |
-    VARCHAR { $$ = DataType::varchar; };
+    VARCHAR { $$ = DataType::varchar; } | 
+    DATETIME { $$ = DataType::datetime; };
 
 col_ident: 
     id { $$ = $1; } |

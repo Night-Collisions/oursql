@@ -14,6 +14,7 @@
 #include "Parser/Nodes/RelExpr.h"
 #include "Parser/Nodes/SelectList.h"
 #include "Parser/Nodes/VarList.h"
+#include "Parser/Nodes/With.h"
 #include "Parser/RelationalOperationsParser/Helper.h"
 #include "Parser/RelationalOperationsParser/Intersect.h"
 #include "Parser/RelationalOperationsParser/Join.h"
@@ -25,6 +26,7 @@ void QueryManager::execute(
     const Query& query, t_ull transact_num, std::unique_ptr<exc::Exception>& e,
     std::ostream& out,
     std::map<unsigned long long, std::set<std::string>>& locked_tables) {
+
     void (*const
               commandsActions[static_cast<unsigned int>(CommandType::Count)])(
         const Query& query, t_ull transact_num,
@@ -73,11 +75,13 @@ void QueryManager::createTable(const Query& query, t_ull transact_num,
                                std::unique_ptr<exc::Exception>& e,
                                std::ostream& out) {
     e.reset(nullptr);
-
     std::string name = query.getChildren()[NodeType::ident]->getName();
 
     auto vars = static_cast<VarList*>(query.getChildren()[NodeType::var_list])
                     ->getVars();
+
+    auto is_versioned =
+        static_cast<With*>(query.getChildren()[NodeType::with])->isVersioned();
 
     std::vector<Column> columns;
     for (auto& v : vars) {
@@ -86,6 +90,8 @@ void QueryManager::createTable(const Query& query, t_ull transact_num,
         int len = 0;
         if (type == DataType::varchar) {
             len = v->getVarcharLen();
+        } else if (type == DataType::datetime) {
+            // must be not null
         }
 
         std::set<ColumnConstraint> constr_set;
