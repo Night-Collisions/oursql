@@ -19,6 +19,7 @@ class ChangeManager {
     ChangeManager(const Table& table, int tr_id);
     void reset();
     bool nextInserted();
+    bool nextRemoved();
     std::vector<Value> fetch();
     void insert(const std::vector<Value>& values);
     void markRemoved();
@@ -30,6 +31,7 @@ class ChangeManager {
     bool next();
     int getChangeRowSize();
     ChangeType getChangeType();
+    bool wasMarkedRemoved();
     int getRemovedPosition();
     std::string getValues();
     void markProcessed();

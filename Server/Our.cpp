@@ -63,6 +63,7 @@ unsigned int perform(std::istream& in, std::ostream& out,
     std::string command;
     static std::map<unsigned long long, unsigned long long> users_transacts;
     static std::map<unsigned long long, bool> users_begins;
+    static std::map<unsigned long long, std::set<std::string>> trancasts_tables;
     bool is_end = false;
     do {
         is_end = !get_command(in, command);
@@ -94,6 +95,7 @@ unsigned int perform(std::istream& in, std::ostream& out,
             if (users_begins[client_id]) {
                 users_begins[client_id] = false;
                 Engine::commitTransaction(users_transacts[client_id]);
+                trancasts_tables[users_transacts[client_id]].clear();
                 continue;
             } else {
                 e.reset(new exc::tr::NoUncommitedTransact());
@@ -107,9 +109,13 @@ unsigned int perform(std::istream& in, std::ostream& out,
         EXCEPTION_OURSQL_CHECK(e, out, command);
         for (auto& q : queries) {
             QueryManager::execute(*q, users_transacts[client_id], e, out,
-                                  locked_tables_);
+                                  trancasts_tables);
             if (!users_begins[client_id]) {
                 Engine::commitTransaction(users_transacts[client_id]);
+            }
+            if (e && e->getNumber() > static_cast<unsigned int>(
+                                          exc::ExceptionType::syntax)) {
+                trancasts_tables[users_transacts[client_id]].clear();
             }
         }
 

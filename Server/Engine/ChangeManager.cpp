@@ -127,7 +127,16 @@ bool ChangeManager::next() {
 
 bool ChangeManager::nextInserted() {
     while (next()) {
-        if (getChangeType() == ChangeType::inserted) {
+        if (getChangeType() == ChangeType::inserted && !wasMarkedRemoved()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ChangeManager::nextRemoved() {
+    while (next()) {
+        if (getChangeType() == ChangeType::removed) {
             return true;
         }
     }
@@ -140,6 +149,15 @@ ChangeType ChangeManager::getChangeType() {
     file_.read(&type, sizeof(char));
     file_.seekg(g);
     return static_cast<ChangeType>(type);
+}
+
+bool ChangeManager::wasMarkedRemoved() {
+    int g = file_.tellg();
+    file_.seekg(g + sizeof(char));
+    char removed;
+    file_.read(&removed, sizeof(char));
+    file_.seekg(g);
+    return static_cast<bool>(removed);
 }
 
 int ChangeManager::getRemovedPosition() {
