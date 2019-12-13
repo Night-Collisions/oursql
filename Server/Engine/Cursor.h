@@ -26,6 +26,8 @@ class Cursor {
     int getTrId() { return tr_id_; }
 
 private:
+    void loadRemovedRows();
+
     std::unordered_set<int> removed_rows_;
     int tr_id_;
     std::fstream file_;
