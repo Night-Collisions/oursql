@@ -98,7 +98,7 @@ class Column {
     void setType(DataType type) { type_ = type; }
 
     void setPeriod(PeriodState st) { period_ = st; }
-    PeriodState getPeriod() { return period_; }
+    PeriodState getPeriod() const { return period_; }
 
    private:
     static bool checkConstraint(const std::set<ColumnConstraint>&,

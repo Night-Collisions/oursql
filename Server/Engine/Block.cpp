@@ -77,7 +77,7 @@ std::vector<Value> Block::toValues(const Table& table, char* buff) {
                 pos += sizeof(double);
                 break;
             }
-            case DataType::varchar:
+            case DataType::varchar: {
                 char s[column.getN()];
                 for (int i = 0; i < column.getN(); ++i) {
                     s[i] = buff[pos + i];
@@ -85,6 +85,7 @@ std::vector<Value> Block::toValues(const Table& table, char* buff) {
                 value.data = s;
                 pos += column.getN();
                 break;
+            }
         }
         values.push_back(value);
     }

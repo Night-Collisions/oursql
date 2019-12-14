@@ -83,6 +83,10 @@ class Table {
         return res;
     }
 
+    void setSystemVersioning(bool is_system_versioning) { system_versioning_ = is_system_versioning; }
+
+    bool isSystemVersioning() const { return system_versioning_; }
+
    private:
     std::string name_;
     std::vector<Column> columns_;

@@ -1,10 +1,10 @@
 #include "Engine.h"
 
 // Metafile:
-// reserved: 1 byte;
+// is versioning: 1 byte;
 // table name: 128 bytes (with '\0');
 // columns count: 1 byte;
-// columns: reserved: 1 byte, n: 4 bytes, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
+// columns: period: 4 bytes, n: 4 bytes, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
 
 namespace fs = boost::filesystem;
 
@@ -106,8 +106,8 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
 
     try {
         std::ofstream metafile(getPathToTableMeta(table.getName()), std::ios::binary);
-        unsigned char reserved = 0;
-        metafile.write((char*) &reserved, sizeof(unsigned char));
+        unsigned char is_versioning = (table.isSystemVersioning()) ? (1) : (0);
+        metafile.write((char*) &is_versioning, sizeof(unsigned char));
         char table_name[kTableNameLength] = {0};
         std::memcpy(table_name, table.getName().c_str(), table.getName().size());
         metafile.write(table_name, kTableNameLength);
@@ -115,8 +115,8 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
         metafile.write((char*) &columns_count, sizeof(unsigned char));
 
         for (const auto& column : table.getColumns()) {
-            unsigned char reserved = 0;
-            metafile.write((char*) &reserved, sizeof(unsigned char));
+            unsigned int period = static_cast<unsigned int>(column.getPeriod());
+            metafile.write((char*) &period, sizeof(unsigned int));
             int n = column.getN();
             metafile.write((char*) &n, sizeof(int));
             unsigned char type = static_cast<unsigned char>(column.getType());
@@ -143,8 +143,9 @@ Table Engine::show(const std::string& table_name) {
     std::ifstream metafile(getPathToTableMeta(table_name), std::ios::binary);
     Table table;
 
-    unsigned char reserved;
-    metafile.read((char*) &reserved, sizeof(unsigned char));
+    unsigned char is_versioning;
+    metafile.read((char*) &is_versioning, sizeof(unsigned char));
+    table.setSystemVersioning(static_cast<bool>(is_versioning));
     char table_name_[kTableNameLength];
     metafile.read(table_name_, kTableNameLength);
     table.setName(table_name);
@@ -152,8 +153,8 @@ Table Engine::show(const std::string& table_name) {
     metafile.read((char*) &columns_count, sizeof(unsigned char));
 
     for (int i = 0; i < columns_count; ++i) {
-        unsigned char reserved;
-        metafile.read((char*) &reserved, sizeof(unsigned char));
+        unsigned int period;
+        metafile.read((char*) &period, sizeof(unsigned int));
         int n;
         metafile.read((char*) &n, sizeof(n));
         unsigned char type;
@@ -165,6 +166,7 @@ Table Engine::show(const std::string& table_name) {
         std::unique_ptr<exc::Exception> e;
         Column column(column_name, static_cast<DataType>(type), e, constraints);
         column.setN(n);
+        column.setPeriod(static_cast<PeriodState>(period));
         table.addColumn(column, e);
     }
 
