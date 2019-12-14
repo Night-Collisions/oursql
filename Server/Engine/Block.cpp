@@ -48,6 +48,11 @@ std::stringstream Block::toRow(const Table& table, const std::vector<Value>& val
                 ss.write(s, table.getColumns()[i].getN());
                 break;
             }
+            case DataType::datetime: {
+                long long ll = std::stoll(values[i].data);
+                ss.write((char*) &ll, sizeof(long long));
+                break;
+            }
         }
     }
 
@@ -84,6 +89,13 @@ std::vector<Value> Block::toValues(const Table& table, char* buff) {
                 }
                 value.data = s;
                 pos += column.getN();
+                break;
+            }
+            case DataType::datetime: {
+                long long ll;
+                memcpy(&ll, &(buff[pos]), sizeof(long long));
+                value.data = std::to_string(ll);
+                pos += sizeof(long long);
                 break;
             }
         }
@@ -123,6 +135,9 @@ void Block::setTable(const Table& table) {
                 break;
             case DataType::varchar:
                 row_size_ += column.getN();
+                break;
+            case DataType::datetime:
+                row_size_ ++ sizeof(long long);
                 break;
         }
     }
