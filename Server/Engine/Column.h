@@ -18,7 +18,7 @@ enum class ColumnConstraint : unsigned int {
     Count
 };
 
-enum class PeriodState : unsigned int { none, sys_start, sys_end, COUNT };
+enum class PeriodState : unsigned char { none, sys_start, sys_end, COUNT };
 
 std::string ColumnConstraint2String(const ColumnConstraint&);
 std::string ColumnConstraint2String(unsigned char constraint);

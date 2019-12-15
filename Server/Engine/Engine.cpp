@@ -4,7 +4,7 @@
 // is versioning: 1 byte;
 // table name: 128 bytes (with '\0');
 // columns count: 1 byte;
-// columns: period: 4 bytes, n: 4 bytes, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
+// columns: period: 1 byte, n: 4 bytes, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
 
 namespace fs = boost::filesystem;
 
@@ -115,8 +115,8 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
         metafile.write((char*) &columns_count, sizeof(unsigned char));
 
         for (const auto& column : table.getColumns()) {
-            unsigned int period = static_cast<unsigned int>(column.getPeriod());
-            metafile.write((char*) &period, sizeof(unsigned int));
+            unsigned char period = static_cast<unsigned char>(column.getPeriod());
+            metafile.write((char*) &period, sizeof(unsigned char));
             int n = column.getN();
             metafile.write((char*) &n, sizeof(int));
             unsigned char type = static_cast<unsigned char>(column.getType());
@@ -153,8 +153,8 @@ Table Engine::show(const std::string& table_name) {
     metafile.read((char*) &columns_count, sizeof(unsigned char));
 
     for (int i = 0; i < columns_count; ++i) {
-        unsigned int period;
-        metafile.read((char*) &period, sizeof(unsigned int));
+        unsigned char period;
+        metafile.read((char*) &period, sizeof(unsigned char));
         int n;
         metafile.read((char*) &n, sizeof(n));
         unsigned char type;
