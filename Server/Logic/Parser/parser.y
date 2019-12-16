@@ -54,7 +54,6 @@
 %token TABLE TABLES VALUES INTO FROM WHERE SET
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA ASTERISK
 %token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ
-%token PERIOD FOR_ SYSTEM_TIME
 %token ID ICONST FCONST SCONST
 %token INT REAL VARCHAR DATETIME
 %token NOT_NULL PRIMARY_KEY UNIQUE NULL_
@@ -135,11 +134,10 @@ statement:
 // ---- create table
 
 create:
-    CREATE TABLE id LPAREN variables RPAREN with_expr {
+    CREATE TABLE id LPAREN variables RPAREN {
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $3;
         children[NodeType::var_list] = new VarList(varList);
-        children[NodeType::with] = $7;
         children[NodeType::period_pair] = new Period(period);
 
         $$ = new Query(children, CommandType::create_table);
@@ -149,12 +147,13 @@ with_expr: WITH LPAREN VERSIONING EQUAL on_or_off RPAREN { $$ = new With($5); } 
 
 on_or_off: ON { $$ = true; } | OFF { $$ = false; };
 
+
 variables:
     variable {
-        varList.push_back($1);
+        //varList.push_back($1);
     } |
     variables COMMA variable {
-        varList.push_back($3);
+        //varList.push_back($3);
     };
 
 variable:
@@ -163,17 +162,18 @@ variable:
         if ($2 == DataType::varchar) {
             $$->addVarcharLen(yylval.varcharLen);
         }
+        varList.push_back($$);
     } | id type constraints {
         $$ = new Variable($1->getName(), $2, constraintList);
         if ($2 == DataType::varchar) {
             $$->addVarcharLen(yylval.varcharLen);
         }
+        varList.push_back($$);
         constraintList.clear();
-    } |
-    PERIOD FOR_ SYSTEM_TIME LPAREN id COMMA id RPAREN {
+    } | PERIOD FOR_ SYSTEM_TIME LPAREN id COMMA id RPAREN {
         period.first = $5->getName();
         period.second = $7->getName();
-    };
+    }
 
 constraints:
     constraint {

@@ -1,5 +1,7 @@
 #include "QueryManager.h"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -22,6 +24,12 @@
 #include "Parser/RelationalOperationsParser/Union.h"
 
 std::mutex transact_mtx;
+using namespace boost::gregorian;
+using namespace boost::posix_time;
+
+std::string getPtimeToPosixStr(const ptime& t) {
+    return std::to_string(to_time_t(t));
+}
 
 void QueryManager::execute(
     const Query& query, t_ull transact_num, std::unique_ptr<exc::Exception>& e,
@@ -71,6 +79,23 @@ void QueryManager::execute(
     }
 }
 
+void QueryManager::createTemporalTable(const std::string& name,
+                                       const std::vector<Column>& columns,
+                                       std::unique_ptr<exc::Exception>& e) {
+    std::vector<Column> temp_columns(columns.size());
+    std::copy(columns.begin(), columns.end(), temp_columns.begin());
+
+    for (auto& c : temp_columns) {
+        c.setConstraints({});
+    }
+
+    Table table(name, temp_columns, e);
+    if (e) {
+        return;
+    }
+    Engine::create(table, e);
+}
+
 void QueryManager::createTable(const Query& query, t_ull transact_num,
                                std::unique_ptr<exc::Exception>& e,
                                std::ostream& out) {
@@ -79,25 +104,17 @@ void QueryManager::createTable(const Query& query, t_ull transact_num,
 
     auto vars = static_cast<VarList*>(query.getChildren()[NodeType::var_list])
                     ->getVars();
-    /*    bool is_versioned = false;
-        if (query.getChildren().find(NodeType::with) !=
-       query.getChildren().end()) { is_versioned =
-                static_cast<With*>(query.getChildren()[NodeType::with])->isVersioned();
-        }*/
     auto period =
         static_cast<Period*>(query.getChildren()[NodeType::period_pair])
             ->getPeriod();
     ;
     bool is_period = false;
-    if (period.first.empty() || period.second.empty()) {
-        is_period = false;
-    } else {
-        is_period = true;
-    }
+    is_period = !(period.first.empty() || period.second.empty());
 
     std::vector<Column> columns;
     bool sys_start_found = false;
     bool sys_end_found = false;
+    bool has_primary_key = false;
     for (auto& v : vars) {
         std::string col_name = v->getName();
         DataType type = v->getType();
@@ -110,6 +127,9 @@ void QueryManager::createTable(const Query& query, t_ull transact_num,
 
         for (auto& c : v->getConstraints()) {
             if (constr_set.find(c) == constr_set.end()) {
+                if (c == ColumnConstraint::primary_key) {
+                    has_primary_key = true;
+                }
                 constr_set.insert(c);
             } else {
                 e.reset(
@@ -121,9 +141,18 @@ void QueryManager::createTable(const Query& query, t_ull transact_num,
         Column col(col_name, type, e, constr_set);
         col.setN(len);
         if (period.first == col_name) {
+            if (type != DataType::datetime) {
+                e.reset(new exc::IncorrectTypeForPeriod());
+                return;
+            }
             col.setPeriod(PeriodState::sys_start);
             sys_start_found = true;
-        } else if (period.second == col_name) {
+        }
+        if (period.second == col_name) {
+            if (type != DataType::datetime) {
+                e.reset(new exc::IncorrectTypeForPeriod());
+                return;
+            }
             col.setPeriod(PeriodState::sys_end);
             sys_end_found = true;
         }
@@ -131,9 +160,22 @@ void QueryManager::createTable(const Query& query, t_ull transact_num,
     }
     bool is_period_correct = sys_start_found && sys_end_found;
     if (!is_period_correct && is_period) {
-        // TODO: не существует поля, которое указано в period
+        e.reset(new exc::acc::ColumnNonexistent());
         return;
     }
+
+    if (is_period && !has_primary_key) {
+        e.reset(new exc::cr_table::PrimaryKeyInTempTable());
+        return;
+    }
+
+    if (is_period) {
+        createTemporalTable(getHistoryName(name), columns, e);
+        if (e) {
+            return;
+        }
+    }
+
     Table table(name, columns, e, is_period_correct);
     if (e != nullptr) {
         return;
@@ -159,6 +201,7 @@ void QueryManager::dropTable(const Query& query, t_ull transact_num,
                              std::ostream& out) {
     auto name = query.getChildren()[NodeType::ident]->getName();
     Engine::drop(name, e);
+    Engine::drop(getHistoryName(name), e);
 }
 
 void printSelect(const Table& table, t_column_infos column_infos,
@@ -312,8 +355,11 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
     auto table = Engine::show(name);
 
     std::map<std::string, std::map<std::string, Column>> column_info;
+
     for (auto& c : table.getColumns()) {
-        column_info[table.getName()][c.getName()] = c;
+        if (c.getPeriod() == PeriodState::none) {
+            column_info[table.getName()][c.getName()] = c;
+        }
     }
 
     auto idents =
@@ -331,7 +377,9 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
         }
     } else {
         for (auto& c : table.getColumns()) {
-            col_set.insert(c.getName());
+            if (c.getPeriod() == PeriodState::none) {
+                col_set.insert(c.getName());
+            }
             idents.push_back(new Ident(c.getName()));
         }
     }
@@ -387,13 +435,29 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
     }
 
     Cursor cursor(transact_num, name);
-    std::vector<std::vector<Value>> fetch_arr;
-    while (cursor.next()) {
-        fetch_arr.push_back(cursor.fetch());
-    }
 
     std::vector<Value> v_arr;
     for (auto& c : table.getColumns()) {
+        if (c.getPeriod() == PeriodState::sys_start) {
+            Value v;
+            v.is_null = false;
+            auto curr = boost::posix_time::second_clock::local_time();
+            v.data = getPtimeToPosixStr(curr);
+            v_arr.push_back(v);
+            continue;
+        }
+        if (c.getPeriod() == PeriodState::sys_end) {
+            Value v;
+            v.is_null = false;
+            // TODO: chage the maximal year
+            //  boost got a 2038 issue but it's fixed in v1.67 but I leave
+            //  I set 2037 as the maximum by now
+            auto upper_bound = ptime(date(2037, Dec, 31));
+            v.data = getPtimeToPosixStr(upper_bound);
+            v_arr.push_back(v);
+            continue;
+        }
+
         if (values.find(c.getName()) == values.end()) {
             if ((c.getConstraints().find(ColumnConstraint::primary_key) !=
                  c.getConstraints().end()) ||
@@ -419,7 +483,9 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
     }
 
     auto tbl_cols = table.getColumns();
-    for (auto& f : fetch_arr) {
+    cursor.reset();
+    while (cursor.next()) {
+        auto f = cursor.fetch();
         for (int i = 0; i < f.size(); ++i) {
             if (f[i].data == v_arr[i].data &&
                 ((column_info[name][tbl_cols[i].getName()]
@@ -457,8 +523,14 @@ void QueryManager::update(const Query& query, t_ull transact_num,
     auto table = Engine::show(name);
 
     std::map<std::string, std::map<std::string, Column>> column_info;
+    int sys_end_ind = 0;
+    int cnt = 0;
     for (auto& c : table.getColumns()) {
+        if (c.getPeriod() == PeriodState::sys_end) {
+            sys_end_ind = cnt;
+        }
         column_info[table.getName()][c.getName()] = c;
+        ++cnt;
     }
 
     auto idents =
@@ -466,6 +538,11 @@ void QueryManager::update(const Query& query, t_ull transact_num,
             ->getIdents();
     std::set<std::string> col_set;
     for (auto& c : idents) {
+        if (column_info[name].find(c->getName()) == column_info[name].end()) {
+            e.reset(new exc::acc::ColumnNonexistent(c->getName(), name));
+            return;
+        }
+
         if (col_set.find(c->getName()) == col_set.end()) {
             col_set.insert(c->getName());
         } else {
@@ -480,25 +557,28 @@ void QueryManager::update(const Query& query, t_ull transact_num,
 
     std::map<std::string, std::string> values;
     for (size_t i = 0; i < constants.size(); ++i) {
+        auto id_name = idents[i]->getName();
+        if (column_info[name][id_name].getPeriod() != PeriodState::none) {
+            e.reset(new exc::UnableToAssignPeriodField(id_name));
+            return;
+        }
         if (Resolver::compareTypes(name, name, column_info, idents[i],
                                    constants[i], e, CompareCondition::assign,
                                    "=")) {
-            if (column_info[name][idents[i]->getName()].getType() ==
-                    DataType::varchar &&
-                column_info[name][idents[i]->getName()].getN() <
+            if (column_info[name][id_name].getType() == DataType::varchar &&
+                column_info[name][id_name].getN() <
                     static_cast<Constant*>(constants[i])->getValue().length()) {
-                e.reset(new exc::DataTypeOversize(idents[i]->getName()));
+                e.reset(new exc::DataTypeOversize(id_name));
                 return;
             }
-            values[idents[i]->getName()] =
-                static_cast<Constant*>(constants[i])->getValue();
+            values[id_name] = static_cast<Constant*>(constants[i])->getValue();
         } else {
             return;
         }
     }
 
     std::vector<int> unique_pos;
-    int cnt = 0;
+    int cntr = 0;
     for (auto& c : table.getColumns()) {
         if (c.getConstraints().find(ColumnConstraint::not_null) !=
                 c.getConstraints().end() ||
@@ -506,12 +586,13 @@ void QueryManager::update(const Query& query, t_ull transact_num,
                 c.getConstraints().end() ||
             c.getConstraints().find(ColumnConstraint::unique) !=
                 c.getConstraints().end()) {
-            unique_pos.push_back(cnt);
+            unique_pos.push_back(cntr);
         }
-        ++cnt;
+        ++cntr;
     }
 
     Cursor cursor(transact_num, name);
+    Cursor history_cursor(transact_num, getHistoryName(name));
     cursor.markUpdate(true);
     std::vector<std::vector<Value>> fetch_arr;
     std::vector<std::vector<Value>> ready_ftch;
@@ -538,17 +619,34 @@ void QueryManager::update(const Query& query, t_ull transact_num,
                 }
                 rec.push_back(v);
             } else {
-                rec.push_back(ftch[i]);
+                if (c.getPeriod() == PeriodState::sys_start) {
+                    Value v;
+                    v.is_null = false;
+                    auto curr = boost::posix_time::second_clock::local_time();
+                    v.data = getPtimeToPosixStr(curr);
+                    rec.push_back(v);
+                } else if (c.getPeriod() == PeriodState::sys_end) {
+                    Value v;
+                    v.is_null = false;
+                    auto upper_bound = ptime(date(2037, Dec, 31));
+                    v.data = getPtimeToPosixStr(upper_bound);
+                    rec.push_back(v);
+                } else {
+                    rec.push_back(ftch[i]);
+                }
             }
         }
         updated_records.push_back(rec);
         ready_ftch.push_back(ftch);
     }
 
+    int f_cnt = 0;
+    int u_cnt = 0;
     for (auto& f : fetch_arr) {
+        u_cnt = 0;
         for (auto& rec : updated_records) {
             for (auto& u : unique_pos) {
-                if (f[u].data == rec[u].data) {
+                if (f[u].data == rec[u].data && u_cnt != f_cnt) {
                     e.reset(new exc::constr::DuplicatedUnique(
                         name, table.getColumns()[u].getName(), f[u].data));
                     return;
@@ -562,11 +660,13 @@ void QueryManager::update(const Query& query, t_ull transact_num,
                     return;
                 }
             }
+            ++u_cnt;
         }
+        ++f_cnt;
     }
 
     cursor.reset();
-
+    std::set<std::string> repeated;
     while (cursor.next()) {
         auto f = cursor.fetch();
         std::string resp = "0";
@@ -596,9 +696,23 @@ void QueryManager::update(const Query& query, t_ull transact_num,
                 return;
             }
             if (resp != "0") {
+                for (auto& u : unique_pos) {
+                    if (repeated.find(updated_records[k][u].data) ==
+                        repeated.end()) {
+                        repeated.insert(updated_records[k][u].data);
+                    } else {
+                        e.reset(new exc::constr::DuplicatedUnique(
+                            name, table.getColumns()[u].getName(),
+                            updated_records[k][u].data));
+                        return;
+                    }
+                }
+                if (table.isSystemVersioning()) {
+                    insertTemporalTable(name, table.getColumns(), transact_num,
+                                        sys_end_ind, f, e);
+                }
                 cursor.update(updated_records[k]);
             }
-            // ready_ftch.erase(ready_ftch.begin() + k);
             break;
         }
     }
@@ -612,8 +726,14 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
     auto table = Engine::show(name);
 
     std::map<std::string, std::map<std::string, Column>> column_info;
+    int sys_end_ind = 0;
+    int cnt = 0;
     for (auto& c : table.getColumns()) {
+        if (c.getPeriod() == PeriodState::sys_end) {
+            sys_end_ind = cnt;
+        }
         column_info[table.getName()][c.getName()] = c;
+        ++cnt;
     }
 
     Cursor cursor(transact_num, name);
@@ -634,6 +754,10 @@ void QueryManager::remove(const Query& query, t_ull transact_num,
             return;
         }
         if (resp != "0") {
+            if (table.isSystemVersioning()) {
+                insertTemporalTable(name, table.getColumns(), transact_num,
+                                    sys_end_ind, ftch, e);
+            }
             cursor.remove();
         }
     }
@@ -724,4 +848,23 @@ Table QueryManager::getFilledTable(const std::string& name, t_ull transact_num,
     }
 
     return table;
+}
+
+std::string QueryManager::getHistoryName(const std::string& name) {
+    return name + "History";
+}
+void QueryManager::insertTemporalTable(const std::string& name,
+                                       const std::vector<Column>& cols,
+                                       t_ull transact_num,
+                                       const int sys_end_ind,
+                                       std::vector<Value> rec,
+                                       std::unique_ptr<exc::Exception>& e) {
+    Cursor cursor(transact_num, getHistoryName(name));
+    Value v;
+    v.is_null = false;
+    auto curr = boost::posix_time::second_clock::local_time();
+    v.data = getPtimeToPosixStr(curr);
+    rec[sys_end_ind] = v;
+
+    cursor.insert(rec);
 }

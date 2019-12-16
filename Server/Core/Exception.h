@@ -39,7 +39,11 @@ enum class ExceptionType : unsigned int {
     null_column_in_intersect,
     serialize_access_error,
     repeat_begin_transact,
-    no_uncommited_transact
+    no_uncommited_transact,
+    column_in_period_noexist,
+    no_primary_key_in_table,
+    unable_to_assign_period,
+    incorrect_type_for_period
 };
 
 class Exception {
@@ -62,6 +66,20 @@ class Exception {
 
     const ExceptionType type_;
     const std::string message_;
+};
+
+class IncorrectTypeForPeriod : public Exception {
+   public:
+    IncorrectTypeForPeriod()
+        : Exception(ExceptionType::incorrect_type_for_period,
+                    "Fields in period must be datetime") {}
+};
+
+class UnableToAssignPeriodField : public Exception {
+   public:
+    UnableToAssignPeriodField(const std::string& name)
+        : Exception(ExceptionType::unable_to_assign_period,
+                    "impossible to assign period field " + name) {}
 };
 
 class SyntaxException : public Exception {
@@ -200,6 +218,9 @@ class ColumnNonexistent : public Exception {
         : Exception(ExceptionType::access_column_nonexistent,
                     "column " + column_name + " in table " + table_name +
                         " nonexistent.") {}
+    ColumnNonexistent()
+        : Exception(ExceptionType::column_in_period_noexist,
+                    "column used in period doesn't exist.") {}
 };
 };  // namespace acc
 
@@ -239,6 +260,13 @@ class CreateTableExceptionInColumn : public CreateTableException {
 
    protected:
     const std::string column_name_;
+};
+
+class PrimaryKeyInTempTable : public Exception {
+   public:
+    PrimaryKeyInTempTable()
+        : Exception(ExceptionType::no_primary_key_in_table,
+                    "Temporal table must have primary key column") {}
 };
 
 class ColumnName : public CreateTableExceptionInColumn {
@@ -316,9 +344,8 @@ namespace tr {
 class SerializeAccessError : public Exception {
    public:
     SerializeAccessError()
-        : Exception(
-              ExceptionType::serialize_access_error,
-              "Could not serialize access.") {}
+        : Exception(ExceptionType::serialize_access_error,
+                    "Could not serialize access.") {}
 };
 
 class RepeatBeginTransact : public Exception {

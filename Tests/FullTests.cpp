@@ -681,9 +681,7 @@ TEST_F(UPDATE_TESTS, TEST_8) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2);");
     CHECK_REQUEST_ST_CLIENT(
         "update a set a = 2 where a = 2;",
-        exc::ExceptionType::duplicated_unique,
-        "~~Exception 804 in table a:\n 2 is not unique is in the column "
-        "a.\n~~Exception in command:\"update a set a = 2 where a = 2;\"\n");
+        0, "");
 }
 
 class WHERE_TESTS : public REQUEST_TESTS {};

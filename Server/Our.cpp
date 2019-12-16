@@ -102,7 +102,7 @@ unsigned int perform(std::istream& in, std::ostream& out,
         }
 
         ParserManager pm;
-        // pm.setDebug(1);
+        //pm.setDebug(1);
         auto queries = pm.getParseTree(command, e);
         EXCEPTION_OURSQL_CHECK(e, out, command);
         for (auto& q : queries) {

@@ -31,6 +31,7 @@ class QueryManager {
     static void createTable(const Query& query, t_ull transact_num,
                             std::unique_ptr<exc::Exception>& e,
                             std::ostream& out);
+    static std::string getHistoryName(const std::string& name);
     static void showCreateTable(const Query& query, t_ull transact_num,
                                 std::unique_ptr<exc::Exception>& e,
                                 std::ostream& out);
@@ -56,6 +57,16 @@ class QueryManager {
     static Table getFilledTable(const std::string& name, t_ull transact_num,
                                 std::unique_ptr<exc::Exception>& e);
 
+    static void createTemporalTable(const std::string& name,
+                                    const std::vector<Column>& columns,
+                                    std::unique_ptr<exc::Exception>& e);
+
+    static void insertTemporalTable(const std::string& name,
+                                    const std::vector<Column>& cols,
+                                    t_ull transact_num,
+                                    const int sys_end_ind,
+                                    std::vector<Value> rec,
+                                    std::unique_ptr<exc::Exception>& e);
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_

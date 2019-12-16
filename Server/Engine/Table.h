@@ -74,7 +74,9 @@ class Table {
         }
         for (unsigned int i = 0; i < columns_[0].getValues().size(); ++i) {
             rec.clear();
+
             for (auto& column : columns_) {
+
                 rec.push_back(column.getValues()[i]);
             }
             res.push_back(rec);

@@ -49,7 +49,7 @@ std::stringstream Block::toRow(const Table& table, const std::vector<Value>& val
                 break;
             }
             case DataType::datetime: {
-                long long ll = std::stoll(values[i].data);
+                unsigned long long ll = std::stoull(values[i].data);
                 ss.write((char*) &ll, sizeof(long long));
                 break;
             }
@@ -137,7 +137,7 @@ void Block::setTable(const Table& table) {
                 row_size_ += column.getN();
                 break;
             case DataType::datetime:
-                row_size_ ++ sizeof(long long);
+                row_size_ += sizeof(long long);
                 break;
         }
     }

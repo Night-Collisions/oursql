@@ -1,8 +1,14 @@
 #include "Resolver.h"
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <iostream>
+
 #include "../Nodes/Ident.h"
 #include "../Nodes/IntConstant.h"
 #include "../Nodes/RealConstant.h"
+
+using namespace boost::posix_time;
 
 std::array<func, static_cast<unsigned int>(ExprUnit::Count)>
     Resolver::operations_ = {equal,     notEqual, greater, greaterEqual, less,
@@ -839,19 +845,21 @@ std::map<std::string, std::string> Resolver::getRecordMap(
     std::map<std::string, std::string> m;
     int counter = 0;
     for (auto& k : cols) {
-        auto c = k.getName();
-/*        if (m.find(c) != m.end()) {
-            e.reset(new exc::AmbiguousColumnName("ambiguous column name " + c));
-            return m;
-        }*/
+        auto colname = k.getName();
         if (record[counter].is_null) {
             if (k.getType() == DataType::varchar) {
-                m[c] = "";
+                m[colname] = "";
             } else {
-                m[c] = "null";
+                m[colname] = "null";
             }
         } else {
-            m[c] = record[counter].data;
+            if (k.getType() == DataType::datetime) {
+                unsigned long long t = std::stoull(record[counter].data);
+                auto str_date = to_simple_string(from_time_t(t));
+                m[colname] = str_date;
+            } else {
+                m[colname] = record[counter].data;
+            }
         }
 
         ++counter;
