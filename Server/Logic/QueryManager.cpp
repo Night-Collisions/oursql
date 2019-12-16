@@ -934,10 +934,6 @@ Table QueryManager::getFilledTempTable(const std::string& name,
             auto record_end = getPosixStrToPtime(r[sys_end_ind].data);
             date_period period1(start.date(), end.date());
             date_period period2(record_start.date(), record_end.date());
-            auto s1 = to_simple_string(start);
-            auto e1 = to_simple_string(end);
-            auto r_s = to_simple_string(record_start);
-            auto r_e = to_simple_string(record_end);
             if (period1.contains(period2)) {
                 res.addRecord(r, e);
             }
