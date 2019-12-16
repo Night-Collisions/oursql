@@ -23,6 +23,7 @@ std::string Resolver::resolve(const std::string& table1,
                               t_column_infos column_infos, Expression* root,
                               t_record_infos record,
                               std::unique_ptr<exc::Exception>& e) {
+    //TODO: add all operations for datetime
     table1_ = table1;
     table2_ = table2;
     column_infos_ = column_infos;

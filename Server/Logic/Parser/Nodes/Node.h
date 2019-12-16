@@ -26,7 +26,8 @@ enum class NodeType {
     relational_oper_expr,
     transaction,
     with,
-    period_pair
+    period_pair,
+    sys_time
 };
 
 class Node {

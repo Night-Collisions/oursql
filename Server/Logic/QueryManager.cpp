@@ -16,6 +16,7 @@
 #include "Parser/Nodes/Period.h"
 #include "Parser/Nodes/RelExpr.h"
 #include "Parser/Nodes/SelectList.h"
+#include "Parser/Nodes/SysTime.h"
 #include "Parser/Nodes/VarList.h"
 #include "Parser/Nodes/With.h"
 #include "Parser/RelationalOperationsParser/Helper.h"
@@ -29,6 +30,11 @@ using namespace boost::posix_time;
 
 std::string getPtimeToPosixStr(const ptime& t) {
     return std::to_string(to_time_t(t));
+}
+
+ptime getPosixStrToPtime(const std::string& s) {
+    unsigned long long t = std::stoull(s);
+    return from_time_t(t);
 }
 
 void QueryManager::execute(
@@ -265,6 +271,19 @@ void QueryManager::select(const Query& query, t_ull transact_num,
             return;
         }
 
+    } else if (children.find(NodeType::sys_time) != children.end()) {
+        auto name = children[NodeType::ident]->getName();
+        if (!Engine::exists(name)) {
+            e.reset(new exc::acc::TableNonexistent(name));
+            return;
+        }
+        resolvedTable = getFilledTempTable(
+            name, transact_num,
+            *static_cast<SysTime*>(children[NodeType::sys_time]), e);
+
+        if (e) {
+            return;
+        }
     } else {
         auto name = children[NodeType::ident]->getName();
         if (!Engine::exists(name)) {
@@ -848,6 +867,88 @@ Table QueryManager::getFilledTable(const std::string& name, t_ull transact_num,
     }
 
     return table;
+}
+
+Table QueryManager::getFilledTempTable(const std::string& name,
+                                       t_ull transact_num, const SysTime& stime,
+                                       std::unique_ptr<exc::Exception>& e) {
+    if (!Engine::show(name).isSystemVersioning()) {
+        e.reset(new exc::TableIsNotTemporal());
+        return Table();
+    }
+    Table actual_table = getFilledTable(name, transact_num, e);
+    Table history_table = getFilledTable(getHistoryName(name), transact_num, e);
+    if (e) {
+        return Table();
+    }
+
+    int primary_ind = 0;
+    int sys_start_ind = 0;
+    int sys_end_ind = 0;
+    int cnt = 0;
+    for (auto& c : actual_table.getColumns()) {
+        if (c.getConstraints().find(ColumnConstraint::primary_key) !=
+            c.getConstraints().end()) {
+            primary_ind = cnt;
+        } else if (c.getPeriod() == PeriodState::sys_start) {
+            sys_start_ind = cnt;
+        } else if (c.getPeriod() == PeriodState::sys_end) {
+            sys_end_ind = cnt;
+        }
+        ++cnt;
+    }
+
+    auto actual_records = actual_table.getRecords();
+    auto history_records = history_table.getRecords();
+
+    std::vector<std::pair<int, std::vector<int>>> suka_map;
+    for (int i = 0; i < actual_records.size(); ++i) {
+        std::vector<int> tmp;
+        for (int j = 0; j < history_records.size(); ++j) {
+            if (actual_records[i][primary_ind].data ==
+                history_records[j][primary_ind].data) {
+                tmp.emplace_back(j);
+            }
+        }
+        suka_map.emplace_back(std::make_pair(i, tmp));
+    }
+
+    Table packed = Engine::show(name);
+    for (auto& s : suka_map) {
+        packed.addRecord(actual_records[s.first], e);
+        for (auto& t : s.second) {
+            packed.addRecord(history_records[t], e);
+        }
+    }
+    if (e) {
+        return Table();
+    }
+
+    Table res = Engine::show(name);
+    if (stime.getRangeType() == RangeType::all) {
+        return packed;
+    } else if (stime.getRangeType() == RangeType::from_to) {
+        for (auto& r : packed.getRecords()) {
+            auto [start, end] = stime.getRange();
+            auto record_start = getPosixStrToPtime(r[sys_start_ind].data);
+            auto record_end = getPosixStrToPtime(r[sys_end_ind].data);
+            date_period period1(start.date(), end.date());
+            date_period period2(record_start.date(), record_end.date());
+            auto s1 = to_simple_string(start);
+            auto e1 = to_simple_string(end);
+            auto r_s = to_simple_string(record_start);
+            auto r_e = to_simple_string(record_end);
+            if (period1.contains(period2)) {
+                res.addRecord(r, e);
+            }
+        }
+    }
+
+    if (e) {
+        return Table();
+    }
+
+    return res;
 }
 
 std::string QueryManager::getHistoryName(const std::string& name) {

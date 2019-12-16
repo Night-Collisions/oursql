@@ -9,6 +9,7 @@
 #include "../Engine/Value.h"
 #include "Parser/Nodes/Query.h"
 #include "Parser/Nodes/RelExpr.h"
+#include "Parser/Nodes/SysTime.h"
 #include "Parser/Nodes/Transaction.h"
 
 using t_ull = unsigned long long;
@@ -57,14 +58,17 @@ class QueryManager {
     static Table getFilledTable(const std::string& name, t_ull transact_num,
                                 std::unique_ptr<exc::Exception>& e);
 
+    static Table getFilledTempTable(const std::string& name, t_ull transact_num,
+                                    const SysTime& stime,
+                                    std::unique_ptr<exc::Exception>& e);
+
     static void createTemporalTable(const std::string& name,
                                     const std::vector<Column>& columns,
                                     std::unique_ptr<exc::Exception>& e);
 
     static void insertTemporalTable(const std::string& name,
                                     const std::vector<Column>& cols,
-                                    t_ull transact_num,
-                                    const int sys_end_ind,
+                                    t_ull transact_num, const int sys_end_ind,
                                     std::vector<Value> rec,
                                     std::unique_ptr<exc::Exception>& e);
 };

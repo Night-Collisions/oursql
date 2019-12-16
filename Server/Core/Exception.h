@@ -43,7 +43,9 @@ enum class ExceptionType : unsigned int {
     column_in_period_noexist,
     no_primary_key_in_table,
     unable_to_assign_period,
-    incorrect_type_for_period
+    incorrect_type_for_period,
+    date_cast_from_str,
+    table_is_not_temporal
 };
 
 class Exception {
@@ -66,6 +68,20 @@ class Exception {
 
     const ExceptionType type_;
     const std::string message_;
+};
+
+class TableIsNotTemporal : public Exception {
+   public:
+    TableIsNotTemporal()
+        : Exception(ExceptionType::table_is_not_temporal,
+                    "Table is not temporal.") {}
+};
+
+class DateCastFromStrExc : public Exception {
+   public:
+    DateCastFromStrExc()
+        : Exception(ExceptionType::date_cast_from_str,
+                    "Date input couldn't be interpreted as date.") {}
 };
 
 class IncorrectTypeForPeriod : public Exception {

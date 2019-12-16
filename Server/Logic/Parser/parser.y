@@ -16,6 +16,7 @@
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
     #include "../../Server/Logic/Parser/Nodes/Transaction.h"
     #include "../../Server/Logic/Parser/Nodes/Period.h"
+    #include "../../Server/Logic/Parser/Nodes/SysTime.h"
     #include "../../Server/Logic/Parser/Nodes/With.h"
     #include "../../Server/Core/Exception.h"
     #include "../../Server/Engine/Engine.h"
@@ -60,7 +61,7 @@
 %token AND OR DIVIDE PLUS MINUS NOT
 %token LEFT RIGHT INNER OUTER FULL CROSS JOIN INTERSECT UNION AS ON
 %token BEGIN_ COMMIT
-%token VERSIONING WITH PERIOD SYSTEM_TIME FOR_ OFF
+%token VERSIONING WITH PERIOD SYSTEM_TIME FOR_ OFF TO ALL
 
 %type<query> create show_create drop_table select insert delete update statement statements
 %type<ident> id col_ident
@@ -78,6 +79,7 @@
 %type<relExpr> sub_rel_expr relational_expr
 %type<is_versioned> on_or_off
 %type<withCond> with_expr
+%type<sysTimeExpr> sys_time_cond
 
 %start start_expression
 
@@ -98,6 +100,7 @@
     Expression *expr;
     RelExpr *relExpr;
     With *withCond;
+    SysTime *sysTimeExpr;
 
     int varcharLen;
     bool is_versioned;
@@ -206,6 +209,26 @@ select:
         children[NodeType::expression] = $5;
 
         $$ = new Query(children, CommandType::select);
+    } |
+    SELECT select_decl FROM id FOR_ SYSTEM_TIME sys_time_cond {
+        std::map<NodeType, Node*> children;
+        children[NodeType::ident] = $4;
+        children[NodeType::select_list] = new SelectList(selectList);
+        children[NodeType::sys_time] = $7;
+
+        $$ = new Query(children, CommandType::select);
+    };
+
+sys_time_cond: ALL {
+        $$ = new SysTime();
+    } | 
+    FROM text_const TO text_const {
+        auto s1 = $2->getValue();
+        auto s2 = $4->getValue();
+        delete $2;
+        delete $4;
+
+        $$ = new SysTime(s1, s2, ex);
     };
 
 select_decl:

@@ -40,7 +40,8 @@ set(HEADERS
         Logic/Parser/RelationalOperationsParser/Helper.h
         Logic/Parser/Nodes/DatetimeConstant.h
         Logic/Parser/Nodes/With.h
-         Logic/Parser/Nodes/Period.h)
+        Logic/Parser/Nodes/Period.h
+        Logic/Parser/Nodes/SysTime.h)
 
 set(DEFINITIONS
         Our.cpp
@@ -80,13 +81,13 @@ set(DEFINITIONS
         Logic/Parser/RelationalOperationsParser/Helper.cpp
         Logic/Parser/Nodes/Transaction.cpp
         Logic/Parser/Nodes/DatetimeConstant.cpp
-        Logic/Parser/Nodes/With.cpp Logic/Parser/Nodes/Period.cpp)
+        Logic/Parser/Nodes/With.cpp Logic/Parser/Nodes/Period.cpp Logic/Parser/Nodes/SysTime.cpp)
 
 assemble_parser(Logic/Parser/)
 
 init(${PROJECT_BINARY_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} )
+add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
 
 show_compilation_warnings(${PROJECT_NAME})
 
