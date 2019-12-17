@@ -924,9 +924,15 @@ Table QueryManager::getFilledTempTable(const std::string& name,
                 packed.addRecord(history_records[t], e);
             }
         }
+        for (int i = 0; i < history_records.size(); ++i) {
+            if (suka_map[i].second.empty()) {
+                packed.addRecord(history_records[suka_map[i].first], e);
+            }
+        }
         if (e) {
             return Table();
         }
+        return packed;
     } else if (stime.getRangeType() == RangeType::from_to) {
         for (auto& r : history_records) {
             auto [start, end] = stime.getRange();
