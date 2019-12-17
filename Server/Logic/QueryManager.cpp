@@ -207,7 +207,9 @@ void QueryManager::dropTable(const Query& query, t_ull transact_num,
                              std::ostream& out) {
     auto name = query.getChildren()[NodeType::ident]->getName();
     Engine::drop(name, e);
-    Engine::drop(getHistoryName(name), e);
+    if (Engine::show(name).isSystemVersioning()) {
+        Engine::drop(getHistoryName(name), e);
+    }
 }
 
 void printSelect(const Table& table, t_column_infos column_infos,
@@ -913,28 +915,27 @@ Table QueryManager::getFilledTempTable(const std::string& name,
         suka_map.emplace_back(std::make_pair(i, tmp));
     }
 
-    Table packed = Engine::show(name);
-    for (auto& s : suka_map) {
-        packed.addRecord(actual_records[s.first], e);
-        for (auto& t : s.second) {
-            packed.addRecord(history_records[t], e);
-        }
-    }
-    if (e) {
-        return Table();
-    }
-
     Table res = Engine::show(name);
     if (stime.getRangeType() == RangeType::all) {
-        return packed;
+        Table packed = Engine::show(name);
+        for (auto& s : suka_map) {
+            packed.addRecord(actual_records[s.first], e);
+            for (auto& t : s.second) {
+                packed.addRecord(history_records[t], e);
+            }
+        }
+        if (e) {
+            return Table();
+        }
     } else if (stime.getRangeType() == RangeType::from_to) {
-        for (auto& r : packed.getRecords()) {
+        for (auto& r : history_records) {
             auto [start, end] = stime.getRange();
-            auto record_start = getPosixStrToPtime(r[sys_start_ind].data);
-            auto record_end = getPosixStrToPtime(r[sys_end_ind].data);
-            date_period period1(start.date(), end.date());
-            date_period period2(record_start.date(), record_end.date());
-            if (period1.contains(period2)) {
+            auto record_start = std::stoll(r[sys_start_ind].data);
+            auto record_end = std::stoll(r[sys_end_ind].data);
+            auto left = to_time_t(start);
+            auto right = to_time_t(end);
+            if (left <= record_start &&
+                record_start <= record_end && record_end <= right) {
                 res.addRecord(r, e);
             }
         }

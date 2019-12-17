@@ -6,7 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 macro(show_compilation_warnings TERGET)
     target_compile_options(${TERGET} PRIVATE
             $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
-            -Wall -Wextra>
+            -Wall -Wextra -DDEBUG>
+
             $<$<CXX_COMPILER_ID:MSVC>:
             /W4>
             )
@@ -35,16 +36,6 @@ endmacro()
 include(FetchContent)
 
 FetchContent_Declare(
-        rapidjson
-        GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-        GIT_TAG v1.1.0
-        UPDATE_DISCONNECTED 1
-)
-
-FetchContent_Populate(rapidjson)
-include_directories(${rapidjson_SOURCE_DIR}/include/)
-
-FetchContent_Declare(
         asio
         GIT_REPOSITORY https://github.com/chriskohlhoff/asio
         GIT_TAG asio-1-14-0
@@ -58,8 +49,6 @@ include_directories(${asio_SOURCE_DIR}/asio/include/)
 if(WIN32)
     link_libraries(ws2_32 wsock32)
 endif()
-
-#TODO: взять asio из boost
 
 add_subdirectory(Server)
 

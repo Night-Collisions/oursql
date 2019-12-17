@@ -19,13 +19,29 @@ class SysTime : public Node {
         : Node(NodeType::sys_time), rtype_(RangeType::from_to) {
         try {
             from_ = time_from_string(from);
+        } catch (boost::bad_lexical_cast& b) {
+            e.reset(new exc::DateCastFromStrExc());
+            return;
+        } catch (std::out_of_range& b) {
+            try {
+                from_ = ptime(from_string(from));
+            } catch (boost::gregorian::bad_day_of_month& b) {
+                e.reset(new exc::DateCastFromStrExc());
+                return;
+            }
+        }
+        try {
             to_ = time_from_string(to);
         } catch (boost::bad_lexical_cast& b) {
             e.reset(new exc::DateCastFromStrExc());
             return;
-        } catch (std::out_of_range& e) {
-            from_ = ptime(from_string(from));
-            to_ = ptime(from_string(to));
+        } catch (std::out_of_range& b) {
+            try {
+                to_ = time_from_string(to + " 23:59:99");
+            } catch (boost::gregorian::bad_day_of_month& b) {
+                e.reset(new exc::DateCastFromStrExc());
+                return;
+            }
         }
     }
     SysTime() : Node(NodeType::sys_time), rtype_(RangeType::all) {}
