@@ -2,6 +2,8 @@
 #define OURSQL_APP_ENGINE_ENGINE_H_
 
 #include <boost/filesystem.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <mutex>
 #include <cstdio>
 #include <cstring>
@@ -54,7 +56,12 @@ class Engine {
     static const int kTableNameLength;
     static const int kNullTransactionId;
 
+    static const std::string kTransactionsEndTimesTable;
+
 private:
+    static void createTransactionsEndTimesTable();
+    static void insertIntoTransactionsEndTimesTable(int id);
+
     static const std::string kTransactionsIdsFile_;
     static const size_t kColumnNameLength_;
 

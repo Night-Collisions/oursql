@@ -11,6 +11,7 @@ namespace fs = boost::filesystem;
 const int Engine::kTableNameLength = 128;
 const int Engine::kNullTransactionId = 0;
 const std::string Engine::kTransactionsIdsFile_ ("DataBD/transactions_ids");
+const std::string Engine::kTransactionsEndTimesTable("transactions_end_times");
 const size_t Engine::kColumnNameLength_ = 128;
 
 std::mutex Engine::mutex_;
@@ -35,6 +36,17 @@ void Engine::initialize() {
     if (getPerformingTransactionId() != kNullTransactionId) {
         commitTransaction(getPerformingTransactionId());
     }
+    if (!exists(kTransactionsEndTimesTable)) {
+        createTransactionsEndTimesTable();
+    }
+}
+
+void Engine::createTransactionsEndTimesTable() {
+    std::unique_ptr<exc::Exception> ignore;
+    std::vector<Column> columns;
+    columns.emplace_back("transaction_id", DataType::integer, ignore);
+    columns.emplace_back("end_time", DataType::datetime, ignore);
+    create(Table(kTransactionsEndTimesTable, columns, ignore), ignore);
 }
 
 int Engine::generateNextTransactionId() {
@@ -61,9 +73,23 @@ void Engine::commitTransaction(int id) {
         cursor.commit();
     }
 
+    insertIntoTransactionsEndTimesTable(id);
     setPerformingTransactionId(kNullTransactionId);
     endTransaction(id);
 }
+
+void Engine::insertIntoTransactionsEndTimesTable(int id){
+    auto curr_time = boost::posix_time::second_clock::local_time();
+    auto posix_time = boost::posix_time::to_time_t(curr_time);
+
+    std::vector<Value> values;
+    values.push_back({std::to_string(id)});
+    values.push_back({std::to_string(posix_time)});
+    Cursor cursor(0, kTransactionsEndTimesTable);
+    cursor.insert(values);
+    cursor.commit();
+}
+
 
 void Engine::endTransaction(int id) {
     fs::remove_all(fs::current_path() / "DataBD" / std::to_string(id));
