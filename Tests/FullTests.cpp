@@ -161,6 +161,57 @@ TEST_F(SHOW_CREATE_TABLE_TESTS, TEST_2) {
 
 class SYNTAX_TESTS : public REQUEST_TESTS {};
 
+class VERSION_TESTS : public REQUEST_TESTS {};
+TEST_F(VERSION_TESTS, TEST_1) {
+    CHECK_REQUEST_ST_CLIENT(
+        "create table a(b int primary key, s datetime, e datetime);", 0, "");
+}
+
+TEST_F(VERSION_TESTS, TEST_2) {
+    CHECK_REQUEST_ST_CLIENT(
+        "create table a(b int primary key, s datetime, e datetime, period for "
+        "system_time(s, e));",
+        0, "");
+}
+
+TEST_F(VERSION_TESTS, TEST_3) {
+    CHECK_REQUEST_ST_CLIENT(
+        "create table a(b int , s datetime, e datetime, period for "
+        "system_time(s, e));",
+        1112,
+        "~~Exception 1112:\n Temporal table must have primary key "
+        "column\n~~Exception in command:\"create table a(b int , s datetime, e "
+        "datetime, period for system_time(s, e));\"\n");
+}
+
+TEST_F(VERSION_TESTS, TEST_4) {
+    CHECK_REQUEST_ST_CLIENT(
+        "create table a(b int primary key, k int, s datetime, e datetime, "
+        "period for system_time(e, k));",
+        1114,
+        "~~Exception 1114:\n Fields in period must be datetime\n~~Exception in "
+        "command:\"create table a(b int primary key, k int, s datetime, e "
+        "datetime, period for system_time(e, k));\"\n");
+}
+
+TEST_F(VERSION_TESTS, TEST_5) {
+    CHECK_REQUEST_ST_CLIENT("create table t(i int);", 0, "");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from t for system_time all;", 1116,
+        "~~Exception 1116:\n Table is not temporal.\n~~Exception in "
+        "command:\"select * from t for system_time all;\"\n");
+}
+
+TEST_F(VERSION_TESTS, TEST_6) {
+    CHECK_REQUEST_ST_CLIENT("create table t(i int);", 0, "");
+    CHECK_REQUEST_ST_CLIENT(
+        "select * from t for system_time from '2019-12-12' to '2019-12-18';",
+        1116,
+        "~~Exception 1116:\n Table is not temporal.\n~~Exception in "
+        "command:\"select * from t for system_time from '2019-12-12' to "
+        "'2019-12-18';\"\n");
+}
+
 TEST_F(SYNTAX_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("CreAte    \n  TablE   NamE \n ( A ReAl);", 0, "");
 }
@@ -679,9 +730,7 @@ TEST_F(UPDATE_TESTS, TEST_7) {
 TEST_F(UPDATE_TESTS, TEST_8) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table a(a int primary key);");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2);");
-    CHECK_REQUEST_ST_CLIENT(
-        "update a set a = 2 where a = 2;",
-        0, "");
+    CHECK_REQUEST_ST_CLIENT("update a set a = 2 where a = 2;", 0, "");
 }
 
 class WHERE_TESTS : public REQUEST_TESTS {};
@@ -1379,7 +1428,8 @@ TEST_F(TRANSACTION_TESTS, TEST_1) {
     }
     full_answer.back() = {"1", "Time to apologize."};
     client1.sendRequest(
-        "begin; delete from a where b = 'Grenkind and Igor the best friends.';");
+        "begin; delete from a where b = 'Grenkind and Igor the best "
+        "friends.';");
     CHECK_REQUEST("select * from a;", 0,
                   get_select_answer({"a.a", "a.b"}, full_answer), client2);
     std::string ans;
@@ -1417,8 +1467,7 @@ TEST_F(TRANSACTION_TESTS, TEST_2) {
     ASSERT_EQ(ans, get_select_answer({"a.a"}, expected_ans_client1))
         << "Wrong answer client1!!!";
     CHECK_REQUEST("select * from a;", 0,
-                  get_select_answer({"a.a", "a.b"}, full_answer),
-                  client2);
+                  get_select_answer({"a.a", "a.b"}, full_answer), client2);
 }
 
 TEST_F(TRANSACTION_TESTS, TEST_3) {
