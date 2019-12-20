@@ -212,39 +212,60 @@ void QueryManager::dropTable(const Query& query, t_ull transact_num,
     }
 }
 
-void printSelect(const Table& table, t_column_infos column_infos,
-                 std::vector<Node*> cols_from_parser, t_record_infos record,
-                 std::unique_ptr<exc::Exception>& e, std::ostream& out) {
-    std::string response;
-    int expr_cnt = 1;
-    out << "=======\n";
-    for (auto& c : cols_from_parser) {
-        auto expr = static_cast<Expression*>(c);
-        std::string prefix = Helper::getCorrectTablePrefix(table.getName());
-        if (expr->exprType() == ExprUnit::value &&
-            expr->getConstant()->getName() == "*") {
-            for (auto& k : table.getColumns()) {
-                out << prefix + k.getName() + ": " +
-                           record[table.getName()][k.getName()]
-                    << std::endl;
+void printSelectedRecords(const Table& table, t_column_infos column_infos,
+                          std::vector<Node*> cols_from_parser,
+                          const std::vector<Value>& record, Expression* root,
+                          std::unique_ptr<exc::Exception>& e,
+                          std::ostream& out) {
+    t_record_infos record_infos;
+    record_infos[table.getName()] =
+        Resolver::getRecordMap(table.getColumns(), record, e);
+    if (e) {
+        return;
+    }
+
+    // auto root = static_cast<Expression*>(children[NodeType::expression]);
+    std::string response = Resolver::resolve(
+        table.getName(), table.getName(), column_infos, root, record_infos, e);
+    if (e) {
+        return;
+    }
+    if (response != "0") {
+        std::string response;
+        int expr_cnt = 1;
+        out << "=======\n";
+        for (auto& c : cols_from_parser) {
+            auto expr = static_cast<Expression*>(c);
+            std::string prefix = Helper::getCorrectTablePrefix(table.getName());
+            if (expr->exprType() == ExprUnit::value &&
+                expr->getConstant()->getName() == "*") {
+                for (auto& k : table.getColumns()) {
+                    out << prefix + k.getName() + ": " +
+                               record_infos[table.getName()][k.getName()]
+                        << std::endl;
+                }
+                continue;
             }
-            continue;
-        }
-        response = Resolver::resolve(table.getName(), table.getName(),
-                                     column_infos, expr, record, e);
-        std::string colname = expr->getConstant()->getName();
-        if (colname.empty()) {
-            colname = "expression " + std::to_string(expr_cnt++);
-        } else {
-            auto id = static_cast<Ident*>(expr->getConstant());
-            colname = (id->getTableName().empty()) ? ("")
-                                                   : (id->getTableName() + ".");
-            colname += id->getName();
+            response = Resolver::resolve(table.getName(), table.getName(),
+                                         column_infos, expr, record_infos, e);
+            std::string colname = expr->getConstant()->getName();
+            if (colname.empty()) {
+                colname = "expression " + std::to_string(expr_cnt++);
+            } else {
+                auto id = static_cast<Ident*>(expr->getConstant());
+                colname = (id->getTableName().empty())
+                              ? ("")
+                              : (id->getTableName() + ".");
+                colname += id->getName();
+            }
+            if (e) {
+                return;
+            }
+            out << colname + ": " + response << std::endl;
         }
         if (e) {
             return;
         }
-        out << colname + ": " + response << std::endl;
     }
 }
 
@@ -261,14 +282,17 @@ void QueryManager::select(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
     auto children = query.getChildren();
-    Table resolvedTable;
     t_column_infos column_info;
     std::vector<Node*> cols_from_parser;
+    Table resolvedTable;
+
+    bool in_memory = false;
 
     if (children.find(NodeType::relational_oper_expr) != children.end()) {
         auto root =
             static_cast<RelExpr*>(children[NodeType::relational_oper_expr]);
         resolvedTable = resolveRelationalOperTree(root, transact_num, e);
+        in_memory = true;
         if (e) {
             return;
         }
@@ -279,9 +303,10 @@ void QueryManager::select(const Query& query, t_ull transact_num,
             e.reset(new exc::acc::TableNonexistent(name));
             return;
         }
-        resolvedTable = getFilledTempTable(
-            name, transact_num,
-            *static_cast<SysTime*>(children[NodeType::sys_time]), e);
+        // todo: делать курсорами дичь, да ваще перепилить все нахер
+        /* resolvedTable = getFilledTempTable(
+             name, transact_num,
+             *static_cast<SysTime*>(children[NodeType::sys_time]), e);*/
 
         if (e) {
             return;
@@ -292,7 +317,7 @@ void QueryManager::select(const Query& query, t_ull transact_num,
             e.reset(new exc::acc::TableNonexistent(name));
             return;
         }
-        resolvedTable = getFilledTable(name, transact_num, e);
+        resolvedTable = Engine::show(name);
 
         if (e) {
             return;
@@ -341,25 +366,25 @@ void QueryManager::select(const Query& query, t_ull transact_num,
         }
     }
 
-    auto records = resolvedTable.getRecords();
-    t_record_infos record_info;
-    for (int i = 0; i < records.size(); ++i) {
-        record_info[resolvedTable.getName()] =
-            Resolver::getRecordMap(resolvedTable.getColumns(), records[i], e);
-        if (e) {
-            return;
+    if (in_memory) {
+        auto records = resolvedTable.getRecords();
+        for (int i = 0; i < records.size(); ++i) {
+            auto root =
+                static_cast<Expression*>(children[NodeType::expression]);
+            printSelectedRecords(resolvedTable, column_info, cols_from_parser,
+                                 records[i], root, e, out);
+            if (e) {
+                return;
+            }
         }
-
-        auto root = static_cast<Expression*>(children[NodeType::expression]);
-        std::string response =
-            Resolver::resolve(resolvedTable.getName(), resolvedTable.getName(),
-                              column_info, root, record_info, e);
-        if (e) {
-            return;
-        }
-        if (response != "0") {
-            printSelect(resolvedTable, column_info, cols_from_parser,
-                        record_info, e, out);
+    } else {
+        Cursor cursor(transact_num, resolvedTable.getName());
+        while (cursor.next()) {
+            auto ftch = cursor.fetch();
+            auto root =
+                static_cast<Expression*>(children[NodeType::expression]);
+            printSelectedRecords(resolvedTable, column_info, cols_from_parser,
+                                 ftch, root, e, out);
             if (e) {
                 return;
             }
@@ -615,12 +640,10 @@ void QueryManager::update(const Query& query, t_ull transact_num,
     Cursor cursor(transact_num, name);
     Cursor history_cursor(transact_num, getHistoryName(name));
     cursor.markUpdate(true);
-    std::vector<std::vector<Value>> fetch_arr;
     std::vector<std::vector<Value>> ready_ftch;
     std::vector<std::vector<Value>> updated_records;
     while (cursor.next()) {
         auto ftch = cursor.fetch();
-        fetch_arr.push_back(ftch);
         std::vector<Value> rec;
         for (int i = 0; i < table.getColumns().size(); ++i) {
             auto c = table.getColumns()[i];
@@ -663,7 +686,10 @@ void QueryManager::update(const Query& query, t_ull transact_num,
 
     int f_cnt = 0;
     int u_cnt = 0;
-    for (auto& f : fetch_arr) {
+
+    cursor.reset();
+    while (cursor.next()) {
+        auto f = cursor.fetch();
         u_cnt = 0;
         for (auto& rec : updated_records) {
             for (auto& u : unique_pos) {
@@ -878,6 +904,7 @@ Table QueryManager::getFilledTempTable(const std::string& name,
         e.reset(new exc::TableIsNotTemporal());
         return Table();
     }
+    // todo: говно
     Table actual_table = getFilledTable(name, transact_num, e);
     Table history_table = getFilledTable(getHistoryName(name), transact_num, e);
     if (e) {
@@ -940,8 +967,8 @@ Table QueryManager::getFilledTempTable(const std::string& name,
             auto record_end = std::stoll(r[sys_end_ind].data);
             auto left = to_time_t(start);
             auto right = to_time_t(end);
-            if (left <= record_start &&
-                record_start <= record_end && record_end <= right) {
+            if (left <= record_start && record_start <= record_end &&
+                record_end <= right) {
                 res.addRecord(r, e);
             }
         }

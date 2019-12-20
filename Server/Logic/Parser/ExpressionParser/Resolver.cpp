@@ -23,7 +23,7 @@ std::string Resolver::resolve(const std::string& table1,
                               t_column_infos column_infos, Expression* root,
                               t_record_infos record,
                               std::unique_ptr<exc::Exception>& e) {
-    //TODO: add all operations for datetime
+    // TODO: add all operations for datetime
     table1_ = table1;
     table2_ = table2;
     column_infos_ = column_infos;
@@ -142,6 +142,11 @@ void Resolver::equal(Expression* root, t_record_infos record,
     } else {
         res = std::to_string(value1 == value2);
     }
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(res));
 }
 
@@ -206,7 +211,11 @@ void Resolver::greater(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -308,7 +317,11 @@ void Resolver::greaterEqual(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -358,7 +371,11 @@ void Resolver::less(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -408,7 +425,11 @@ void Resolver::lessEqual(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -460,7 +481,11 @@ void Resolver::logicAnd(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -512,7 +537,11 @@ void Resolver::logicOr(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -534,7 +563,11 @@ void Resolver::div(Expression* root, t_record_infos record,
     if (e) {
         return;
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     try {
         if (type1 == DataType::integer && type2 == DataType::integer) {
             auto a = std::stoi(value1);
@@ -589,7 +622,11 @@ void Resolver::logicNot(Expression* root, t_record_infos record,
     if (e) {
         return;
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     int res = 0;
     try {
         if (type2 == DataType::integer) {
@@ -634,7 +671,11 @@ void Resolver::mul(Expression* root, t_record_infos record,
     if (e) {
         return;
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     try {
         if (type1 == DataType::integer && type2 == DataType::integer) {
             auto a = std::stoi(value1);
@@ -679,7 +720,11 @@ void Resolver::add(Expression* root, t_record_infos record,
     if (e) {
         return;
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     try {
         if (type1 == DataType::integer && type2 == DataType::integer) {
             auto a = std::stoi(value1);
@@ -724,7 +769,11 @@ void Resolver::sub(Expression* root, t_record_infos record,
     if (e) {
         return;
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     try {
         if (type1 == DataType::integer && type2 == DataType::integer) {
             auto a = std::stoi(value1);
@@ -769,7 +818,8 @@ void Resolver::setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
 
     if (left->getNodeType() == NodeType::ident) {
         auto col_name = static_cast<Ident*>(left)->getName();
-        if (column_infos[table_name1].find(col_name) != column_infos[table_name1].end()) {
+        if (column_infos[table_name1].find(col_name) !=
+            column_infos[table_name1].end()) {
             a = column_infos[table_name1][col_name].getType();
         } else {
             e.reset(new exc::acc::ColumnNonexistent(col_name, table_name1));
@@ -781,7 +831,8 @@ void Resolver::setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
 
     if (right->getNodeType() == NodeType::ident) {
         auto col_name = static_cast<Ident*>(right)->getName();
-        if (column_infos[table_name2].find(col_name) != column_infos[table_name2].end()) {
+        if (column_infos[table_name2].find(col_name) !=
+            column_infos[table_name2].end()) {
             b = column_infos[table_name2][col_name].getType();
         } else {
             e.reset(new exc::acc::ColumnNonexistent(col_name, table_name2));

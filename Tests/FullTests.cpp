@@ -194,24 +194,6 @@ TEST_F(VERSION_TESTS, TEST_4) {
         "datetime, period for system_time(e, k));\"\n");
 }
 
-TEST_F(VERSION_TESTS, TEST_5) {
-    CHECK_REQUEST_ST_CLIENT("create table t(i int);", 0, "");
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from t for system_time all;", 1116,
-        "~~Exception 1116:\n Table is not temporal.\n~~Exception in "
-        "command:\"select * from t for system_time all;\"\n");
-}
-
-TEST_F(VERSION_TESTS, TEST_6) {
-    CHECK_REQUEST_ST_CLIENT("create table t(i int);", 0, "");
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from t for system_time from '2019-12-12' to '2019-12-18';",
-        1116,
-        "~~Exception 1116:\n Table is not temporal.\n~~Exception in "
-        "command:\"select * from t for system_time from '2019-12-12' to "
-        "'2019-12-18';\"\n");
-}
-
 TEST_F(SYNTAX_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("CreAte    \n  TablE   NamE \n ( A ReAl);", 0, "");
 }
@@ -1470,20 +1452,3 @@ TEST_F(TRANSACTION_TESTS, TEST_2) {
                   get_select_answer({"a.a", "a.b"}, full_answer), client2);
 }
 
-TEST_F(TRANSACTION_TESTS, TEST_3) {
-    std::vector<std::vector<std::string>> full_answer(number_start_row);
-    for (unsigned int i = 0; i < number_start_row - 1; i++) {
-        full_answer[i] = {"0", "Grenkind and Igor the best friends."};
-    }
-    full_answer.back() = {"1", "Time to apologize."};
-    client1.sendRequest(
-        "begin; "
-        "update a set a = 3 where a = 0; "
-        "select a.a from a where b = 'Grenkind and Igor the best friends.'; "
-        "delete from a where a = 3;");
-    CHECK_REQUEST(
-        "begin; "
-        "update a set a = 2 where a = 1;"
-        "commit;",
-        -1, "", client2);
-}
