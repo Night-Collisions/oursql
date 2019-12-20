@@ -85,9 +85,11 @@ void Engine::insertIntoTransactionsEndTimesTable(int id){
     std::vector<Value> values;
     values.push_back({std::to_string(id)});
     values.push_back({std::to_string(posix_time)});
+    beginTransaction(0);
     Cursor cursor(0, kTransactionsEndTimesTable);
     cursor.insert(values);
     cursor.commit();
+    endTransaction(0);
 }
 
 
