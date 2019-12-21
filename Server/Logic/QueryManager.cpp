@@ -18,6 +18,7 @@
 #include "Parser/Nodes/RelExpr.h"
 #include "Parser/Nodes/SelectList.h"
 #include "Parser/Nodes/SysTime.h"
+#include "Parser/Nodes/TextConstant.h"
 #include "Parser/Nodes/VarList.h"
 #include "Parser/Nodes/With.h"
 #include "Parser/RelationalOperationsParser/Helper.h"
@@ -299,17 +300,48 @@ void QueryManager::select(const Query& query, t_ull transact_num,
 
     } else if (children.find(NodeType::sys_time) != children.end()) {
         auto name = children[NodeType::ident]->getName();
+        auto systime = *static_cast<SysTime*>(children[NodeType::sys_time]);
         in_memory = true;
         if (!Engine::exists(name)) {
             e.reset(new exc::acc::TableNonexistent(name));
             return;
         }
-        resolvedTable = getFilledTempTable(
-            name, transact_num,
-            *static_cast<SysTime*>(children[NodeType::sys_time]), e);
-
+        resolvedTable = getFilledTempTable(name, transact_num, systime, e);
         if (e) {
             return;
+        }
+        name = resolvedTable.getName();
+        int sys_start_ind = 0;
+        int sys_end_ind = 0;
+        auto columns = resolvedTable.getColumns();
+        for (int i = 0; i < columns.size(); ++i) {
+            if (columns[i].getPeriod() == PeriodState::sys_start) {
+                sys_start_ind = i;
+            } else if (columns[i].getPeriod() == PeriodState::sys_end) {
+                sys_end_ind = i;
+            }
+        }
+        if (systime.getRangeType() == RangeType::from_to) {
+            auto [from, to] = systime.getRange();
+            // TODO(Victor): ~~Exception 605:
+            // can't compare varchar and int.
+            auto fromNode = new Expression(new TextConstant(from));
+            auto toNode = new Expression(new TextConstant(to));
+            auto start_col =
+                new Expression(new Ident(columns[sys_start_ind].getName()));
+            auto end_col =
+                new Expression(new Ident(columns[sys_end_ind].getName()));
+            auto cond1 = new Expression(fromNode, ExprUnit::less_eq, start_col);
+            auto cond2 = new Expression(end_col, ExprUnit::less_eq, toNode);
+            auto rangeCond = new Expression(cond1, ExprUnit::and_, cond2);
+            if (children.find(NodeType::expression) != children.end()) {
+                auto prev =
+                    static_cast<Expression*>(children[NodeType::expression]);
+                auto new_expr = new Expression(prev, ExprUnit::and_, rangeCond);
+                children[NodeType::expression] = new_expr;
+            } else {
+                children[NodeType::expression] = rangeCond;
+            }
         }
     } else {
         auto name = children[NodeType::ident]->getName();
@@ -926,15 +958,13 @@ Table QueryManager::getFilledTempTable(const std::string& name,
     auto name2 = Engine::kTransactionsEndTimesTable;
     auto child1 = new Expression(
         new Ident(unioned.getColumns()[sys_start_ind].getName()));
-    auto child2 = new Expression(
-        new Ident("end_time"));
+    auto child2 = new Expression(new Ident("end_time"));
     root = new Expression(child1, ExprUnit::equal, child2);
     // TODO: дописать условия для form to
     // TODO: perhaps we need to rename the columns and the table name
     auto joined_with_tr = Join::makeJoin(
-        unioned,
-        getFilledTable(Engine::kTransactionsEndTimesTable, 1, e),
-        root, e);
+        unioned, getFilledTable(Engine::kTransactionsEndTimesTable, 2, e), root,
+        e);
     if (e) {
         return Table();
     }
