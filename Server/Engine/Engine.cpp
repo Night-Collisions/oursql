@@ -31,7 +31,7 @@ void Engine::initialize() {
         is_exist = static_cast<bool>(std::ifstream(kTransactionsIdsFile_));
     }
     if (!is_exist) {
-        setIds(0, kNullTransactionId);
+        setIds(1, kNullTransactionId);
     }
     if (getPerformingTransactionId() != kNullTransactionId) {
         commitTransaction(getPerformingTransactionId());
@@ -85,13 +85,13 @@ void Engine::insertIntoTransactionsEndTimesTable(int id){
     std::vector<Value> values;
     values.push_back({std::to_string(id)});
     values.push_back({std::to_string(posix_time)});
-    beginTransaction(0);
+    beginTransaction(1);
     {
-        Cursor cursor(0, kTransactionsEndTimesTable);
+        Cursor cursor(1, kTransactionsEndTimesTable);
         cursor.insert(values);
         cursor.commit();
     }
-    endTransaction(0);
+    endTransaction(1);
 }
 
 

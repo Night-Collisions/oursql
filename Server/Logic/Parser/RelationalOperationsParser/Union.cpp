@@ -24,7 +24,7 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
                     exc::ExceptionType::column_datatype_mismatch_union));
                 return Table();
             }
-            if (columns1[i].getConstraints().find(ColumnConstraint::not_null) ==
+/*            if (columns1[i].getConstraints().find(ColumnConstraint::not_null) ==
                     columns1[i].getConstraints().end() ||
                 columns2[i].getConstraints().find(ColumnConstraint::not_null) ==
                     columns2[i].getConstraints().end()) {
@@ -32,7 +32,7 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
                     "Union requires all columns to be not null.",
                     exc::ExceptionType::null_column_in_union));
                 return Table();
-            }
+            }*/
         }
     } else {
         e.reset(

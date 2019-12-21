@@ -13,6 +13,7 @@
 #include "Parser/Nodes/ConstantList.h"
 #include "Parser/Nodes/Ident.h"
 #include "Parser/Nodes/IdentList.h"
+#include "Parser/Nodes/IntConstant.h"
 #include "Parser/Nodes/Period.h"
 #include "Parser/Nodes/RelExpr.h"
 #include "Parser/Nodes/SelectList.h"
@@ -224,7 +225,6 @@ void printSelectedRecords(const Table& table, t_column_infos column_infos,
         return;
     }
 
-    // auto root = static_cast<Expression*>(children[NodeType::expression]);
     std::string response = Resolver::resolve(
         table.getName(), table.getName(), column_infos, root, record_infos, e);
     if (e) {
@@ -299,14 +299,14 @@ void QueryManager::select(const Query& query, t_ull transact_num,
 
     } else if (children.find(NodeType::sys_time) != children.end()) {
         auto name = children[NodeType::ident]->getName();
+        in_memory = true;
         if (!Engine::exists(name)) {
             e.reset(new exc::acc::TableNonexistent(name));
             return;
         }
-        // todo: делать курсорами дичь, да ваще перепилить все нахер
-        /* resolvedTable = getFilledTempTable(
-             name, transact_num,
-             *static_cast<SysTime*>(children[NodeType::sys_time]), e);*/
+        resolvedTable = getFilledTempTable(
+            name, transact_num,
+            *static_cast<SysTime*>(children[NodeType::sys_time]), e);
 
         if (e) {
             return;
@@ -495,7 +495,7 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
         if (c.getPeriod() == PeriodState::sys_end) {
             Value v;
             v.is_null = false;
-            // TODO: chage the maximal year
+            // TODO: change the maximal year
             //  boost got a 2038 issue but it's fixed in v1.67 but I leave
             //  I set 2037 as the maximum by now
             auto upper_bound = ptime(date(2037, Dec, 31));
@@ -714,6 +714,7 @@ void QueryManager::update(const Query& query, t_ull transact_num,
 
     cursor.reset();
     std::set<std::string> repeated;
+
     while (cursor.next()) {
         auto f = cursor.fetch();
         std::string resp = "0";
@@ -758,6 +759,7 @@ void QueryManager::update(const Query& query, t_ull transact_num,
                     insertTemporalTable(name, table.getColumns(), transact_num,
                                         sys_end_ind, f, e);
                 }
+
                 cursor.update(updated_records[k]);
             }
             break;
@@ -884,7 +886,6 @@ Table QueryManager::getFilledTable(const std::string& name, t_ull transact_num,
         return Table();
     }
     auto table = Engine::show(name);
-    table.setName(name);
     Cursor cursor(transact_num, name);
 
     while (cursor.next()) {
@@ -900,85 +901,45 @@ Table QueryManager::getFilledTable(const std::string& name, t_ull transact_num,
 Table QueryManager::getFilledTempTable(const std::string& name,
                                        t_ull transact_num, const SysTime& stime,
                                        std::unique_ptr<exc::Exception>& e) {
-    if (!Engine::show(name).isSystemVersioning()) {
+    auto table = Engine::show(name);
+    if (!table.isSystemVersioning()) {
         e.reset(new exc::TableIsNotTemporal());
         return Table();
     }
-    // todo: говно
-    Table actual_table = getFilledTable(name, transact_num, e);
-    Table history_table = getFilledTable(getHistoryName(name), transact_num, e);
+
+    auto unioned = Union::makeUnion(
+        getFilledTable(name, transact_num, e),
+        getFilledTable(getHistoryName(name), transact_num, e), e);
     if (e) {
         return Table();
     }
-
-    int primary_ind = 0;
+    Expression* root = nullptr;
+    auto columns = table.getColumns();
     int sys_start_ind = 0;
-    int sys_end_ind = 0;
-    int cnt = 0;
-    for (auto& c : actual_table.getColumns()) {
-        if (c.getConstraints().find(ColumnConstraint::primary_key) !=
-            c.getConstraints().end()) {
-            primary_ind = cnt;
-        } else if (c.getPeriod() == PeriodState::sys_start) {
-            sys_start_ind = cnt;
-        } else if (c.getPeriod() == PeriodState::sys_end) {
-            sys_end_ind = cnt;
-        }
-        ++cnt;
-    }
-
-    auto actual_records = actual_table.getRecords();
-    auto history_records = history_table.getRecords();
-
-    std::vector<std::pair<int, std::vector<int>>> suka_map;
-    for (int i = 0; i < actual_records.size(); ++i) {
-        std::vector<int> tmp;
-        for (int j = 0; j < history_records.size(); ++j) {
-            if (actual_records[i][primary_ind].data ==
-                history_records[j][primary_ind].data) {
-                tmp.emplace_back(j);
-            }
-        }
-        suka_map.emplace_back(std::make_pair(i, tmp));
-    }
-
-    Table res = Engine::show(name);
-    if (stime.getRangeType() == RangeType::all) {
-        Table packed = Engine::show(name);
-        for (auto& s : suka_map) {
-            packed.addRecord(actual_records[s.first], e);
-            for (auto& t : s.second) {
-                packed.addRecord(history_records[t], e);
-            }
-        }
-        for (int i = 0; i < history_records.size(); ++i) {
-            if (suka_map[i].second.empty()) {
-                packed.addRecord(history_records[suka_map[i].first], e);
-            }
-        }
-        if (e) {
-            return Table();
-        }
-        return packed;
-    } else if (stime.getRangeType() == RangeType::from_to) {
-        for (auto& r : history_records) {
-            auto [start, end] = stime.getRange();
-            auto record_start = std::stoll(r[sys_start_ind].data);
-            auto record_end = std::stoll(r[sys_end_ind].data);
-            auto left = to_time_t(start);
-            auto right = to_time_t(end);
-            if (left <= record_start && record_start <= record_end &&
-                record_end <= right) {
-                res.addRecord(r, e);
-            }
+    for (int i = 0; i < columns.size(); ++i) {
+        if (columns[i].getPeriod() == PeriodState::sys_start) {
+            sys_start_ind = i;
+            break;
         }
     }
-
+    auto name1 = unioned.getName();
+    auto name2 = Engine::kTransactionsEndTimesTable;
+    auto child1 = new Expression(
+        new Ident(unioned.getColumns()[sys_start_ind].getName()));
+    auto child2 = new Expression(
+        new Ident("end_time"));
+    root = new Expression(child1, ExprUnit::equal, child2);
+    // TODO: дописать условия для form to
+    // TODO: perhaps we need to rename the columns and the table name
+    auto joined_with_tr = Join::makeJoin(
+        unioned,
+        getFilledTable(Engine::kTransactionsEndTimesTable, 1, e),
+        root, e);
     if (e) {
         return Table();
     }
 
-    return res;
+    return joined_with_tr;
 }
 
 std::string QueryManager::getHistoryName(const std::string& name) {
