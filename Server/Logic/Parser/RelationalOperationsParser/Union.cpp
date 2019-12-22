@@ -88,6 +88,7 @@ Table Union::makeUnion(const Table& table1, const Table& table2,
         table.setType(table1.getColumns()[i].getType(), i);
         table.setN(table1.getColumns()[i].getN(), i);
         table.setConstraints(table1.getColumns()[i].getConstraints(), i);
+        table.setPeriodStates(table1.getColumns()[i].getPeriod(), i);
     }
 
     return table;

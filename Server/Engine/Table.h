@@ -24,6 +24,10 @@ class Table {
         columns_[ind].setConstraints(std::move(constraints));
     }
 
+    void setPeriodStates(PeriodState s, int ind) {
+        columns_[ind].setPeriod(s);
+    }
+
     void setN(int n, int ind) { columns_[ind].setN(n); }
 
     int getColSize() { return columns_.size(); }

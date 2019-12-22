@@ -2,6 +2,7 @@
 #define OURSQL_SERVER_LOGIC_RELATIONALOPERATIONS_JOIN_H_
 
 #include <map>
+
 #include "../../../Engine/Table.h"
 #include "../Nodes/RelExpr.h"
 
@@ -23,17 +24,19 @@ class Join {
         const std::string& table_name, const std::vector<Column>& cols,
         std::vector<std::string>& col_names, std::vector<DataType>& types,
         std::vector<int>& varchar_sizes,
-        std::vector<std::set<ColumnConstraint>>& constraints);
+        std::vector<std::set<ColumnConstraint>>& constraints,
+        std::vector<PeriodState>& period_states);
     static void initTable(
         Table& table, const std::vector<std::string>& col_names,
         const std::vector<DataType>& types,
         const std::vector<int>& varchar_sizes,
         const std::vector<std::set<ColumnConstraint>>& constraints,
+        std::vector<PeriodState>& period_states,
         std::unique_ptr<exc::Exception>& e);
     static void setPosOfTheCols(Table& to_run, Table& to_hash,
-                                 const std::string& col_of_run,
-                                 const std::string& col_of_hash,
-                                 int& pos_of_run, int& pos_of_hash);
+                                const std::string& col_of_run,
+                                const std::string& col_of_hash, int& pos_of_run,
+                                int& pos_of_hash);
 };
 
 #endif  // OURSQL_SERVER_LOGIC_RELATIONALOPERATIONS_JOIN_H_

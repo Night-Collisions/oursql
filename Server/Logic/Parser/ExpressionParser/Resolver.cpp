@@ -137,7 +137,9 @@ void Resolver::equal(Expression* root, t_record_infos record,
     }
 
     std::string res;
-    if (type1 != DataType::varchar && type2 != DataType::varchar) {
+    if (type1 == DataType::datetime && type2 == DataType::datetime) {
+        res = std::to_string(value1 == value2);
+    } else if (type1 != DataType::varchar && type2 != DataType::varchar) {
         res = std::to_string(std::stof(value1) == std::stof(value2));
     } else {
         res = std::to_string(value1 == value2);
@@ -232,6 +234,12 @@ void Resolver::setStringValue(Expression* root, t_record_infos record,
         return;
     }
 
+    DataType type1 = DataType::Count;
+    DataType type2 = DataType::Count;
+    setDataTypes(root->childs()[0]->getConstant(),
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
+
     auto constant1 = child1->getConstant();
     auto constant2 = child2->getConstant();
 
@@ -246,26 +254,36 @@ void Resolver::setStringValue(Expression* root, t_record_infos record,
 
     if (constant1->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(constant1);
-        a = record[id->getTableName()][id->getName()];
+        if (type1 == DataType::datetime) {
+            a = std::to_string(to_time_t(
+                time_from_string(record[id->getTableName()][id->getName()])));
+        } else {
+            a = record[id->getTableName()][id->getName()];
+        }
     } else {
         std::string val = static_cast<Constant*>(constant1)->getValue();
-        if (static_cast<Constant*>(constant1)->getDataType() !=
-            DataType::varchar) {
-            val = std::to_string(
-                std::stof(static_cast<Constant*>(constant1)->getValue()));
+        if (type1 == DataType::datetime) {
+            val = std::to_string(to_time_t(time_from_string(val)));
+        } else if (type1 != DataType::varchar) {
+            val = std::to_string(std::stof(val));
         }
         a = val;
     }
 
     if (constant2->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(constant2);
-        b = record[id->getTableName()][id->getName()];
+        if (type2 == DataType::datetime) {
+            b = std::to_string(to_time_t(
+                time_from_string(record[id->getTableName()][id->getName()])));
+        } else {
+            b = record[id->getTableName()][id->getName()];
+        }
     } else {
         std::string val = static_cast<Constant*>(constant2)->getValue();
-        if (static_cast<Constant*>(constant2)->getDataType() !=
-            DataType::varchar) {
-            val = std::to_string(
-                std::stof(static_cast<Constant*>(constant2)->getValue()));
+        if (type2 == DataType::datetime) {
+            val = std::to_string(to_time_t(time_from_string(val)));
+        } else if (type2 != DataType::varchar) {
+            val = std::to_string(std::stof(val));
         }
         b = val;
     }

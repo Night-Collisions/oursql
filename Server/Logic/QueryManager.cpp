@@ -11,6 +11,7 @@
 #include "../Engine/Engine.h"
 #include "Parser/ExpressionParser/Resolver.h"
 #include "Parser/Nodes/ConstantList.h"
+#include "Parser/Nodes/DatetimeConstant.h"
 #include "Parser/Nodes/Ident.h"
 #include "Parser/Nodes/IdentList.h"
 #include "Parser/Nodes/IntConstant.h"
@@ -325,8 +326,8 @@ void QueryManager::select(const Query& query, t_ull transact_num,
             auto [from, to] = systime.getRange();
             // TODO(Victor): ~~Exception 605:
             // can't compare varchar and int.
-            auto fromNode = new Expression(new TextConstant(from));
-            auto toNode = new Expression(new TextConstant(to));
+            auto fromNode = new Expression(new DatetimeConstant(from));
+            auto toNode = new Expression(new DatetimeConstant(to));
             auto start_col =
                 new Expression(new Ident(columns[sys_start_ind].getName()));
             auto end_col =
@@ -919,6 +920,9 @@ Table QueryManager::getFilledTable(const std::string& name, t_ull transact_num,
     }
     auto table = Engine::show(name);
     Cursor cursor(transact_num, name);
+    if (name == Engine::kTransactionsEndTimesTable) {
+        transact_num = 2;
+    }
 
     while (cursor.next()) {
         table.addRecord(cursor.fetch(), e);
@@ -934,6 +938,7 @@ Table QueryManager::getFilledTempTable(const std::string& name,
                                        t_ull transact_num, const SysTime& stime,
                                        std::unique_ptr<exc::Exception>& e) {
     auto table = Engine::show(name);
+    e.reset(nullptr);
     if (!table.isSystemVersioning()) {
         e.reset(new exc::TableIsNotTemporal());
         return Table();
@@ -960,11 +965,12 @@ Table QueryManager::getFilledTempTable(const std::string& name,
         new Ident(unioned.getColumns()[sys_start_ind].getName()));
     auto child2 = new Expression(new Ident("end_time"));
     root = new Expression(child1, ExprUnit::equal, child2);
-    // TODO: дописать условия для form to
     // TODO: perhaps we need to rename the columns and the table name
     auto joined_with_tr = Join::makeJoin(
-        unioned, getFilledTable(Engine::kTransactionsEndTimesTable, 2, e), root,
-        e);
+        unioned,
+        getFilledTable(Engine::kTransactionsEndTimesTable, transact_num, e),
+        root, e);
+
     if (e) {
         return Table();
     }
