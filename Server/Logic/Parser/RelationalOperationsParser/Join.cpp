@@ -1,6 +1,8 @@
 #include "Join.h"
+
 #include <iostream>
 #include <map>
+
 #include "../ExpressionParser/Resolver.h"
 #include "Helper.h"
 
@@ -98,16 +100,20 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
         std::vector<DataType> types;
         std::vector<int> varchar_sizes;
         std::vector<std::set<ColumnConstraint>> constraints;
+        std::vector<PeriodState> period_types;
         pushBackMeta(table_to_run.getName(), table_to_run.getColumns(),
-                     col_names, types, varchar_sizes, constraints);
+                     col_names, types, varchar_sizes, constraints,
+                     period_types);
         pushBackMeta(table_to_hash.getName(), table_to_hash.getColumns(),
-                     col_names, types, varchar_sizes, constraints);
+                     col_names, types, varchar_sizes, constraints,
+                     period_types);
 
         for (auto s : constraints) {
             s.insert(ColumnConstraint::not_null);
         }
 
-        initTable(table, col_names, types, varchar_sizes, constraints, e);
+        initTable(table, col_names, types, varchar_sizes, constraints,
+                  period_types, e);
         if (e) {
             return Table();
         }
@@ -141,17 +147,19 @@ Table Join::makeJoin(const Table& table1, const Table& table2,
             getNullRecord(table2.getColumns());
         std::vector<int> varchar_sizes;
         std::vector<std::set<ColumnConstraint>> constraints;
+        std::vector<PeriodState> period_types;
         pushBackMeta(table1.getName(), table1.getColumns(), col_names, types,
-                     varchar_sizes, constraints);
+                     varchar_sizes, constraints, period_types);
         pushBackMeta(table2.getName(), table2.getColumns(), col_names, types,
-                     varchar_sizes, constraints);
+                     varchar_sizes, constraints, period_types);
         if (type == RelOperNodeType::join ||
             type == RelOperNodeType::inner_join) {
             for (auto s : constraints) {
                 s.insert(ColumnConstraint::not_null);
             }
         }
-        initTable(table, col_names, types, varchar_sizes, constraints, e);
+        initTable(table, col_names, types, varchar_sizes, constraints,
+                  period_types, e);
         if (e) {
             return Table();
         }
@@ -240,7 +248,7 @@ bool Join::isHashJoinOk(
     bool ok1 = false;
     bool ok2 = false;
 
-    if (!expr) {
+    if (expr) {
         return false;
     }
     if (expr->exprType() != ExprUnit::equal) {
@@ -258,21 +266,25 @@ bool Join::isHashJoinOk(
         return false;
     }
 
-    if (static_cast<Ident*>(child1->getConstant())->getNodeType() != NodeType::ident) {
+    if (static_cast<Ident*>(child1->getConstant())->getNodeType() !=
+        NodeType::ident) {
         return false;
     }
 
-    if (static_cast<Ident*>(child2->getConstant())->getNodeType() != NodeType::ident) {
+    if (static_cast<Ident*>(child2->getConstant())->getNodeType() !=
+        NodeType::ident) {
         return false;
     }
 
-    if (static_cast<Ident*>(child1->getConstant())->getNodeType() == NodeType::ident && !child2->childs()[0] &&
-        !child2->childs()[1]) {
+    if (static_cast<Ident*>(child1->getConstant())->getNodeType() ==
+            NodeType::ident &&
+        !child2->childs()[0] && !child2->childs()[1]) {
         ok2 = true;
     }
 
-    if (static_cast<Ident*>(child2->getConstant())->getNodeType() == NodeType::ident && !child2->childs()[0] &&
-        !child2->childs()[1]) {
+    if (static_cast<Ident*>(child2->getConstant())->getNodeType() ==
+            NodeType::ident &&
+        !child2->childs()[0] && !child2->childs()[1]) {
         ok2 = true;
     }
 
@@ -282,8 +294,6 @@ bool Join::isHashJoinOk(
     auto tbl_name2 = name2;
 
     if (name1.empty()) {
-        // tbl_name1 =
-        // static_cast<Ident*>(child1->getConstant())->getTableName();
         auto t = static_cast<Ident*>(child1->getConstant())->getTableName();
         auto c = static_cast<Ident*>(child1->getConstant())->getName();
         static_cast<Ident*>(child1->getConstant())->setTableName("");
@@ -348,13 +358,15 @@ void Join::pushBackMeta(const std::string& table_name,
                         std::vector<std::string>& col_names,
                         std::vector<DataType>& types,
                         std::vector<int>& varchar_sizes,
-                        std::vector<std::set<ColumnConstraint>>& constraints) {
+                        std::vector<std::set<ColumnConstraint>>& constraints,
+                        std::vector<PeriodState>& period_states) {
     for (auto& c : cols) {
-        col_names.push_back(Helper::getCorrectTablePrefix(table_name) +
-                            c.getName());
-        types.push_back(c.getType());
-        varchar_sizes.push_back(c.getN());
-        constraints.push_back(c.getConstraints());
+        col_names.emplace_back(Helper::getCorrectTablePrefix(table_name) +
+                               c.getName());
+        types.emplace_back(c.getType());
+        varchar_sizes.emplace_back(c.getN());
+        constraints.emplace_back(c.getConstraints());
+        period_states.emplace_back(c.getPeriod());
     }
 }
 
@@ -362,6 +374,7 @@ void Join::initTable(Table& table, const std::vector<std::string>& col_names,
                      const std::vector<DataType>& types,
                      const std::vector<int>& varchar_sizes,
                      const std::vector<std::set<ColumnConstraint>>& constraints,
+                     std::vector<PeriodState>& period_states,
                      std::unique_ptr<exc::Exception>& e) {
     table.renameColumns(col_names, e);
     if (e) {
@@ -371,6 +384,7 @@ void Join::initTable(Table& table, const std::vector<std::string>& col_names,
         table.setType(types[i], i);
         table.setN(varchar_sizes[i], i);
         table.setConstraints(constraints[i], i);
+        table.setPeriodStates(period_states[i], i);
     }
 }
 

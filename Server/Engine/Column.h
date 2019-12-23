@@ -18,6 +18,8 @@ enum class ColumnConstraint : unsigned int {
     Count
 };
 
+enum class PeriodState : unsigned char { none, sys_start, sys_end, COUNT };
+
 std::string ColumnConstraint2String(const ColumnConstraint&);
 std::string ColumnConstraint2String(unsigned char constraint);
 ColumnConstraint String2ColumnConstraint(const std::string&);
@@ -93,9 +95,10 @@ class Column {
     void setN(int n) { n_ = n; }
     int getN() const { return n_; }
 
-    void setType(DataType type) {
-        type_ = type;
-    }
+    void setType(DataType type) { type_ = type; }
+
+    void setPeriod(PeriodState st) { period_ = st; }
+    PeriodState getPeriod() const { return period_; }
 
    private:
     static bool checkConstraint(const std::set<ColumnConstraint>&,
@@ -107,6 +110,8 @@ class Column {
     std::set<ColumnConstraint> constraint_;
     std::vector<std::string> data_;
     std::vector<Value> values_;
+    PeriodState period_{PeriodState::none};
+
     int n_;
 };
 

@@ -21,6 +21,9 @@
     #include "../../Server/Logic/Parser/Nodes/SelectList.h"
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
+    #include "../../Server/Logic/Parser/Nodes/Transaction.h"
+    #include "../../Server/Logic/Parser/Nodes/With.h"
+    #include "../../Server/Logic/Parser/Nodes/SysTime.h"
 
     #include "../../Server/Engine/Engine.h"
     #include "parser.hpp"
@@ -88,6 +91,7 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "table"                    { return TABLE; }
 "select"                   { return SELECT; }
 "from"                     { return FROM; }
+"to"                       { return TO; }
 "where"                    { return WHERE; }
 "insert"                   { return INSERT; }
 "into"                     { return INTO; }
@@ -111,9 +115,19 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 
 "as"                       { return AS; }
 "on"                       { return ON; }
+"period"                   { return PERIOD; }
+"for"                      { return FOR_; }
+"system_time"              { return SYSTEM_TIME; }
+"versioning"               { return VERSIONING; }
+"with"                     { return WITH; }
+"all"                      { return ALL; }
+
+"commit"                   { return COMMIT; }
+"begin"                    { return BEGIN_; }
   
 "int"                      { return INT; }
 "real"                     { return REAL; }
+"datetime"                 { return DATETIME; }
 {VARCHAR}                  { 
                               local_str = "";
                               int i = 0;

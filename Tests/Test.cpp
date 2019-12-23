@@ -1,7 +1,5 @@
 #include "Test.h"
-
-#include "../Server/Engine/Engine.h"
-#include "../Server/Our.h"
+#include <fstream>
 
 Server* Server::obj_ = nullptr;
 
@@ -32,7 +30,7 @@ void Server::run() {
     defined(__WIN32) && !defined(__CYGWIN__)
     command = "start cmd.exe /c \"" + directory_ + name_ + ".exe\"";
 #else
-    command = "cd " + directory_ + " && ./" + name_ + " ; cd -";
+    command = "../Server/OurSQL_Server &";
 #endif
     std::system(command.c_str());
 }
@@ -69,12 +67,7 @@ std::string check_request(const std::string& request, const long exception,
 }
 
 void test_sleep(size_t time) {
-#if defined(WIN32) || defined(_WIN32) || \
-    defined(__WIN32) && !defined(__CYGWIN__)
     std::this_thread::sleep_for(std::chrono::milliseconds(time));
-#else
-    usleep(time);
-#endif
 }
 
 void copyDB() {

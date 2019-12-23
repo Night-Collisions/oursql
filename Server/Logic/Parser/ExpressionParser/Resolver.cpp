@@ -1,8 +1,14 @@
 #include "Resolver.h"
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <iostream>
+
 #include "../Nodes/Ident.h"
 #include "../Nodes/IntConstant.h"
 #include "../Nodes/RealConstant.h"
+
+using namespace boost::posix_time;
 
 std::array<func, static_cast<unsigned int>(ExprUnit::Count)>
     Resolver::operations_ = {equal,     notEqual, greater, greaterEqual, less,
@@ -17,6 +23,7 @@ std::string Resolver::resolve(const std::string& table1,
                               t_column_infos column_infos, Expression* root,
                               t_record_infos record,
                               std::unique_ptr<exc::Exception>& e) {
+    // TODO: add all operations for datetime
     table1_ = table1;
     table2_ = table2;
     column_infos_ = column_infos;
@@ -130,10 +137,17 @@ void Resolver::equal(Expression* root, t_record_infos record,
     }
 
     std::string res;
-    if (type1 != DataType::varchar && type2 != DataType::varchar) {
+    if (type1 == DataType::datetime && type2 == DataType::datetime) {
+        res = std::to_string(value1 == value2);
+    } else if (type1 != DataType::varchar && type2 != DataType::varchar) {
         res = std::to_string(std::stof(value1) == std::stof(value2));
     } else {
         res = std::to_string(value1 == value2);
+    }
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
     }
     root->setConstant(new IntConstant(res));
 }
@@ -199,7 +213,11 @@ void Resolver::greater(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -216,6 +234,12 @@ void Resolver::setStringValue(Expression* root, t_record_infos record,
         return;
     }
 
+    DataType type1 = DataType::Count;
+    DataType type2 = DataType::Count;
+    setDataTypes(root->childs()[0]->getConstant(),
+                 root->childs()[1]->getConstant(), type1, type2, table1_,
+                 table2_, column_infos_, e);
+
     auto constant1 = child1->getConstant();
     auto constant2 = child2->getConstant();
 
@@ -230,26 +254,36 @@ void Resolver::setStringValue(Expression* root, t_record_infos record,
 
     if (constant1->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(constant1);
-        a = record[id->getTableName()][id->getName()];
+        if (type1 == DataType::datetime) {
+            a = std::to_string(to_time_t(
+                time_from_string(record[id->getTableName()][id->getName()])));
+        } else {
+            a = record[id->getTableName()][id->getName()];
+        }
     } else {
         std::string val = static_cast<Constant*>(constant1)->getValue();
-        if (static_cast<Constant*>(constant1)->getDataType() !=
-            DataType::varchar) {
-            val = std::to_string(
-                std::stof(static_cast<Constant*>(constant1)->getValue()));
+        if (type1 == DataType::datetime) {
+            val = std::to_string(to_time_t(time_from_string(val)));
+        } else if (type1 != DataType::varchar) {
+            val = std::to_string(std::stof(val));
         }
         a = val;
     }
 
     if (constant2->getNodeType() == NodeType::ident) {
         auto id = static_cast<Ident*>(constant2);
-        b = record[id->getTableName()][id->getName()];
+        if (type2 == DataType::datetime) {
+            b = std::to_string(to_time_t(
+                time_from_string(record[id->getTableName()][id->getName()])));
+        } else {
+            b = record[id->getTableName()][id->getName()];
+        }
     } else {
         std::string val = static_cast<Constant*>(constant2)->getValue();
-        if (static_cast<Constant*>(constant2)->getDataType() !=
-            DataType::varchar) {
-            val = std::to_string(
-                std::stof(static_cast<Constant*>(constant2)->getValue()));
+        if (type2 == DataType::datetime) {
+            val = std::to_string(to_time_t(time_from_string(val)));
+        } else if (type2 != DataType::varchar) {
+            val = std::to_string(std::stof(val));
         }
         b = val;
     }
@@ -301,7 +335,11 @@ void Resolver::greaterEqual(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -351,7 +389,11 @@ void Resolver::less(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -401,7 +443,11 @@ void Resolver::lessEqual(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -453,7 +499,11 @@ void Resolver::logicAnd(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -505,7 +555,11 @@ void Resolver::logicOr(Expression* root, t_record_infos record,
             return;
         }
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     root->setConstant(new IntConstant(std::to_string(res)));
 }
 
@@ -527,7 +581,11 @@ void Resolver::div(Expression* root, t_record_infos record,
     if (e) {
         return;
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     try {
         if (type1 == DataType::integer && type2 == DataType::integer) {
             auto a = std::stoi(value1);
@@ -582,7 +640,11 @@ void Resolver::logicNot(Expression* root, t_record_infos record,
     if (e) {
         return;
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     int res = 0;
     try {
         if (type2 == DataType::integer) {
@@ -627,7 +689,11 @@ void Resolver::mul(Expression* root, t_record_infos record,
     if (e) {
         return;
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     try {
         if (type1 == DataType::integer && type2 == DataType::integer) {
             auto a = std::stoi(value1);
@@ -672,7 +738,11 @@ void Resolver::add(Expression* root, t_record_infos record,
     if (e) {
         return;
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     try {
         if (type1 == DataType::integer && type2 == DataType::integer) {
             auto a = std::stoi(value1);
@@ -717,7 +787,11 @@ void Resolver::sub(Expression* root, t_record_infos record,
     if (e) {
         return;
     }
-
+    if (root->childs()[0]->getPropagational() &&
+        root->childs()[1]->getPropagational()) {
+        root->deleteChildren();
+        root->setPropagational(true);
+    }
     try {
         if (type1 == DataType::integer && type2 == DataType::integer) {
             auto a = std::stoi(value1);
@@ -762,7 +836,8 @@ void Resolver::setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
 
     if (left->getNodeType() == NodeType::ident) {
         auto col_name = static_cast<Ident*>(left)->getName();
-        if (column_infos[table_name1].find(col_name) != column_infos[table_name1].end()) {
+        if (column_infos[table_name1].find(col_name) !=
+            column_infos[table_name1].end()) {
             a = column_infos[table_name1][col_name].getType();
         } else {
             e.reset(new exc::acc::ColumnNonexistent(col_name, table_name1));
@@ -774,7 +849,8 @@ void Resolver::setDataTypes(Node* left, Node* right, DataType& a, DataType& b,
 
     if (right->getNodeType() == NodeType::ident) {
         auto col_name = static_cast<Ident*>(right)->getName();
-        if (column_infos[table_name2].find(col_name) != column_infos[table_name2].end()) {
+        if (column_infos[table_name2].find(col_name) !=
+            column_infos[table_name2].end()) {
             b = column_infos[table_name2][col_name].getType();
         } else {
             e.reset(new exc::acc::ColumnNonexistent(col_name, table_name2));
@@ -839,19 +915,21 @@ std::map<std::string, std::string> Resolver::getRecordMap(
     std::map<std::string, std::string> m;
     int counter = 0;
     for (auto& k : cols) {
-        auto c = k.getName();
-/*        if (m.find(c) != m.end()) {
-            e.reset(new exc::AmbiguousColumnName("ambiguous column name " + c));
-            return m;
-        }*/
+        auto colname = k.getName();
         if (record[counter].is_null) {
             if (k.getType() == DataType::varchar) {
-                m[c] = "";
+                m[colname] = "";
             } else {
-                m[c] = "null";
+                m[colname] = "null";
             }
         } else {
-            m[c] = record[counter].data;
+            if (k.getType() == DataType::datetime) {
+                unsigned long long t = std::stoull(record[counter].data);
+                auto str_date = to_simple_string(from_time_t(t));
+                m[colname] = str_date;
+            } else {
+                m[colname] = record[counter].data;
+            }
         }
 
         ++counter;

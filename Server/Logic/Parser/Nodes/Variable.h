@@ -30,6 +30,7 @@ class Variable : public Node {
     DataType data_type_;
     std::vector<ColumnConstraint> constraints_;
     size_t varchar_len_;
+
 };
 
 #endif  // OURSQL_APP_LOGIC_PARSER_NODES_VARIABLE_H_

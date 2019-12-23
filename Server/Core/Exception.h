@@ -36,7 +36,17 @@ enum class ExceptionType : unsigned int {
     null_column_in_union,
     column_datatype_mismatch_intersect,
     column_sizes_intersect,
-    null_column_in_intersect
+    null_column_in_intersect,
+    serialize_access_error,
+    repeat_begin_transact,
+    no_uncommited_transact,
+    column_in_period_noexist,
+    no_primary_key_in_table,
+    unable_to_assign_period,
+    incorrect_type_for_period,
+    date_cast_from_str,
+    table_is_not_temporal,
+    temp_table_drop
 };
 
 class Exception {
@@ -59,6 +69,41 @@ class Exception {
 
     const ExceptionType type_;
     const std::string message_;
+};
+
+class TableIsNotTemporal : public Exception {
+   public:
+    TableIsNotTemporal()
+        : Exception(ExceptionType::table_is_not_temporal,
+                    "Table is not temporal.") {}
+};
+
+class TemporalTableDropNotAllowed : public Exception {
+   public:
+    TemporalTableDropNotAllowed()
+        : Exception(ExceptionType::temp_table_drop,
+                    "DROP TABLE is not allowed for temporal tables.") {}
+};
+
+class DateCastFromStrExc : public Exception {
+   public:
+    DateCastFromStrExc()
+        : Exception(ExceptionType::date_cast_from_str,
+                    "Date input couldn't be interpreted as date.") {}
+};
+
+class IncorrectTypeForPeriod : public Exception {
+   public:
+    IncorrectTypeForPeriod()
+        : Exception(ExceptionType::incorrect_type_for_period,
+                    "Fields in period must be datetime") {}
+};
+
+class UnableToAssignPeriodField : public Exception {
+   public:
+    UnableToAssignPeriodField(const std::string& name)
+        : Exception(ExceptionType::unable_to_assign_period,
+                    "impossible to assign period field " + name) {}
 };
 
 class SyntaxException : public Exception {
@@ -197,6 +242,9 @@ class ColumnNonexistent : public Exception {
         : Exception(ExceptionType::access_column_nonexistent,
                     "column " + column_name + " in table " + table_name +
                         " nonexistent.") {}
+    ColumnNonexistent()
+        : Exception(ExceptionType::column_in_period_noexist,
+                    "column used in period doesn't exist.") {}
 };
 };  // namespace acc
 
@@ -236,6 +284,13 @@ class CreateTableExceptionInColumn : public CreateTableException {
 
    protected:
     const std::string column_name_;
+};
+
+class PrimaryKeyInTempTable : public Exception {
+   public:
+    PrimaryKeyInTempTable()
+        : Exception(ExceptionType::no_primary_key_in_table,
+                    "Temporal table must have primary key column") {}
 };
 
 class ColumnName : public CreateTableExceptionInColumn {
@@ -283,8 +338,6 @@ class NoOperationForType : public Exception {
                     "no operation for these types.") {}
 };
 
-// TODO: переделать аргумены конструктора, и переделать то, как оно вызывается в
-// коде
 class DataTypeOversize : public Exception {
    public:
     DataTypeOversize()
@@ -310,6 +363,30 @@ class DivByZero : public Exception {
         : Exception(ExceptionType::div_by_zero,
                     "division by zero '" + mess + "'.") {}
 };
+
+namespace tr {
+class SerializeAccessError : public Exception {
+   public:
+    SerializeAccessError()
+        : Exception(ExceptionType::serialize_access_error,
+                    "Could not serialize access.") {}
+};
+
+class RepeatBeginTransact : public Exception {
+   public:
+    RepeatBeginTransact()
+        : Exception(ExceptionType::repeat_begin_transact,
+                    "Transaction is already being started.") {}
+};
+
+class NoUncommitedTransact : public Exception {
+   public:
+    NoUncommitedTransact()
+        : Exception(ExceptionType::no_uncommited_transact,
+                    "No uncommitted transaction.") {}
+};
+}  // namespace tr
+
 };  // namespace exc
 
 #endif  // OURSQL_EXCEPTIONS_H

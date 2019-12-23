@@ -9,6 +9,8 @@ set(HEADERS
         Engine/Engine.h
         Engine/Block.h
         Engine/Cursor.h
+        Engine/ChangeManager.h
+        Engine/Value.h
         Core/Exception.h
         Core/DataType.h
         Logic/Parser/ParserManager.h
@@ -34,7 +36,12 @@ set(HEADERS
         Core/DataType.h
         Logic/Parser/Nodes/Expression.h
         Logic/QueryManager.h
-        )
+        Logic/Parser/Nodes/Transaction.h
+        Logic/Parser/RelationalOperationsParser/Helper.h
+        Logic/Parser/Nodes/DatetimeConstant.h
+        Logic/Parser/Nodes/With.h
+        Logic/Parser/Nodes/Period.h
+        Logic/Parser/Nodes/SysTime.h)
 
 set(DEFINITIONS
         Our.cpp
@@ -44,7 +51,7 @@ set(DEFINITIONS
         Engine/Table.cpp
         Engine/Block.cpp
         Engine/Cursor.cpp
-        Engine/Value.h
+        Engine/ChangeManager.cpp
         Core/Exception.cpp
         Core/DataType.cpp
         Engine/Engine.cpp
@@ -71,12 +78,23 @@ set(DEFINITIONS
         Logic/Parser/ExpressionParser/Resolver.cpp
         Core/DataType.cpp
         Logic/QueryManager.cpp
-        Logic/Parser/RelationalOperationsParser/Helper.cpp Logic/Parser/RelationalOperationsParser/Helper.h)
+        Logic/Parser/RelationalOperationsParser/Helper.cpp
+        Logic/Parser/Nodes/Transaction.cpp
+        Logic/Parser/Nodes/DatetimeConstant.cpp
+        Logic/Parser/Nodes/With.cpp Logic/Parser/Nodes/Period.cpp Logic/Parser/Nodes/SysTime.cpp)
 
 assemble_parser(Logic/Parser/)
 
 init(${PROJECT_BINARY_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS} )
+add_executable(${PROJECT_NAME} main.cpp ${HEADERS} ${DEFINITIONS} ${FLEX_SCANNER_OUTPUTS})
 
 show_compilation_warnings(${PROJECT_NAME})
+
+find_package(Boost REQUIRED COMPONENTS system filesystem date_time)
+
+include_directories(${PROJECT_NAME} ${Boost_INCLUDE_DIRS})
+
+link_directories(${PROJECT_NAME} ${Boost_LIBRARY_DIRS})
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
+

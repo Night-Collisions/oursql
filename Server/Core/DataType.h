@@ -8,6 +8,7 @@ enum class DataType : unsigned int {
     real,
     varchar,
     null_,
+    datetime,
     Count,
 };
 

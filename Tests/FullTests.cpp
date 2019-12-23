@@ -91,6 +91,7 @@ TEST_F(CREATE_TABLE_TESTS, TEST_7) {
 
 TEST_F(CREATE_TABLE_TESTS, TEST_8) {
     CHECK_REQUEST_ST_CLIENT(
+
         "create table a(MyColumn int, mycolumn varchar(100));",
         EXCEPTION2NUMB(exc::ExceptionType::repeat_column_in_table),
         "~~Exception 5:\n repeat column MyColumn in table a.\n"
@@ -154,11 +155,44 @@ TEST_F(SHOW_CREATE_TABLE_TESTS, TEST_2) {
     CHECK_REQUEST_ST_CLIENT(
         "show create table e;",
         EXCEPTION2NUMB(exc::ExceptionType::access_table_nonexistent),
-        "\n~~Exception 701:\n table e nonexistent.\n~~Exception in "
+        "~~Exception 701:\n table e nonexistent.\n~~Exception in "
         "command:\"show create table e;\"\n");
 }
 
 class SYNTAX_TESTS : public REQUEST_TESTS {};
+
+class VERSION_TESTS : public REQUEST_TESTS {};
+TEST_F(VERSION_TESTS, TEST_1) {
+    CHECK_REQUEST_ST_CLIENT(
+        "create table a(b int primary key, s datetime, e datetime);", 0, "");
+}
+
+TEST_F(VERSION_TESTS, TEST_2) {
+    CHECK_REQUEST_ST_CLIENT(
+        "create table a(b int primary key, s datetime, e datetime, period for "
+        "system_time(s, e));",
+        0, "");
+}
+
+TEST_F(VERSION_TESTS, TEST_3) {
+    CHECK_REQUEST_ST_CLIENT(
+        "create table a(b int , s datetime, e datetime, period for "
+        "system_time(s, e));",
+        1112,
+        "~~Exception 1112:\n Temporal table must have primary key "
+        "column\n~~Exception in command:\"create table a(b int , s datetime, e "
+        "datetime, period for system_time(s, e));\"\n");
+}
+
+TEST_F(VERSION_TESTS, TEST_4) {
+    CHECK_REQUEST_ST_CLIENT(
+        "create table a(b int primary key, k int, s datetime, e datetime, "
+        "period for system_time(e, k));",
+        1114,
+        "~~Exception 1114:\n Fields in period must be datetime\n~~Exception in "
+        "command:\"create table a(b int primary key, k int, s datetime, e "
+        "datetime, period for system_time(e, k));\"\n");
+}
 
 TEST_F(SYNTAX_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("CreAte    \n  TablE   NamE \n ( A ReAl);", 0, "");
@@ -598,8 +632,8 @@ TEST_F(UPDATE_TESTS, TEST_1) {
     CHECK_REQUEST_ST_CLIENT("update a set a = 2;", 0, "");
     CHECK_REQUEST_ST_CLIENT(
         "select * from a;", 0,
-        get_select_answer({"a.a", "a.b", "a.c"}, {{"2", "1.000000", "1"},
-                                                  {"2", "1.000000", "1"},
+        get_select_answer({"a.a", "a.b", "a.c"}, {{"2", "0.000000", "1"},
+                                                  {"2", "1.000000", "0"},
                                                   {"2", "1.000000", "1"}}));
     CHECK_REQUEST_ST_CLIENT("update a set b = 3.45, c = 'H';", 0, "");
     CHECK_REQUEST_ST_CLIENT(
@@ -678,11 +712,7 @@ TEST_F(UPDATE_TESTS, TEST_7) {
 TEST_F(UPDATE_TESTS, TEST_8) {
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("create table a(a int primary key);");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT("insert into a values (2);");
-    CHECK_REQUEST_ST_CLIENT(
-        "update a set a = 2 where a = 2;",
-        exc::ExceptionType::duplicated_unique,
-        "~~Exception 804 in table a:\n 2 is not unique is in the column "
-        "a.\n~~Exception in command:\"update a set a = 2 where a = 2;\"\n");
+    CHECK_REQUEST_ST_CLIENT("update a set a = 2 where a = 2;", 0, "");
 }
 
 class WHERE_TESTS : public REQUEST_TESTS {};
@@ -1160,34 +1190,18 @@ TEST_F(UNION_TESTS, TEST_1) {
 }
 
 TEST_F(UNION_TESTS, EXCEPTION_TEST_1) {
-    /*    CHECK_REQUEST_ST_CLIENT(
-            "select * from a union select * from b;", -1,
-            ""); */ // Это даёт ошибку, т. к. вложенные селекты ещё не задовали.
-    //    CHECK_REQUEST_ST_CLIENT(
-    //        "select * from a union b;",
-    //        exc::ExceptionType::access_table_nonexistent,
-    //        "");  // TODO: не существует
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from a union a;", 0,
-        get_select_answer(
-            {"a", "b"},
-            {{"0", "Vitia"},
-             {"0", "Viktor"},
-             {"1", "Viktor"},
-             {"1", "Vitichka"}}));  // TODO: если это риализованно и нормально
-                                    // работает, то перемести
+    // TODO(Victor, 23.12.2019) I removed tests for 1104 exceptions because I
+    // let columns be null. It can be reverted but we need to create history
+    // tables for temporal tables with not null columns.
+    CHECK_REQUEST_ST_CLIENT("select * from a union a;", 0,
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"}}));
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a_a (a int not null, b varchar(100));");
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from a_a union a;", exc::ExceptionType::null_column_in_union,
-        "~~Exception 1104:\n Union requires all columns to be not "
-        "null.\n~~Exception in command:\"select * from a_a union a;\"\n");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a_b (a int, b varchar(100) primary key);");
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from a union a_b;", exc::ExceptionType::null_column_in_union,
-        "~~Exception 1104:\n Union requires all columns to be not "
-        "null.\n~~Exception in command:\"select * from a union a_b;\"\n");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table long_a (a int not null, b varchar(100) not null, c "
         "varchar(100) not null);");
@@ -1264,6 +1278,7 @@ void DROP_TESTS::SetUpTestCase() {
 #endif
     client.connect();
 }
+
 void DROP_TESTS::TearDownTestCase() {
 #if defined(CREATE_SERVER)
     Server::get()->stop();
@@ -1283,7 +1298,7 @@ TEST_F(DROP_TESTS, DROP_TEST_1) {
     CHECK_DROP_REQUEST_ST_CLIENT(
         "drop table a;", "show create table a;",
         EXCEPTION2NUMB(exc::ExceptionType::access_table_nonexistent),
-        "\n~~Exception 701:\n table a nonexistent.\n~~Exception in "
+        "~~Exception 701:\n table a nonexistent.\n~~Exception in "
         "command:\"show create table a;\"\n",
         "a a_meta");
 }
@@ -1321,4 +1336,102 @@ TEST_F(DROP_TESTS, UPDATE_TEST_1) {
                                                   {"1", to_string(1.0), "1"},
                                                   {"1", to_string(1.0), "1"}}),
         "a a_meta");
+}
+
+class TRANSACTION_TESTS : public ::testing::Test {
+   public:
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void SetUp() override;
+    void TearDown() override { clearDB(); }
+
+    static ourSQL::client::Client client1;
+    static ourSQL::client::Client client2;
+
+    static const unsigned int number_start_row;
+};
+
+void TRANSACTION_TESTS::SetUpTestCase() {
+    clearDB();
+#if defined(CREATE_SERVER)
+    Server::get()->run();
+#endif
+    client1.connect();
+    client2.connect();
+}
+
+void TRANSACTION_TESTS::TearDownTestCase() {
+#if defined(CREATE_SERVER)
+    Server::get()->stop();
+#endif
+}
+
+void TRANSACTION_TESTS::SetUp() {
+    clearDB();
+    CHECK_UNREQUITED_REQUEST("create table a (a int, b varchar(100));\n",
+                             client1);
+    for (unsigned int i = 0; i < number_start_row - 1; i++) {
+        CHECK_UNREQUITED_REQUEST(
+            "insert into a values(0, 'Grenkind and Igor the best "
+            "friends.');\n",
+            client1);
+    }
+    CHECK_UNREQUITED_REQUEST("insert into a values(1, 'Time to apologize.');\n",
+                             client1);
+}
+
+ourSQL::client::Client TRANSACTION_TESTS::client1(TEST_SERVER_HOST,
+                                                  TEST_SERVER_PORT);
+ourSQL::client::Client TRANSACTION_TESTS::client2(TEST_SERVER_HOST,
+                                                  TEST_SERVER_PORT);
+
+const unsigned int TRANSACTION_TESTS::number_start_row = 500;
+
+TEST_F(TRANSACTION_TESTS, TEST_1) {
+    std::vector<std::vector<std::string>> full_answer(number_start_row);
+    for (unsigned int i = 0; i < number_start_row - 1; i++) {
+        full_answer[i] = {"0", "Grenkind and Igor the best friends."};
+    }
+    full_answer.back() = {"1", "Time to apologize."};
+    client1.sendRequest(
+        "begin; delete from a where b = 'Grenkind and Igor the best "
+        "friends.';");
+    CHECK_REQUEST("select * from a;", 0,
+                  get_select_answer({"a.a", "a.b"}, full_answer), client2);
+    std::string ans;
+    client1.sendRequest("commit;");
+    client1.getAnswer(ans);
+    CHECK_REQUEST("select * from a;", 0,
+                  get_select_answer({"a.a", "a.b"}, {full_answer.back()}),
+                  client2);
+}
+
+TEST_F(TRANSACTION_TESTS, TEST_2) {
+    std::vector<std::vector<std::string>> full_answer(number_start_row - 1);
+    for (unsigned int i = 0; i < number_start_row - 1; i++) {
+        full_answer[i] = {"3", "Grenkind and Igor the best friends."};
+    }
+    client1.sendRequest(
+        "begin; "
+        "update a set a = 3 where a = 0; "
+        "select a.a from a where b = 'Grenkind and Igor the best friends.'; "
+        "delete from a where b = 'Time to apologize.';");
+    CHECK_REQUEST(
+        "begin; "
+        "select * from a where a = 3;"
+        "commit;",
+        0, "", client2);
+    client1.sendRequest("commit;");
+    std::string ans;
+    client1.getAnswer(ans);
+    //    test_sleep(1500);
+    std::vector<std::vector<std::string>> expected_ans_client1(
+        number_start_row - 1);
+    for (unsigned int i = 0; i < number_start_row - 1; i++) {
+        expected_ans_client1[i] = {"3"};
+    }
+    ASSERT_EQ(ans, get_select_answer({"a.a"}, expected_ans_client1))
+        << "Wrong answer client1!!!";
+    CHECK_REQUEST("select * from a;", 0,
+                  get_select_answer({"a.a", "a.b"}, full_answer), client2);
 }

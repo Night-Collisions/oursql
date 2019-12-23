@@ -14,6 +14,10 @@
     #include "../../Server/Logic/Parser/Nodes/SelectList.h"
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
+    #include "../../Server/Logic/Parser/Nodes/Transaction.h"
+    #include "../../Server/Logic/Parser/Nodes/Period.h"
+    #include "../../Server/Logic/Parser/Nodes/SysTime.h"
+    #include "../../Server/Logic/Parser/Nodes/With.h"
     #include "../../Server/Core/Exception.h"
     #include "../../Server/Engine/Engine.h"
     #include "../../Server/Engine/Column.h"
@@ -25,8 +29,6 @@
     #include <map>
     #include <sstream>
 
-    #define VARCHAR_MAX_LEN (1024)
-
     extern FILE *yyin;
     extern FILE *yyout;
 
@@ -35,9 +37,11 @@
     void yyerror(const char *s);
     void destroy();
 
-    Query *parseTree;
+    std::vector<Query*> rootQuery;
+    std::vector<Query*> queryList;
     std::vector<Variable *> varList;
     std::vector<ColumnConstraint> constraintList;
+    std::pair<std::string, std::string> period;
     std::vector<Ident*> identList;
     std::vector<Node*> constantList;
     std::vector<Node*> selectList;
@@ -52,12 +56,14 @@
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA ASTERISK
 %token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ
 %token ID ICONST FCONST SCONST
-%token INT REAL VARCHAR
+%token INT REAL VARCHAR DATETIME
 %token NOT_NULL PRIMARY_KEY UNIQUE NULL_
 %token AND OR DIVIDE PLUS MINUS NOT
 %token LEFT RIGHT INNER OUTER FULL CROSS JOIN INTERSECT UNION AS ON
+%token BEGIN_ COMMIT
+%token VERSIONING WITH PERIOD SYSTEM_TIME FOR_ OFF TO ALL
 
-%type<query> create show_create drop_table select insert
+%type<query> create show_create drop_table select insert delete update statement statements
 %type<ident> id col_ident
 %type<var> variable
 %type<dataType> type
@@ -71,6 +77,9 @@
 %type<exprUnit> logic_or logic_and plus_minus mul_div relations
 %type<expr> where_expr root_expr relation_expr exprssn term factor under_root_expr join_cond
 %type<relExpr> sub_rel_expr relational_expr
+%type<is_versioned> on_or_off
+%type<withCond> with_expr
+%type<sysTimeExpr> sys_time_cond
 
 %start start_expression
 
@@ -90,28 +99,31 @@
     ExprUnit exprUnit;
     Expression *expr;
     RelExpr *relExpr;
+    With *withCond;
+    SysTime *sysTimeExpr;
 
     int varcharLen;
+    bool is_versioned;
 }
 
 %%
 
 start_expression:
-    statements SEMI {
-        varList.clear();
-        constraintList.clear();
-        identList.clear();
-        selectList.clear();
-        constantList.clear();
+    statements {
+        destroy();
+    } | 
+    BEGIN_ SEMI statements COMMIT SEMI {
+        destroy();
     };
 
 statements:
-    statement {
+    statement SEMI {
         varList.clear();
-    } |
-    statements statement {
-        varList.clear();
-    };
+        queryList.push_back($1);
+    } | 
+    statements statement SEMI {
+        queryList.push_back($2);
+    }
 
 statement:
     create |
@@ -120,7 +132,7 @@ statement:
     select |
     insert |
     update |
-    delete ;
+    delete;
 
 // ---- create table
 
@@ -129,16 +141,22 @@ create:
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $3;
         children[NodeType::var_list] = new VarList(varList);
+        children[NodeType::period_pair] = new Period(period);
 
-        parseTree = new Query(children, CommandType::create_table);
+        $$ = new Query(children, CommandType::create_table);
     };
+
+with_expr: WITH LPAREN VERSIONING EQUAL on_or_off RPAREN { $$ = new With($5); }  | /*EMPTY*/;
+
+on_or_off: ON { $$ = true; } | OFF { $$ = false; };
+
 
 variables:
     variable {
-        varList.push_back($1);
+        //varList.push_back($1);
     } |
     variables COMMA variable {
-        varList.push_back($3);
+        //varList.push_back($3);
     };
 
 variable:
@@ -147,13 +165,18 @@ variable:
         if ($2 == DataType::varchar) {
             $$->addVarcharLen(yylval.varcharLen);
         }
+        varList.push_back($$);
     } | id type constraints {
         $$ = new Variable($1->getName(), $2, constraintList);
         if ($2 == DataType::varchar) {
             $$->addVarcharLen(yylval.varcharLen);
         }
+        varList.push_back($$);
         constraintList.clear();
-    };
+    } | PERIOD FOR_ SYSTEM_TIME LPAREN id COMMA id RPAREN {
+        period.first = $5->getName();
+        period.second = $7->getName();
+    }
 
 constraints:
     constraint {
@@ -177,7 +200,7 @@ select:
          children[NodeType::relational_oper_expr] = $4;
          children[NodeType::expression] = $5;
 
-         parseTree = new Query(children, CommandType::select);
+         $$ = new Query(children, CommandType::select);
     } |
     SELECT select_decl FROM id where_expr {
         std::map<NodeType, Node*> children;
@@ -185,7 +208,27 @@ select:
         children[NodeType::select_list] = new SelectList(selectList);
         children[NodeType::expression] = $5;
 
-        parseTree = new Query(children, CommandType::select);
+        $$ = new Query(children, CommandType::select);
+    } |
+    SELECT select_decl FROM id FOR_ SYSTEM_TIME sys_time_cond {
+        std::map<NodeType, Node*> children;
+        children[NodeType::ident] = $4;
+        children[NodeType::select_list] = new SelectList(selectList);
+        children[NodeType::sys_time] = $7;
+
+        $$ = new Query(children, CommandType::select);
+    };
+
+sys_time_cond: ALL {
+        $$ = new SysTime();
+    } | 
+    FROM text_const TO text_const {
+        auto s1 = $2->getValue();
+        auto s2 = $4->getValue();
+        delete $2;
+        delete $4;
+
+        $$ = new SysTime(s1, s2, ex);
     };
 
 select_decl:
@@ -211,7 +254,6 @@ select_list_element:
         $$ = $1;
     };
 
-
 where_expr:
     WHERE root_expr {
         $$ = $2;
@@ -229,7 +271,7 @@ show_create:
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $4;
 
-        parseTree = new Query(children, CommandType::show_create_table);
+        $$ = new Query(children, CommandType::show_create_table);
     };
 
 // --- drop table
@@ -239,7 +281,7 @@ drop_table:
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $3;
 
-        parseTree = new Query(children, CommandType::drop_table);
+        $$ = new Query(children, CommandType::drop_table);
     };
 
 // --- insert
@@ -251,7 +293,7 @@ insert:
         children[NodeType::ident_list] = new IdentList(identList);
         children[NodeType::constant_list] = new ConstantList(constantList);
 
-        parseTree = new Query(children, CommandType::insert);
+        $$ = new Query(children, CommandType::insert);
     };
 
 column_decl:
@@ -283,7 +325,7 @@ update:
         children[NodeType::constant_list] = new ConstantList(constantList);
         children[NodeType::expression] = $5;
 
-        parseTree = new Query(children, CommandType::update);
+        $$ = new Query(children, CommandType::update);
     };
 
 
@@ -308,7 +350,7 @@ delete:
         children[NodeType::constant_list] = new ConstantList(constantList);
         children[NodeType::expression] = $4;
 
-        parseTree = new Query(children, CommandType::remove);
+        $$ = new Query(children, CommandType::remove);
     };
 
 
@@ -427,7 +469,8 @@ null_:
 type:
     INT { $$ = DataType::integer; } |
     REAL { $$ = DataType::real; } |
-    VARCHAR { $$ = DataType::varchar; };
+    VARCHAR { $$ = DataType::varchar; } | 
+    DATETIME { $$ = DataType::datetime; };
 
 col_ident: 
     id { $$ = $1; } |
@@ -495,11 +538,9 @@ void destroy() {
     selectList.clear();
     constantList.clear();
     yylval.varcharLen = 0;
-
-    parseTree = nullptr;
 }
 
-Query* parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) {
+std::vector<Query*> parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) {
     destroy();
     exception.reset(nullptr);
 
@@ -508,6 +549,5 @@ Query* parse_string(const char* in, std::unique_ptr<exc::Exception>& exception) 
     end_lexical_scan();
 
     exception = std::move(ex);
-
-    return parseTree;
+    return std::move(queryList);
 }

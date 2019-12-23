@@ -91,5 +91,6 @@ std::string get_select_answer(
     const std::vector<std::string>& column,
     const std::vector<std::vector<std::string>>& data);
 std::string to_string(double a);
+void test_sleep(size_t time);
 
 #endif

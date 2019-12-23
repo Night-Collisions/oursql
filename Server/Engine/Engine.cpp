@@ -1,15 +1,21 @@
 #include "Engine.h"
-#include "../Core/Exception.h"
 
 // Metafile:
-// reserved: 1 byte;
+// is versioning: 1 byte;
 // table name: 128 bytes (with '\0');
 // columns count: 1 byte;
-// columns: reserved: 1 byte, n: 4 bytes, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
+// columns: period: 1 byte, n: 4 bytes, type: 1 byte, constraints: 1 byte, column name: 128 bytes (with '\0').
 
+namespace fs = boost::filesystem;
+
+const int Engine::kTableNameLength = 128;
+const int Engine::kNullTransactionId = 0;
+const std::string Engine::kTransactionsIdsFile_ ("DataBD/transactions_ids");
+const std::string Engine::kTransactionsEndTimesTable("transactions_end_times");
+const size_t Engine::kColumnNameLength_ = 128;
+
+std::mutex Engine::mutex_;
 Engine::Initializer Engine::initializer_;
-const std::string Engine::kTmpTableFile("tmp_table_1324ygoasdhvmzn14bfh");
-const std::string Engine::kStatusFile_( "status");
 
 std::string Engine::getPathToTable(const std::string& table_name) {
     return "DataBD/" + table_name;
@@ -20,46 +26,106 @@ std::string Engine::getPathToTableMeta(const std::string& table_name) {
 }
 
 void Engine::initialize() {
-    if (!static_cast<bool>(std::ifstream(kStatusFile_))) {
-        setIds(0, 0);
+    bool is_exist;
+    {
+        is_exist = static_cast<bool>(std::ifstream(kTransactionsIdsFile_));
     }
-    if (getLastCompletedId() != getLastPerformingId()) {
-        std::ifstream tmp_file(kTmpTableFile);
+    if (!is_exist) {
+        setIds(1, kNullTransactionId);
+    }
+    if (getPerformingTransactionId() != kNullTransactionId) {
+        commitTransaction(getPerformingTransactionId());
+    }
+    if (!exists(kTransactionsEndTimesTable)) {
+        createTransactionsEndTimesTable();
+    }
+}
+
+void Engine::createTransactionsEndTimesTable() {
+    std::unique_ptr<exc::Exception> ignore;
+    std::vector<Column> columns;
+    columns.emplace_back("transaction_id", DataType::integer, ignore);
+    columns.emplace_back("end_time", DataType::datetime, ignore);
+    create(Table(kTransactionsEndTimesTable, columns, ignore), ignore);
+}
+
+int Engine::generateNextTransactionId() {
+    std::lock_guard<std::mutex> guard(mutex_);
+    int nextId = getLastTransactionId() + 1;
+    setLastTransactionId(nextId);
+    return nextId;
+}
+
+void Engine::beginTransaction(int id) {
+    fs::create_directory(fs::current_path() / "DataBD" / std::to_string(id));
+}
+
+void Engine::commitTransaction(int id) {
+    std::lock_guard<std::mutex> guard(mutex_);
+    setPerformingTransactionId(id);
+
+    for (auto& p : fs::directory_iterator(fs::current_path() / "DataBD" / std::to_string(id))) {
+        std::ifstream file("DataBD/" + std::to_string(id) + "/" + fs::path(p.path()).filename().string());
         char table_name_[kTableNameLength];
-        tmp_file.read(table_name_, kTableNameLength);
-        tmp_file.close();
-        Cursor cursor(table_name_);
+        file.read(table_name_, kTableNameLength);
+        file.close();
+        Cursor cursor(id, table_name_);
         cursor.commit();
     }
+
+    insertIntoTransactionsEndTimesTable(id);
+    setPerformingTransactionId(kNullTransactionId);
+    endTransaction(id);
 }
 
-int Engine::getLastCompletedId() {
-    int id;
-    std::ifstream statusFile(kStatusFile_);
-    statusFile >> id;
-    return id;
-}
+void Engine::insertIntoTransactionsEndTimesTable(int id){
+    auto curr_time = boost::posix_time::second_clock::local_time();
+    auto posix_time = boost::posix_time::to_time_t(curr_time);
 
-int Engine::getLastPerformingId() {
-    int id;
-    std::ifstream statusFile(kStatusFile_);
-    for (int i = 0; i < 2; ++i) {
-        statusFile >> id;
+    std::vector<Value> values;
+    values.push_back({std::to_string(id)});
+    values.push_back({std::to_string(posix_time)});
+    beginTransaction(1);
+    {
+        Cursor cursor(1, kTransactionsEndTimesTable);
+        cursor.insert(values);
+        cursor.commit();
     }
-    return id;
+    endTransaction(1);
 }
 
-void Engine::setLastCompletedId(int id) {
-    setIds(id, getLastPerformingId());
+
+void Engine::endTransaction(int id) {
+    fs::remove_all(fs::current_path() / "DataBD" / std::to_string(id));
 }
 
-void Engine::setLastPerformingId(int id) {
-    setIds(getLastCompletedId(), id);
+int Engine::getLastTransactionId() {
+    int lastTransactionId;
+    int lastPerformingId;
+    std::ifstream statusFile(kTransactionsIdsFile_);
+    statusFile >> lastTransactionId >> lastPerformingId;
+    return lastTransactionId;
 }
 
-void Engine::setIds(int lastCompletedId, int lastPerformingId) {
-    std::ofstream statusFile(kStatusFile_);
-    statusFile << lastCompletedId << lastPerformingId;
+int Engine::getPerformingTransactionId() {
+    int lastTransactionId;
+    int lastPerformingId;
+    std::ifstream statusFile(kTransactionsIdsFile_);
+    statusFile >> lastTransactionId >> lastPerformingId;
+    return lastPerformingId;
+}
+
+void Engine::setLastTransactionId(int id) {
+    setIds(id, getPerformingTransactionId());
+}
+
+void Engine::setPerformingTransactionId(int id) {
+    setIds(getLastTransactionId(), id);
+}
+
+void Engine::setIds(int lastTransactionId, int lastPerformingTransactionId) {
+    std::ofstream statusFile(kTransactionsIdsFile_);
+    statusFile << lastTransactionId << " " << lastPerformingTransactionId;
 }
 
 void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
@@ -70,8 +136,8 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
 
     try {
         std::ofstream metafile(getPathToTableMeta(table.getName()), std::ios::binary);
-        unsigned char reserved = 0;
-        metafile.write((char*) &reserved, sizeof(unsigned char));
+        unsigned char is_versioning = (table.isSystemVersioning()) ? (1) : (0);
+        metafile.write((char*) &is_versioning, sizeof(unsigned char));
         char table_name[kTableNameLength] = {0};
         std::memcpy(table_name, table.getName().c_str(), table.getName().size());
         metafile.write(table_name, kTableNameLength);
@@ -79,8 +145,8 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
         metafile.write((char*) &columns_count, sizeof(unsigned char));
 
         for (const auto& column : table.getColumns()) {
-            unsigned char reserved = 0;
-            metafile.write((char*) &reserved, sizeof(unsigned char));
+            unsigned char period = static_cast<unsigned char>(column.getPeriod());
+            metafile.write((char*) &period, sizeof(unsigned char));
             int n = column.getN();
             metafile.write((char*) &n, sizeof(int));
             unsigned char type = static_cast<unsigned char>(column.getType());
@@ -103,17 +169,13 @@ void Engine::create(const Table& table, std::unique_ptr<exc::Exception>& e) {
     }
 }
 
-Table Engine::show(const std::string& table_name, std::unique_ptr<exc::Exception>& e) {
-    if (!exists(table_name)) {
-        e.reset(new exc::acc::TableNonexistent(table_name));
-        return Table();
-    }
-
+Table Engine::show(const std::string& table_name) {
     std::ifstream metafile(getPathToTableMeta(table_name), std::ios::binary);
     Table table;
 
-    unsigned char reserved;
-    metafile.read((char*) &reserved, sizeof(unsigned char));
+    unsigned char is_versioning;
+    metafile.read((char*) &is_versioning, sizeof(unsigned char));
+    table.setSystemVersioning(static_cast<bool>(is_versioning));
     char table_name_[kTableNameLength];
     metafile.read(table_name_, kTableNameLength);
     table.setName(table_name);
@@ -121,8 +183,8 @@ Table Engine::show(const std::string& table_name, std::unique_ptr<exc::Exception
     metafile.read((char*) &columns_count, sizeof(unsigned char));
 
     for (int i = 0; i < columns_count; ++i) {
-        unsigned char reserved;
-        metafile.read((char*) &reserved, sizeof(unsigned char));
+        unsigned char period;
+        metafile.read((char*) &period, sizeof(unsigned char));
         int n;
         metafile.read((char*) &n, sizeof(n));
         unsigned char type;
@@ -134,6 +196,7 @@ Table Engine::show(const std::string& table_name, std::unique_ptr<exc::Exception
         std::unique_ptr<exc::Exception> e;
         Column column(column_name, static_cast<DataType>(type), e, constraints);
         column.setN(n);
+        column.setPeriod(static_cast<PeriodState>(period));
         table.addColumn(column, e);
     }
 
@@ -145,7 +208,7 @@ std::string Engine::showCreate(const std::string& table_name, std::unique_ptr<ex
         e.reset(new exc::acc::TableNonexistent(table_name));
         return std::string();
     }
-    Table table = show(table_name, e);
+    Table table = show(table_name);
     std::string query("CREATE TABLE " + table.getName() + "(");
 
     for (unsigned int i = 0; i < table.getColumns().size(); ++i) {
@@ -185,39 +248,4 @@ void Engine::drop(const std::string& table_name, std::unique_ptr<exc::Exception>
 
 bool Engine::exists(const std::string& table_name) {
     return static_cast<bool>(std::ifstream(getPathToTableMeta(table_name)));
-}
-
-void Engine::freeMemory(const std::string& table_name) {
-    std::unique_ptr<exc::Exception> e;
-    Table table = show(table_name, e);
-    std::string salt("afhh2lhrlfjlsdjfnh34232432gfg");
-    std::fstream old_file(getPathToTable(table_name), std::ios::binary | std::ios::in);
-    std::fstream new_file(getPathToTable(table_name) + salt, std::ios::binary | std::ios::out);
-    
-    int id = Block::kNullBlockId;
-    Block block(table);
-    while (!block.load(old_file)) {
-        if (block.getCount() != 0) {
-            block.setPrevBlockId(id);
-            if (id == Block::kNullBlockId) {
-                id = 0;
-            } else {
-                ++id;
-                int p = new_file.tellp();
-                new_file.seekp(p - Block::kBlockSize + Block::kNextBlockIdPosition);
-                new_file.write((char*) &id, sizeof(int));
-                new_file.seekp(p);
-            }
-            new_file.write(block.getBuffer(), Block::kBlockSize);
-        }
-    }
-    if (id == Block::kNullBlockId) {
-        Block block(table);
-        new_file.write(block.getBuffer(), Block::kBlockSize);
-    }
-    
-    old_file.close();
-    new_file.close();
-    std::remove(getPathToTable(table_name).c_str());
-    std::rename((getPathToTable(table_name) + salt).c_str(), getPathToTable(table_name).c_str());
 }
