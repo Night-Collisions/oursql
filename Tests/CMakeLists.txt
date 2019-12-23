@@ -19,7 +19,7 @@ macro(package_set_test TESTNAME)
 endmacro()
 
 macro(package_add_test TESTNAME)
-    add_executable(${TESTNAME} ${ARGN} Test.h Test.cpp)
+    add_executable(${TESTNAME} ${ARGN} Test.h Test.cpp RequestGenerator.h RequestGenerator.cpp)
     package_set_test(${TESTNAME} ${ARGN})
 endmacro()
 

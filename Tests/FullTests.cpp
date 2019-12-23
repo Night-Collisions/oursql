@@ -3,6 +3,7 @@
 
 #include "../Server/Core/Exception.h"
 #include "../Server/Our.h"
+#include "RequestGenerator.h"
 #include "Test.h"
 
 class REQUEST_TESTS : public ::testing::Test {
@@ -1434,4 +1435,21 @@ TEST_F(TRANSACTION_TESTS, TEST_2) {
         << "Wrong answer client1!!!";
     CHECK_REQUEST("select * from a;", 0,
                   get_select_answer({"a.a", "a.b"}, full_answer), client2);
+  
+class GENERATE_REQUEST_TESTS : public REQUEST_TESTS {};
+
+TEST_F(GENERATE_REQUEST_TESTS, TEST_1) {
+    RequestGenerator gen("../../Tests/Test.goyeod");
+    for (unsigned int i = 0; i < 100; i++) {
+        auto s = gen.getRequest();
+        std::string out;
+        std::cout << "Request " << i << ":\n " << s << std::endl;
+        long exception_request = client.request(s, out);
+        if (exception_request == static_cast<long>(exc::ExceptionType::syntax) ||
+                                                   exception_request < 0) {
+            FAIL() << "Wrong command: " << s
+                   << "\n Error: " << exception_request << "\n Answer: " << out
+                   << std::endl;
+        }
+    }
 }
