@@ -1190,34 +1190,18 @@ TEST_F(UNION_TESTS, TEST_1) {
 }
 
 TEST_F(UNION_TESTS, EXCEPTION_TEST_1) {
-    /*    CHECK_REQUEST_ST_CLIENT(
-            "select * from a union select * from b;", -1,
-            ""); */ // Это даёт ошибку, т. к. вложенные селекты ещё не задовали.
-    //    CHECK_REQUEST_ST_CLIENT(
-    //        "select * from a union b;",
-    //        exc::ExceptionType::access_table_nonexistent,
-    //        "");  // TODO: не существует
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from a union a;", 0,
-        get_select_answer(
-            {"a", "b"},
-            {{"0", "Vitia"},
-             {"0", "Viktor"},
-             {"1", "Viktor"},
-             {"1", "Vitichka"}}));  // TODO: если это риализованно и нормально
-                                    // работает, то перемести
+    // TODO(Victor, 23.12.2019) I removed tests for 1104 exceptions because I
+    // let columns be null. It can be reverted but we need to create history
+    // tables for temporal tables with not null columns.
+    CHECK_REQUEST_ST_CLIENT("select * from a union a;", 0,
+                            get_select_answer({"a", "b"}, {{"0", "Vitia"},
+                                                           {"0", "Viktor"},
+                                                           {"1", "Viktor"},
+                                                           {"1", "Vitichka"}}));
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a_a (a int not null, b varchar(100));");
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from a_a union a;", exc::ExceptionType::null_column_in_union,
-        "~~Exception 1104:\n Union requires all columns to be not "
-        "null.\n~~Exception in command:\"select * from a_a union a;\"\n");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table a_b (a int, b varchar(100) primary key);");
-    CHECK_REQUEST_ST_CLIENT(
-        "select * from a union a_b;", exc::ExceptionType::null_column_in_union,
-        "~~Exception 1104:\n Union requires all columns to be not "
-        "null.\n~~Exception in command:\"select * from a union a_b;\"\n");
     CHECK_UNREQUITED_REQUEST_ST_CLIENT(
         "create table long_a (a int not null, b varchar(100) not null, c "
         "varchar(100) not null);");
@@ -1451,4 +1435,3 @@ TEST_F(TRANSACTION_TESTS, TEST_2) {
     CHECK_REQUEST("select * from a;", 0,
                   get_select_answer({"a.a", "a.b"}, full_answer), client2);
 }
-

@@ -45,7 +45,8 @@ enum class ExceptionType : unsigned int {
     unable_to_assign_period,
     incorrect_type_for_period,
     date_cast_from_str,
-    table_is_not_temporal
+    table_is_not_temporal,
+    temp_table_drop
 };
 
 class Exception {
@@ -75,6 +76,13 @@ class TableIsNotTemporal : public Exception {
     TableIsNotTemporal()
         : Exception(ExceptionType::table_is_not_temporal,
                     "Table is not temporal.") {}
+};
+
+class TemporalTableDropNotAllowed : public Exception {
+   public:
+    TemporalTableDropNotAllowed()
+        : Exception(ExceptionType::temp_table_drop,
+                    "DROP TABLE is not allowed for temporal tables.") {}
 };
 
 class DateCastFromStrExc : public Exception {

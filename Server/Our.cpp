@@ -57,6 +57,10 @@ bool get_command(std::istream& in, std::string& command) {
 
 unsigned int perform(std::istream& in, std::ostream& out,
                      unsigned short client_id) {
+    // TODO(Victor, 23.12.2019) Transaction id is incremented even if we do a
+    // single select query so it causes transaction table's size increasing.
+    // Thus, the issue will lengthen the query containing select with
+    // system_time conditions with no reason.
     std::unique_ptr<exc::Exception> e = nullptr;
     std::string command;
     static std::map<unsigned long long, unsigned long long> users_transacts;
@@ -102,7 +106,7 @@ unsigned int perform(std::istream& in, std::ostream& out,
         }
 
         ParserManager pm;
-        //pm.setDebug(1);
+        // pm.setDebug(1);
         auto queries = pm.getParseTree(command, e);
         EXCEPTION_OURSQL_CHECK(e, out, command);
         for (auto& q : queries) {

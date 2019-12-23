@@ -209,9 +209,11 @@ void QueryManager::dropTable(const Query& query, t_ull transact_num,
                              std::unique_ptr<exc::Exception>& e,
                              std::ostream& out) {
     auto name = query.getChildren()[NodeType::ident]->getName();
-    Engine::drop(name, e);
     if (Engine::show(name).isSystemVersioning()) {
-        Engine::drop(getHistoryName(name), e);
+        e.reset(new exc::TemporalTableDropNotAllowed());
+        return;
+    } else {
+        Engine::drop(name, e);
     }
 }
 
@@ -324,8 +326,6 @@ void QueryManager::select(const Query& query, t_ull transact_num,
         }
         if (systime.getRangeType() == RangeType::from_to) {
             auto [from, to] = systime.getRange();
-            // TODO(Victor): ~~Exception 605:
-            // can't compare varchar and int.
             auto fromNode = new Expression(new DatetimeConstant(from));
             auto toNode = new Expression(new DatetimeConstant(to));
             auto start_col =
@@ -528,7 +528,7 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
         if (c.getPeriod() == PeriodState::sys_end) {
             Value v;
             v.is_null = false;
-            // TODO: change the maximal year
+            // TODO(Victor): 2038 issue
             //  boost got a 2038 issue but it's fixed in v1.67 but I leave
             //  I set 2037 as the maximum by now
             auto upper_bound = ptime(date(2037, Dec, 31));
@@ -965,7 +965,6 @@ Table QueryManager::getFilledTempTable(const std::string& name,
         new Ident(unioned.getColumns()[sys_start_ind].getName()));
     auto child2 = new Expression(new Ident("end_time"));
     root = new Expression(child1, ExprUnit::equal, child2);
-    // TODO: perhaps we need to rename the columns and the table name
     auto joined_with_tr = Join::makeJoin(
         unioned,
         getFilledTable(Engine::kTransactionsEndTimesTable, transact_num, e),
