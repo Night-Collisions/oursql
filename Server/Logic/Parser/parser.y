@@ -52,7 +52,7 @@
 %error-verbose
 
 %token CREATE SHOW DROP SELECT INSERT UPDATE DELETE
-%token TABLE TABLES VALUES INTO FROM WHERE SET
+%token TABLE TABLES VALUES INTO FROM WHERE SET INDEX
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE SEMI DOT COMMA ASTERISK
 %token EQUAL GREATER LESS GREATER_EQ LESS_EQ NOT_EQ
 %token ID ICONST FCONST SCONST
@@ -63,7 +63,7 @@
 %token BEGIN_ COMMIT
 %token VERSIONING WITH PERIOD SYSTEM_TIME FOR_ OFF TO ALL
 
-%type<query> create show_create drop_table select insert delete update statement statements
+%type<query> create_table show_create drop_table select insert delete update statement statements
 %type<ident> id col_ident
 %type<var> variable
 %type<dataType> type
@@ -126,17 +126,25 @@ statements:
     }
 
 statement:
-    create |
+    create_table |
     show_create |
     drop_table |
     select |
     insert |
     update |
-    delete;
+    delete |
+    create_index;
+
+// ---- create index
+
+create_index:
+	CREATE INDEX id ON id LPAREN id RPAREN {
+
+	};
 
 // ---- create table
 
-create:
+create_table:
     CREATE TABLE id LPAREN variables RPAREN {
         std::map<NodeType, Node*> children;
         children[NodeType::ident] = $3;

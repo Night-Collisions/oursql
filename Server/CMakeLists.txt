@@ -83,7 +83,8 @@ set(DEFINITIONS
         Logic/Parser/RelationalOperationsParser/Helper.cpp
         Logic/Parser/Nodes/Transaction.cpp
         Logic/Parser/Nodes/DatetimeConstant.cpp
-        Logic/Parser/Nodes/With.cpp Logic/Parser/Nodes/Period.cpp Logic/Parser/Nodes/SysTime.cpp ../Tests/RequestGenerator.cpp ../Tests/RequestGenerator.h)
+        Logic/Parser/Nodes/With.cpp Logic/Parser/Nodes/Period.cpp
+        Logic/Parser/Nodes/SysTime.cpp)
 
 assemble_parser(Logic/Parser/)
 
