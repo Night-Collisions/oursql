@@ -265,7 +265,3 @@ void Block::remove(int id) {
     setTrEndId(id);
 }
 
-void Block::inreaseUsage(int usage) {
-    BuffersManager::increaseUsageIfExists(table_.getName(), loadedBlockStart_, usage);
-}
-

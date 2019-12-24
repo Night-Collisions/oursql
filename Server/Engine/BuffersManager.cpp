@@ -20,7 +20,9 @@ char* BuffersManager::getOrCreateBuffer(const std::string& tablename, int positi
 char* BuffersManager::getBuffer(const std::string& tablename, int position) {
     for (auto& buffer : buffers_) {
         if (std::get<0>(buffer.second) == tablename && std::get<1>(buffer.second) == position) {
-            return std::get<2>(buffer.second);
+            char* result = std::get<2>(buffer.second);
+            increaseUsageIfExists(tablename, position, 1);
+            return result;
         }
     }
     return nullptr;

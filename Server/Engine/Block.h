@@ -39,7 +39,6 @@ class Block {
     void setPosition(int position) { position_ = position; }
     int getPosition() { return position_; }
     int getRowSize() { return row_size_ - 4 - 4; };
-    void inreaseUsage(int usage);
 
     static const int kBlockSize;
     static const int kRowsCountPosition;
