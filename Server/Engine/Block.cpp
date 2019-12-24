@@ -58,7 +58,7 @@ std::stringstream Block::toRow(const Table& table, const std::vector<Value>& val
     return ss;
 }
 
-std::vector<Value> Block::toValues(const Table& table, char* buff) {
+std::vector<Value> Block::toValues(const Table& table, const char* buff) {
     std::vector<Value> values;
     int pos = 0;
 
@@ -210,6 +210,19 @@ bool Block::next(int id) {
             return true;
         }
         position_ += row_size_;
+    }
+    return false;
+}
+
+bool Block::untransactionedNext() {
+    if (getCount() == 0) {
+        return false;
+    }
+
+    position_ += row_size_;
+
+    if (kBlockSize - position_ > row_size_) {
+        return getTrStartId() != Engine::kNullTransactionId;
     }
     return false;
 }

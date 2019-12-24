@@ -12,6 +12,8 @@ set(HEADERS
         Engine/ChangeManager.h
         Engine/BuffersManager.h
         Engine/Value.h
+        Engine/Index.h
+        Engine/IndexesManager.h
         Core/Exception.h
         Core/DataType.h
         Logic/Parser/ParserManager.h
@@ -54,6 +56,7 @@ set(DEFINITIONS
         Engine/Cursor.cpp
         Engine/ChangeManager.cpp
         Engine/BuffersManager.cpp
+        Engine/IndexesManager.cpp
         Core/Exception.cpp
         Core/DataType.cpp
         Engine/Engine.cpp

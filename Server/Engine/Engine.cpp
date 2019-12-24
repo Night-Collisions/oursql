@@ -63,6 +63,7 @@ void Engine::beginTransaction(int id) {
     }
     if (was_files_removed) {
         BuffersManager::clear();
+        IndexesManager::clear();
         std::remove("DataBD/was_files_removed");
     }
     fs::create_directory(fs::current_path() / "DataBD" / std::to_string(id));
@@ -250,6 +251,7 @@ void Engine::drop(const std::string& table_name, std::unique_ptr<exc::Exception>
         return;
     }
     BuffersManager::dropTable(table_name);
+    IndexesManager::dropTable(table_name);
     std::remove(getPathToTable(table_name).c_str());
     std::remove(getPathToTableMeta(table_name).c_str());
 }

@@ -15,7 +15,7 @@
 class Block {
    public:
     static std::stringstream toRow(const Table& table, const std::vector<Value>& values);
-    static std::vector<Value> toValues(const Table& table, char* buff);
+    static std::vector<Value> toValues(const Table& table, const char* buff);
 
     Block() = default;
     ~Block() { delete[] buffer_; }
@@ -31,6 +31,7 @@ class Block {
     int getTrStartId();
     int getTrEndId();
     bool next(int id);
+    bool untransactionedNext();
     std::vector<Value> fetch();
     bool insert(const std::vector<Value>& values, int id);
     bool insert(const std::string& values, int id);
@@ -39,6 +40,7 @@ class Block {
     void setPosition(int position) { position_ = position; }
     int getPosition() { return position_; }
     int getRowSize() { return row_size_ - 4 - 4; };
+    int getInsertionPosition() { return kRowsStartPosition_ + getCount() * row_size_; }
 
     static const int kBlockSize;
     static const int kRowsCountPosition;
