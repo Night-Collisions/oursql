@@ -1,4 +1,5 @@
 #include "Test.h"
+
 #include <fstream>
 
 Server* Server::obj_ = nullptr;
@@ -47,7 +48,8 @@ void Server::stop() {
 }
 
 std::string check_request(const std::string& request, const long exception,
-                          const std::string& answer, ourSQL::client::Client& client) {
+                          const std::string& answer,
+                          ourSQL::client::Client& client) {
     std::string out;
     const std::string error_message =
         "Error in request:\n    " + ::testing::PrintToString(request) + "\n";
@@ -117,8 +119,9 @@ std::string drop_test(const std::string& request,
                       const std::string& checker_request,
                       const long checker_exception,
                       const std::string& checker_answer,
-                      const std::string& db_files, ourSQL::client::Client& client,
-                      size_t start_time, size_t step_time, size_t max_time) {
+                      const std::string& db_files,
+                      ourSQL::client::Client& client, size_t start_time,
+                      size_t step_time, size_t max_time) {
     client.setExceptionReconnect(false);
     copyDB();
     auto files = split_string(db_files);
@@ -133,7 +136,9 @@ std::string drop_test(const std::string& request,
         Server::get()->stop();
         Server::get()->run();
         client.connect();
-        if (check_request(checker_request, checker_exception, checker_answer, client).empty()) {
+        if (check_request(checker_request, checker_exception, checker_answer,
+                          client)
+                .empty()) {
             return "";
         }
         for (const auto& j : files)
