@@ -546,11 +546,7 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
                 return;
             }
             Value v;
-            if (c.getType() == DataType::varchar) {
-                v.data = "";
-            } else {
                 v.data = "0";
-            }
             v.is_null = true;
             v_arr.push_back(v);
         } else {
@@ -686,7 +682,7 @@ void QueryManager::update(const Query& query, t_ull transact_num,
                 auto tmp = values[c.getName()];
                 if (tmp == "null") {
                     if (c.getType() == DataType::varchar) {
-                        v.data = "";
+                        v.data = "0";
                     } else {
                         v.data = "null";
                     }

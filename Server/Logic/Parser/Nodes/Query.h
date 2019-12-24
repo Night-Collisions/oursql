@@ -15,6 +15,7 @@ enum class CommandType : unsigned int {
     insert,
     update,
     remove,
+    create_index,
     Count
 };
 

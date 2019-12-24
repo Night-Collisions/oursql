@@ -121,6 +121,7 @@ PRIMARY_KEY   "primary"[ \t\r\f]+"key"
 "versioning"               { return VERSIONING; }
 "with"                     { return WITH; }
 "all"                      { return ALL; }
+"index"                    { return INDEX; }
 
 "commit"                   { return COMMIT; }
 "begin"                    { return BEGIN_; }
