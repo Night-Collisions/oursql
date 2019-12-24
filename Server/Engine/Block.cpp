@@ -15,7 +15,6 @@ const int Block::kTrEndIdPosition = 4;
 
 const int Block::kRowsStartPosition_ = 4;
 
-
 enum ValueState : char {
     null = 0,
     not_null = 1
@@ -105,14 +104,9 @@ std::vector<Value> Block::toValues(const Table& table, char* buff) {
     return values;
 }
 
-
 Block::Block(const Table& table) {
     setTable(table);
     position_ = kRowsStartPosition_ - row_size_;
-}
-
-Block::Block(const Table& table, std::fstream& fstream) : Block(table) {
-    load(fstream);
 }
 
 void Block::reset() {
@@ -143,14 +137,31 @@ void Block::setTable(const Table& table) {
     }
 }
 
-bool Block::load(std::fstream& fstream) {
-    fstream.read(buffer_, kBlockSize);
-    position_ = kRowsStartPosition_ - row_size_;
-    bool is_fail = fstream.fail();
-    if (is_fail) {
-        fstream.clear();
+//bool Block::load(std::fstream& fstream) {
+//    fstream.read(buffer_, kBlockSize);
+//    position_ = kRowsStartPosition_ - row_size_;
+//    bool is_fail = fstream.fail();
+//    if (is_fail) {
+//        fstream.clear();
+//    }
+//    return is_fail;
+//}
+
+bool Block::load(int start) {
+    {
+        std::fstream file("DataBD/" + table_.getName(), std::fstream::binary | std::fstream::in);
+        file.seekg(start);
+        char test;
+        file.read(&test, sizeof(char));
+        if (file.fail()) {
+            return true;
+        }
     }
-    return is_fail;
+    char* buff = BuffersManager::getOrCreateBuffer(table_.getName(), start);
+    memcpy(buffer_, buff, kBlockSize);
+    loadedBlockStart_ = start;
+    position_ = kRowsStartPosition_ - row_size_;
+    return false;
 }
 
 int Block::getCount() const {
@@ -253,3 +264,8 @@ void Block::setValues(const std::vector<Value>& values, int pos) {
 void Block::remove(int id) {
     setTrEndId(id);
 }
+
+void Block::inreaseUsage(int usage) {
+    BuffersManager::increaseUsageIfExists(table_.getName(), loadedBlockStart_, usage);
+}
+

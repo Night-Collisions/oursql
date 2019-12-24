@@ -10,6 +10,7 @@
 #include "Column.h"
 #include "Value.h"
 #include "Table.h"
+#include "BuffersManager.h"
 
 class Block {
    public:
@@ -19,10 +20,10 @@ class Block {
     Block() = default;
     ~Block() { delete[] buffer_; }
     Block(const Table& table);
-    Block(const Table& table, std::fstream& fstream);
     void reset();
     void setTable(const Table& table);
-    bool load(std::fstream& fstream);
+//    bool load(std::fstream& fstream);
+    bool load(int start);
     int getCount() const;
     void setCount(int count);
     void setTrStartId(int id);
@@ -38,6 +39,7 @@ class Block {
     void setPosition(int position) { position_ = position; }
     int getPosition() { return position_; }
     int getRowSize() { return row_size_ - 4 - 4; };
+    void inreaseUsage(int usage);
 
     static const int kBlockSize;
     static const int kRowsCountPosition;
@@ -53,6 +55,7 @@ private:
     char* buffer_ = new char[kBlockSize]{};
     Table table_;
     size_t row_size_;
+    int loadedBlockStart_ = -1;
     int position_;
 };
 

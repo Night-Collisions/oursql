@@ -30,7 +30,7 @@ private:
 
     std::unordered_set<int> removed_rows_;
     int tr_id_;
-    std::fstream file_;
+    int file_position_ = 0;
     Table table_;
     ChangeManager change_manager_;
     Block block_;

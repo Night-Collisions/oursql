@@ -10,6 +10,7 @@ set(HEADERS
         Engine/Block.h
         Engine/Cursor.h
         Engine/ChangeManager.h
+        Engine/BuffersManager.h
         Engine/Value.h
         Core/Exception.h
         Core/DataType.h
@@ -52,6 +53,7 @@ set(DEFINITIONS
         Engine/Block.cpp
         Engine/Cursor.cpp
         Engine/ChangeManager.cpp
+        Engine/BuffersManager.cpp
         Core/Exception.cpp
         Core/DataType.cpp
         Engine/Engine.cpp

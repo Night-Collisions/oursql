@@ -57,6 +57,14 @@ int Engine::generateNextTransactionId() {
 }
 
 void Engine::beginTransaction(int id) {
+    bool was_files_removed;
+    {
+        was_files_removed = static_cast<bool>(std::ifstream("DataBD/was_files_removed"));
+    }
+    if (was_files_removed) {
+        BuffersManager::clear();
+        std::remove("DataBD/was_files_removed");
+    }
     fs::create_directory(fs::current_path() / "DataBD" / std::to_string(id));
 }
 
@@ -93,7 +101,6 @@ void Engine::insertIntoTransactionsEndTimesTable(int id){
     }
     endTransaction(1);
 }
-
 
 void Engine::endTransaction(int id) {
     fs::remove_all(fs::current_path() / "DataBD" / std::to_string(id));
@@ -242,6 +249,7 @@ void Engine::drop(const std::string& table_name, std::unique_ptr<exc::Exception>
         e.reset(new exc::acc::TableNonexistent(table_name));
         return;
     }
+    BuffersManager::dropTable(table_name);
     std::remove(getPathToTable(table_name).c_str());
     std::remove(getPathToTableMeta(table_name).c_str());
 }

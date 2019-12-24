@@ -4,9 +4,10 @@ Cursor::Cursor(int tr_id, const std::string& table_name) :
         tr_id_(tr_id),
         table_(Engine::show(table_name)),
         change_manager_(table_, tr_id) {
-    file_.open(Engine::getPathToTable(table_name), std::fstream::binary | std::fstream::in | std::fstream::out);
     block_.setTable(table_);
-    block_.load(file_);
+    file_position_ = 0;
+    block_.load(file_position_);
+    file_position_ += Block::kBlockSize;
     change_manager_.setRowSize(block_.getRowSize());
     loadRemovedRows();
 }
@@ -19,11 +20,12 @@ void Cursor::loadRemovedRows() {
 }
 
 void Cursor::reset() {
-    file_.seekg(0);
+    file_position_ = 0;
+    block_.load(file_position_);
+    file_position_ += Block::kBlockSize;
     change_manager_.reset();
     current_block_ = 0;
     was_file_finished_ = false;
-    block_.load(file_);
 }
 
 std::vector<Value> Cursor::fetch() {
@@ -38,7 +40,8 @@ bool Cursor::next() {
         }
     }
 
-    while (!was_file_finished_ && !block_.load(file_)) {
+    while (!was_file_finished_ && !block_.load(file_position_)) {
+        file_position_ += Block::kBlockSize;
         ++current_block_;
         while (block_.next(tr_id_)) {
             if (removed_rows_.find(current_block_ * Block::kBlockSize + block_.getPosition())
@@ -72,10 +75,14 @@ void Cursor::remove() {
 }
 
 void Cursor::commit() {
-    file_.seekg(-Block::kBlockSize, std::fstream::end);
-    block_.load(file_);
-    file_.seekp(-Block::kBlockSize, std::fstream::end);
-    int last_block_id = file_.tellp() / Block::kBlockSize;
+    std::fstream file(Engine::getPathToTable(table_.getName()), std::fstream::binary | std::fstream::in | std::fstream::out);
+    file.seekg(-Block::kBlockSize, std::fstream::end);
+    int last_block_start = file.tellg();
+    file.close();
+    block_.load(last_block_start);
+    file.open(Engine::getPathToTable(table_.getName()), std::fstream::binary | std::fstream::in | std::fstream::out);
+    file.seekp(-Block::kBlockSize, std::fstream::end);
+    int last_block_id = file.tellp() / Block::kBlockSize;
     bool is_last_block = true;
 
     change_manager_.reset();
@@ -89,28 +96,34 @@ void Cursor::commit() {
                 block_.setTrEndId(Engine::getLastTransactionId());
                 block_.setPosition(pos);
             } else {
-                int p = file_.tellp();
-                file_.seekp(change_manager_.getRemovedPosition() + Block::kTrEndIdPosition);
+                int p = file.tellp();
+                file.seekp(change_manager_.getRemovedPosition() + Block::kTrEndIdPosition);
                 int tr_end = Engine::getLastTransactionId();
-                file_.write((char*) &tr_end, sizeof(int));
-                file_.seekp(p);
+                file.write((char*) &tr_end, sizeof(int));
+                file.seekp(p);
             }
         } else {
             if (change_manager_.wasMarkedRemoved()) {
                 continue;
             }
             if (!block_.insert(change_manager_.getValues(), Engine::getLastTransactionId() + 1)) {
-                file_.write(block_.getBuffer(), Block::kBlockSize);
+                file.write(block_.getBuffer(), Block::kBlockSize);
                 change_manager_.markProcessed();
                 block_.reset();
                 block_.insert(change_manager_.getValues(), Engine::getLastTransactionId() + 1);
+                if (is_last_block) {
+                    BuffersManager::updateBufferIfExists(table_.getName(), last_block_start, block_.getBuffer());
+                }
                 is_last_block = false;
             }
         }
     }
 
     if (block_.getCount() != 0) {
-        file_.write(block_.getBuffer(), Block::kBlockSize);
+        if (is_last_block) {
+            BuffersManager::updateBufferIfExists(table_.getName(), last_block_start, block_.getBuffer());
+        }
+        file.write(block_.getBuffer(), Block::kBlockSize);
         change_manager_.markProcessed();
     }
 }
