@@ -4,6 +4,7 @@
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <iostream>
 
+#include "../../../Engine/IndexesManager.h"
 #include "../Nodes/Ident.h"
 #include "../Nodes/IntConstant.h"
 #include "../Nodes/RealConstant.h"
@@ -935,4 +936,57 @@ std::map<std::string, std::string> Resolver::getRecordMap(
         ++counter;
     }
     return m;
+}
+
+bool Resolver::isGoodForIndex(const std::string& table_name, Expression* root,
+                              std::map<std::string, int>& col_ind) {
+    if (root && root->childs()[0] && root->childs()[1]) {
+        auto child1 = root->childs()[0];
+        auto child2 = root->childs()[1];
+
+        bool is_ok1 = false;
+        bool is_ok2 = false;
+        bool index_found = false;
+        bool oper_ok = false;
+
+        auto type = static_cast<int>(root->exprType());
+        auto left = static_cast<int>(ExprUnit::equal);
+        auto right = static_cast<int>(ExprUnit::less_eq);
+        if (left <= type && type <= right) {
+            oper_ok = true;
+        }
+        if (child1->exprType() != ExprUnit::value) {
+        } else if (child1->getConstant()->getNodeType() == NodeType::ident) {
+            if (col_ind.find(child1->getConstant()->getName()) == col_ind.end()) {
+                // TODO: no column
+                return false;
+            }
+
+            if (IndexesManager::exists(table_name,
+                                       col_ind[child1->getConstant()->getName()])) {
+                is_ok1 = true;
+                index_found = true;
+            }
+        } else if (child1->getConstant()->getNodeType() == NodeType::constant) {
+            is_ok1 = true;
+        }
+        if (child2->exprType() != ExprUnit::value) {
+            return false;
+        } else if (child2->getConstant()->getNodeType() == NodeType::ident) {
+            if (col_ind.find(child2->getConstant()->getName()) == col_ind.end()) {
+                // TODO: exception, no column
+                return false;
+            }
+
+            if (IndexesManager::exists(table_name,
+                                       col_ind[child2->getConstant()->getName()])) {
+                is_ok2 = true;
+                index_found = !index_found;
+            }
+        } else if (child2->getConstant()->getNodeType() == NodeType::constant) {
+            is_ok2 = true;
+        }
+
+        return is_ok1 && is_ok2 && index_found && oper_ok;
+    }
 }

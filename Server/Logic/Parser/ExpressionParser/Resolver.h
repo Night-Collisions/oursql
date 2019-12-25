@@ -24,6 +24,9 @@ enum class CompareCondition : unsigned int {
 
 class Resolver {
    public:
+    static bool isGoodForIndex(const std::string& table_name, Expression* root,
+                               std::map<std::string, int>& col_ind);
+
     static std::map<std::string, std::string> getRecordMap(
         const std::vector<Column>& cols, std::vector<Value> record,
         std::unique_ptr<exc::Exception>& e);

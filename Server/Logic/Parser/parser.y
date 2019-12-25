@@ -14,6 +14,7 @@
     #include "../../Server/Logic/Parser/Nodes/SelectList.h"
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
+    #include "../../Server/Logic/Parser/Nodes/IndexNode.h"
     #include "../../Server/Logic/Parser/Nodes/Transaction.h"
     #include "../../Server/Logic/Parser/Nodes/Period.h"
     #include "../../Server/Logic/Parser/Nodes/SysTime.h"
@@ -63,7 +64,7 @@
 %token BEGIN_ COMMIT
 %token VERSIONING WITH PERIOD SYSTEM_TIME FOR_ OFF TO ALL
 
-%type<query> create_table show_create drop_table select insert delete update statement statements
+%type<query> create_table create_index show_create drop_table select insert delete update statement statements
 %type<ident> id col_ident
 %type<var> variable
 %type<dataType> type
@@ -111,7 +112,7 @@
 start_expression:
     statements {
         destroy();
-    } | 
+    } |
     BEGIN_ SEMI statements COMMIT SEMI {
         destroy();
     };
@@ -120,7 +121,7 @@ statements:
     statement SEMI {
         varList.clear();
         queryList.push_back($1);
-    } | 
+    } |
     statements statement SEMI {
         queryList.push_back($2);
     }
@@ -138,9 +139,12 @@ statement:
 // ---- create index
 
 create_index:
-	CREATE INDEX id ON id LPAREN id RPAREN {
+    CREATE INDEX ON id LPAREN id RPAREN {
+	std::map<NodeType, Node*> children;
+     	children[NodeType::index] = new IndexNode($4->getName(), $6->getName());
 
-	};
+     	$$ = new Query(children, CommandType::create_index);
+    };
 
 // ---- create table
 

@@ -27,7 +27,8 @@ enum class NodeType {
     transaction,
     with,
     period_pair,
-    sys_time
+    sys_time,
+    index
 };
 
 class Node {

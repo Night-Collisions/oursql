@@ -20,6 +20,7 @@
     #include "../../Server/Logic/Parser/Nodes/IdentList.h"
     #include "../../Server/Logic/Parser/Nodes/SelectList.h"
     #include "../../Server/Logic/Parser/Nodes/Expression.h"
+    #include "../../Server/Logic/Parser/Nodes/IndexNode.h"
     #include "../../Server/Logic/Parser/Nodes/RelExpr.h"
     #include "../../Server/Logic/Parser/Nodes/Transaction.h"
     #include "../../Server/Logic/Parser/Nodes/With.h"

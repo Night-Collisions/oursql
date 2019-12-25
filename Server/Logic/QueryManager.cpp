@@ -14,6 +14,7 @@
 #include "Parser/Nodes/DatetimeConstant.h"
 #include "Parser/Nodes/Ident.h"
 #include "Parser/Nodes/IdentList.h"
+#include "Parser/Nodes/IndexNode.h"
 #include "Parser/Nodes/IntConstant.h"
 #include "Parser/Nodes/Period.h"
 #include "Parser/Nodes/RelExpr.h"
@@ -56,11 +57,13 @@ void QueryManager::execute(
         select,
         insert,
         update,
-        remove};
+        remove,
+        createIndex};
     CommandType command = query.getCmdType();
     if (command != CommandType::Count) {
         if (command != CommandType::create_table &&
-            command != CommandType::select) {
+            command != CommandType::select &&
+            command != CommandType::create_index) {
             auto name = query.getChildren()[NodeType::ident]->getName();
             if (!Engine::exists(name)) {
                 e.reset(new exc::acc::TableNonexistent(name));
@@ -282,6 +285,16 @@ std::map<std::string, Column> getColumnMap(const Table& t) {
     return all_columns;
 }
 
+std::map<std::string, int> getColumnIndexMap(const Table& t) {
+    std::map<std::string, int> all_columns;
+    auto cols = t.getColumns();
+    for (int i = 0; i < cols.size(); ++i) {
+        all_columns[cols[i].getName()] = i;
+    }
+
+    return all_columns;
+}
+
 void QueryManager::select(const Query& query, t_ull transact_num,
                           std::unique_ptr<exc::Exception>& e,
                           std::ostream& out) {
@@ -359,6 +372,8 @@ void QueryManager::select(const Query& query, t_ull transact_num,
 
     column_info[resolvedTable.getName()] = getColumnMap(resolvedTable);
 
+    auto column_index = getColumnIndexMap(resolvedTable);
+
     cols_from_parser =
         static_cast<SelectList*>(children[NodeType::select_list])->getList();
 
@@ -399,25 +414,38 @@ void QueryManager::select(const Query& query, t_ull transact_num,
         }
     }
 
+    auto root = static_cast<Expression*>(children[NodeType::expression]);
+
+    bool use_index =
+        Resolver::isGoodForIndex(resolvedTable.getName(), root, column_index);
+
     if (in_memory) {
         auto records = resolvedTable.getRecords();
         for (int i = 0; i < records.size(); ++i) {
-            auto root =
-                static_cast<Expression*>(children[NodeType::expression]);
             printSelectedRecords(resolvedTable, column_info, cols_from_parser,
                                  records[i], root, e, out);
             if (e) {
                 return;
             }
         }
-    } else {
+    } else if (!use_index) {
         Cursor cursor(transact_num, resolvedTable.getName());
         while (cursor.next()) {
             auto ftch = cursor.fetch();
-            auto root =
-                static_cast<Expression*>(children[NodeType::expression]);
             printSelectedRecords(resolvedTable, column_info, cols_from_parser,
                                  ftch, root, e, out);
+            if (e) {
+                return;
+            }
+        }
+    } else {
+        Cursor cursor(transact_num, resolvedTable.getName());
+        auto adress_iter = getRecordsFromIndex(resolvedTable.getName(), root);
+        for (auto& i = adress_iter.first; i != adress_iter.second; ++i) {
+            cursor.setPosition(i->second);
+            auto record = cursor.fetch();
+            printSelectedRecords(resolvedTable, column_info, cols_from_parser,
+                                 record, root, e, out);
             if (e) {
                 return;
             }
@@ -546,7 +574,7 @@ void QueryManager::insert(const Query& query, t_ull transact_num,
                 return;
             }
             Value v;
-                v.data = "0";
+            v.data = "0";
             v.is_null = true;
             v_arr.push_back(v);
         } else {
@@ -990,4 +1018,87 @@ void QueryManager::insertTemporalTable(const std::string& name,
     rec[sys_end_ind] = v;
 
     cursor.insert(rec);
+}
+
+void QueryManager::createIndex(const Query& query, t_ull transact_num,
+                               std::unique_ptr<exc::Exception>& e,
+                               std::ostream& out) {
+    auto index = static_cast<IndexNode*>(query.getChildren()[NodeType::index]);
+    auto table_name = index->getTableName();
+    auto column_name = index->getColumnName();
+
+    if (!Engine::exists(table_name)) {
+        e.reset(new exc::acc::TableNonexistent(table_name));
+        return;
+    }
+    auto table = Engine::show(table_name);
+    auto columns = table.getColumns();
+    int col_ind = 0;
+    e.reset(new exc::acc::ColumnNonexistent(column_name, table_name));
+    for (int i = 0; i < columns.size(); ++i) {
+        if (columns[i].getName() == column_name) {
+            col_ind = i;
+            e.reset(nullptr);
+        }
+    }
+    if (e) {
+        return;
+    }
+
+    Cursor::createIndex(table, col_ind);
+}
+std::pair<std::multimap<std::string, int>::iterator,
+          std::multimap<std::string, int>::iterator>
+QueryManager::getRecordsFromIndex(const std::string& table_name,
+                                  Expression* root) {
+    Index* index = IndexesManager::get(table_name, 0);
+    auto positions = index->getPositions();
+    auto child1 = root->childs()[0];
+    auto child2 = root->childs()[1];
+    NodeType type1 = child1->getConstant()->getNodeType();
+    NodeType type2 = child2->getConstant()->getNodeType();
+
+    ExprUnit oper = root->exprType();
+    std::string value = nullptr;
+    if (type1 == NodeType::constant && type2 == NodeType::ident) {
+        value = static_cast<Constant*>(child1->getConstant())->getValue();
+        switch (oper) {
+            case ExprUnit::greater:
+                oper = ExprUnit::less;
+                break;
+            case ExprUnit::greater_eq:
+                oper = ExprUnit::less_eq;
+                break;
+            case ExprUnit::less:
+                oper = ExprUnit::greater;
+                break;
+            case ExprUnit::less_eq:
+                oper = ExprUnit::greater_eq;
+                break;
+        }
+    } else {
+        value = static_cast<Constant*>(child2->getConstant())->getValue();
+    }
+
+    switch (oper) {
+        case ExprUnit::equal:
+            return positions.equal_range(value);
+            /*        case ExprUnit::not_equal:
+                        std::multimap<std::string, int, Index::cmp> res;
+                        auto exclude = positions.equal_range(value);
+                        // TODO: подумать
+                        return {};
+                    case ExprUnit::greater:
+                        auto begin = positions.upper_bound(value);
+                        auto end = positions.end();
+                        return {begin, end};
+                    case ExprUnit::greater_eq:
+                        break;
+                    case ExprUnit::less:
+                        begin = positions.lower_bound(value);
+                        end = positions.end();
+                        return {begin, end};
+                    case ExprUnit::less_eq:
+                        break;*/
+    }
 }

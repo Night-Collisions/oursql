@@ -107,10 +107,10 @@ void Cursor::moveToUncommited() {
 
 bool Cursor::existsInThisTransaction() {
     auto bounds = getTrBounds();
-    int pos = current_block_ * Block::kBlockSize; + block_.getPosition();
+    int pos = current_block_ * Block::kBlockSize + block_.getPosition();
     return bounds.first <= getTrId() &&
             (bounds.second == Engine::kNullTransactionId || getTrId() <= bounds.second) &&
-            removed_rows_.find(pos) == remove().end();
+            removed_rows_.find(pos) == removed_rows_.end();
 
 }
 

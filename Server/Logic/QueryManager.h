@@ -4,20 +4,17 @@
 #include <mutex>
 #include <set>
 
-#include "../Engine/Column.h"
 #include "../Engine/Table.h"
-#include "../Engine/Value.h"
+#include "Parser/Nodes/Expression.h"
 #include "Parser/Nodes/Query.h"
 #include "Parser/Nodes/RelExpr.h"
 #include "Parser/Nodes/SysTime.h"
-#include "Parser/Nodes/Transaction.h"
 
 using t_ull = unsigned long long;
 
-typedef Table (*rel_func)(const Table& table1, const Table& table2,
-                          Expression* on_expr,
-                          std::unique_ptr<exc::Exception>& e,
-                          RelOperNodeType join_type);
+typedef Table(rel_func)(const Table& table1, const Table& table2,
+                        Expression on_expr, std::unique_ptr<exc::Exception>& e,
+                        RelOperNodeType join_type);
 
 class QueryManager {
    public:
@@ -29,6 +26,10 @@ class QueryManager {
         std::map<unsigned long long, std::set<std::string>>& locked_tables);
 
    private:
+    // TODO(Victor, 26-12-19): add drop index
+    static void createIndex(const Query& query, t_ull transact_num,
+                            std::unique_ptr<exc::Exception>& e,
+                            std::ostream& out);
     static void createTable(const Query& query, t_ull transact_num,
                             std::unique_ptr<exc::Exception>& e,
                             std::ostream& out);
@@ -54,7 +55,6 @@ class QueryManager {
 
     static Table resolveRelationalOperTree(RelExpr* root, t_ull transact_num,
                                            std::unique_ptr<exc::Exception>& e);
-
     static Table getFilledTable(const std::string& name, t_ull transact_num,
                                 std::unique_ptr<exc::Exception>& e);
 
@@ -71,6 +71,10 @@ class QueryManager {
                                     t_ull transact_num, const int sys_end_ind,
                                     std::vector<Value> rec,
                                     std::unique_ptr<exc::Exception>& e);
+
+    static std::pair<std::multimap<std::string, int>::iterator,
+                     std::multimap<std::string, int>::iterator>
+    getRecordsFromIndex(const std::string& table_name, Expression* root);
 };
 
 #endif  // OURSQL_APP_LOGIC_QUERYMANAGER_H_
