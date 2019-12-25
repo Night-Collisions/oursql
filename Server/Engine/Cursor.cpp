@@ -105,6 +105,15 @@ void Cursor::moveToUncommited() {
     change_manager_.reset();
 }
 
+bool Cursor::existsInThisTransaction() {
+    auto bounds = getTrBounds();
+    int pos = current_block_ * Block::kBlockSize; + block_.getPosition();
+    return bounds.first <= getTrId() &&
+            (bounds.second == Engine::kNullTransactionId || getTrId() <= bounds.second) &&
+            removed_rows_.find(pos) == remove().end();
+
+}
+
 void Cursor::setPosition(int position) {
     current_block_ = position / Block::kBlockSize;
     file_position_ = current_block_ * Block::kBlockSize;

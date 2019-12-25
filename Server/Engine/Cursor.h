@@ -34,6 +34,7 @@ class Cursor {
     }
     int getPosition() { return current_block_ * Block::kBlockSize + block_.getPosition(); }
     std::pair<int, int> getTrBounds() { return std::make_pair(block_.getTrStartId(), block_.getTrEndId()); }
+    bool existsInThisTransaction();
     void setPosition(int position);
     const Table& getTable() const { return table_; }
 
