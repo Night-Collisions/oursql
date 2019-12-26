@@ -989,4 +989,5 @@ bool Resolver::isGoodForIndex(const std::string& table_name, Expression* root,
 
         return is_ok1 && is_ok2 && index_found && oper_ok;
     }
+    return false;
 }

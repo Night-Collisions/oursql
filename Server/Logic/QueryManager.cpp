@@ -1023,6 +1023,7 @@ void QueryManager::insertTemporalTable(const std::string& name,
 void QueryManager::createIndex(const Query& query, t_ull transact_num,
                                std::unique_ptr<exc::Exception>& e,
                                std::ostream& out) {
+    // TODO: check if it already exists
     auto index = static_cast<IndexNode*>(query.getChildren()[NodeType::index]);
     auto table_name = index->getTableName();
     auto column_name = index->getColumnName();
@@ -1059,7 +1060,7 @@ QueryManager::getRecordsFromIndex(const std::string& table_name,
     NodeType type2 = child2->getConstant()->getNodeType();
 
     ExprUnit oper = root->exprType();
-    std::string value = nullptr;
+    std::string value;
     if (type1 == NodeType::constant && type2 == NodeType::ident) {
         value = static_cast<Constant*>(child1->getConstant())->getValue();
         switch (oper) {
@@ -1089,15 +1090,11 @@ QueryManager::getRecordsFromIndex(const std::string& table_name,
                         // TODO: подумать
                         return {};
                     case ExprUnit::greater:
-                        auto begin = positions.upper_bound(value);
-                        auto end = positions.end();
-                        return {begin, end};
+
                     case ExprUnit::greater_eq:
                         break;
                     case ExprUnit::less:
-                        begin = positions.lower_bound(value);
-                        end = positions.end();
-                        return {begin, end};
+                    break;
                     case ExprUnit::less_eq:
                         break;*/
     }
