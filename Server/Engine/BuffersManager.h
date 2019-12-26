@@ -16,6 +16,8 @@ class BuffersManager {
     static void clear();
 
     static int kBufferSize_;
+    static int getLoadedFromFile() { return loadedFromFile; }
+    static int getLoadedFromFileWithoutOptimisation() { return loadedFromFileWithoutOptimisation; }
 
    private:
     using BufferData = std::tuple<std::string, int, char*>;

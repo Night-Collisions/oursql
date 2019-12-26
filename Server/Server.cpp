@@ -3,6 +3,7 @@
 #include <ctime>
 #include <iomanip>
 
+#include "Engine/BuffersManager.h"
 
 namespace ourSQL {
 namespace server {
@@ -63,6 +64,7 @@ void Session::read() {
                 std::stringstream out;
                 std::string ans = std::to_string(ourSQL::perform(
                     in, out, self->tcp_socket_.remote_endpoint().port()));
+                self->out_.write(std::to_string(BuffersManager::getLoadedFromFile()) + " " + std::to_string(BuffersManager::getLoadedFromFileWithoutOptimisation()));
                 self->out_.write("Was executed: \"" + request +
                                  "\". Answer: \"" + out.str() + "\".");
 
